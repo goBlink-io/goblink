@@ -1,0 +1,28 @@
+{
+  "name": "sapphire",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "dev:web": "turbo run dev --filter=@sapphire/web",
+    "dev:api": "turbo run dev --filter=@sapphire/api",
+    "build:web": "turbo run build --filter=@sapphire/web",
+    "build:api": "turbo run build --filter=@sapphire/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.4.0",
+    "eslint": "^9.18.0"
+  },
+  "packageManager": "npm@10.8.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
