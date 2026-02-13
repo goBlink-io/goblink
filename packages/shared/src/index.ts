@@ -3,14 +3,17 @@ export type ChainType = 'EVM' | 'NEAR' | 'SOLANA' | 'SUI' | 'TON' | 'BITCOIN' | 
 export interface Token {
   assetId: string;
   symbol: string;
-  name: string;
+  name?: string;
   decimals: number;
   icon?: string;
-  chain: ChainType;
+  chain?: ChainType;
+  blockchain?: string;
   contractAddress?: string;
+  price?: number;
+  priceUpdatedAt?: string;
 }
 
-export type SwapStatus = 'PENDING_DEPOSIT' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'INCOMPLETE_DEPOSIT';
+export type SwapStatus = 'PENDING_QUOTE' | 'PENDING_DEPOSIT' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'INCOMPLETE_DEPOSIT';
 
 export interface SwapQuote {
   quoteId: string;

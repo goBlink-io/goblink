@@ -53,7 +53,7 @@ router.post('/quote', validateQuoteRequest, async (req, res) => {
       appFees: [
         {
           recipient: feeRecipient,
-          bps: feeBps
+          fee: feeBps
         }
       ]
     };
