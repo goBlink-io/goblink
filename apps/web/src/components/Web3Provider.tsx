@@ -49,6 +49,9 @@ import { TronTransactionProvider } from './TronTransactionProvider';
 import { BitcoinWalletProvider } from './BitcoinWalletProvider';
 import { BitcoinTransactionProvider } from './BitcoinTransactionProvider';
 
+// Phase 2.5 Unified Wallet Manager
+import { UnifiedWalletProvider } from './UnifiedWalletProvider';
+
 const wagmiConfig = getDefaultConfig({
   appName: 'Sapphire',
   projectId: 'YOUR_PROJECT_ID',
@@ -94,7 +97,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
                                         <BitcoinWalletProvider>
                                           <BitcoinTransactionProvider>
                                             <RainbowKitProvider>
-                                              {children}
+                                              <UnifiedWalletProvider>
+                                                {children}
+                                              </UnifiedWalletProvider>
                                             </RainbowKitProvider>
                                           </BitcoinTransactionProvider>
                                         </BitcoinWalletProvider>
