@@ -12,15 +12,8 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 // Sui
 import { useCurrentAccount as useSuiAccount, ConnectButton as SuiConnectButton } from '@mysten/dapp-kit';
 
-// NEAR
-import { useNearWallet } from './NearWalletProvider';
-
-// Phase 2.4 New Chains
-import { useStellarWallet } from './StellarWalletProvider';
-import { useStarknetWallet } from './StarknetWalletProvider';
-import { useTonWallet } from './TonWalletProvider';
-import { useTronWallet } from './TronWalletProvider';
-import { useBitcoinWallet } from './BitcoinWalletProvider';
+// NEAR (Simplified for now as it requires more complex setup)
+// import { setupWalletSelector } from "@near-wallet-selector/core";
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -37,16 +30,6 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
   // Sui
   const suiAccount = useSuiAccount();
   const isSuiConnected = !!suiAccount;
-
-  // NEAR
-  const { accountId: nearAccountId, isConnected: isNearConnected, connect: connectNear } = useNearWallet();
-
-  // Phase 2.4 New Chains
-  const { publicKey: stellarPublicKey, isConnected: isStellarConnected, connect: connectStellar } = useStellarWallet();
-  const { address: starknetAddress, isConnected: isStarknetConnected, connect: connectStarknet } = useStarknetWallet();
-  const { address: tonAddress, isConnected: isTonConnected, connect: connectTon } = useTonWallet();
-  const { address: tronAddress, isConnected: isTronConnected, connect: connectTron } = useTronWallet();
-  const { address: bitcoinAddress, isConnected: isBitcoinConnected, connect: connectBitcoin } = useBitcoinWallet();
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,40 +67,18 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
 
     const chain = token.blockchain?.toLowerCase() || 'near';
     
-    // EVM chains
-    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'avalanche', 'adi', 'aurora', 'bera', 'bnb', 'gnosis', 'plasma', 'xlayer', 'monad'].includes(chain)) {
+    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base'].includes(chain)) {
       return evmAddress || null;
     }
-    // Solana
     if (chain === 'solana') {
       return solanaPublicKey?.toBase58() || null;
     }
-    // Sui
     if (chain === 'sui') {
       return suiAccount?.address || null;
     }
-    // NEAR
-    if (chain === 'near') {
-      return nearAccountId || null;
-    }
-    // Phase 2.4 New Chains
-    if (chain === 'stellar') {
-      return stellarPublicKey || null;
-    }
-    if (chain === 'starknet') {
-      return starknetAddress || null;
-    }
-    if (chain === 'ton') {
-      return tonAddress || null;
-    }
-    if (chain === 'tron') {
-      return tronAddress || null;
-    }
-    if (chain === 'bitcoin') {
-      return bitcoinAddress || null;
-    }
+    // NEAR logic would go here
     return null;
-  }, [tokens, evmAddress, solanaPublicKey, suiAccount, nearAccountId, stellarPublicKey, starknetAddress, tonAddress, tronAddress, bitcoinAddress]);
+  }, [tokens, evmAddress, solanaPublicKey, suiAccount]);
 
   // Auto-fill addresses based on token selection and connected wallets
   useEffect(() => {
@@ -184,46 +145,10 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
     <div className="card p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Swap Tokens</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex space-x-2">
           <ConnectButton label="EVM" />
           <WalletMultiButton />
           <SuiConnectButton />
-          <button
-            onClick={connectNear}
-            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-          >
-            {isNearConnected ? `NEAR: ${nearAccountId?.slice(0, 8)}...` : 'Connect NEAR'}
-          </button>
-          <button
-            onClick={connectStellar}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-          >
-            {isStellarConnected ? `XLM: ${stellarPublicKey?.slice(0, 8)}...` : 'Connect Stellar'}
-          </button>
-          <button
-            onClick={connectStarknet}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-          >
-            {isStarknetConnected ? `Starknet: ${starknetAddress?.slice(0, 8)}...` : 'Connect Starknet'}
-          </button>
-          <button
-            onClick={connectTon}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            {isTonConnected ? `TON: ${tonAddress?.slice(0, 8)}...` : 'Connect TON'}
-          </button>
-          <button
-            onClick={connectTron}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-          >
-            {isTronConnected ? `TRON: ${tronAddress?.slice(0, 8)}...` : 'Connect TRON'}
-          </button>
-          <button
-            onClick={connectBitcoin}
-            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
-          >
-            {isBitcoinConnected ? `BTC: ${bitcoinAddress?.slice(0, 8)}...` : 'Connect Bitcoin'}
-          </button>
         </div>
       </div>
 
