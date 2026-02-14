@@ -15,6 +15,13 @@ import { useCurrentAccount as useSuiAccount, ConnectButton as SuiConnectButton }
 // NEAR
 import { useNearWallet } from './NearWalletProvider';
 
+// Phase 2.4 New Chains
+import { useStellarWallet } from './StellarWalletProvider';
+import { useStarknetWallet } from './StarknetWalletProvider';
+import { useTonWallet } from './TonWalletProvider';
+import { useTronWallet } from './TronWalletProvider';
+import { useBitcoinWallet } from './BitcoinWalletProvider';
+
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
   onSwapInitiated: (depositAddress: string) => void;
@@ -33,6 +40,13 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
 
   // NEAR
   const { accountId: nearAccountId, isConnected: isNearConnected, connect: connectNear } = useNearWallet();
+
+  // Phase 2.4 New Chains
+  const { publicKey: stellarPublicKey, isConnected: isStellarConnected, connect: connectStellar } = useStellarWallet();
+  const { address: starknetAddress, isConnected: isStarknetConnected, connect: connectStarknet } = useStarknetWallet();
+  const { address: tonAddress, isConnected: isTonConnected, connect: connectTon } = useTonWallet();
+  const { address: tronAddress, isConnected: isTronConnected, connect: connectTron } = useTronWallet();
+  const { address: bitcoinAddress, isConnected: isBitcoinConnected, connect: connectBitcoin } = useBitcoinWallet();
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,20 +84,40 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
 
     const chain = token.blockchain?.toLowerCase() || 'near';
     
-    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base'].includes(chain)) {
+    // EVM chains
+    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'avalanche', 'adi', 'aurora', 'bera', 'bnb', 'gnosis', 'plasma', 'xlayer', 'monad'].includes(chain)) {
       return evmAddress || null;
     }
+    // Solana
     if (chain === 'solana') {
       return solanaPublicKey?.toBase58() || null;
     }
+    // Sui
     if (chain === 'sui') {
       return suiAccount?.address || null;
     }
+    // NEAR
     if (chain === 'near') {
       return nearAccountId || null;
     }
+    // Phase 2.4 New Chains
+    if (chain === 'stellar') {
+      return stellarPublicKey || null;
+    }
+    if (chain === 'starknet') {
+      return starknetAddress || null;
+    }
+    if (chain === 'ton') {
+      return tonAddress || null;
+    }
+    if (chain === 'tron') {
+      return tronAddress || null;
+    }
+    if (chain === 'bitcoin') {
+      return bitcoinAddress || null;
+    }
     return null;
-  }, [tokens, evmAddress, solanaPublicKey, suiAccount, nearAccountId]);
+  }, [tokens, evmAddress, solanaPublicKey, suiAccount, nearAccountId, stellarPublicKey, starknetAddress, tonAddress, tronAddress, bitcoinAddress]);
 
   // Auto-fill addresses based on token selection and connected wallets
   useEffect(() => {
@@ -159,6 +193,36 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
           >
             {isNearConnected ? `NEAR: ${nearAccountId?.slice(0, 8)}...` : 'Connect NEAR'}
+          </button>
+          <button
+            onClick={connectStellar}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+          >
+            {isStellarConnected ? `XLM: ${stellarPublicKey?.slice(0, 8)}...` : 'Connect Stellar'}
+          </button>
+          <button
+            onClick={connectStarknet}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            {isStarknetConnected ? `Starknet: ${starknetAddress?.slice(0, 8)}...` : 'Connect Starknet'}
+          </button>
+          <button
+            onClick={connectTon}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            {isTonConnected ? `TON: ${tonAddress?.slice(0, 8)}...` : 'Connect TON'}
+          </button>
+          <button
+            onClick={connectTron}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+          >
+            {isTronConnected ? `TRON: ${tronAddress?.slice(0, 8)}...` : 'Connect TRON'}
+          </button>
+          <button
+            onClick={connectBitcoin}
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+          >
+            {isBitcoinConnected ? `BTC: ${bitcoinAddress?.slice(0, 8)}...` : 'Connect Bitcoin'}
           </button>
         </div>
       </div>
