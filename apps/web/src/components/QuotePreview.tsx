@@ -1,16 +1,33 @@
 'use client';
 
+import { useState } from 'react';
+
 interface QuotePreviewProps {
   quote: any;
   onReset: () => void;
+  onConfirmSwap?: (quoteRequest: any) => void;
 }
 
-export default function QuotePreview({ quote, onReset }: QuotePreviewProps) {
+export default function QuotePreview({ quote, onReset, onConfirmSwap }: QuotePreviewProps) {
   const { quote: quoteData, quoteRequest } = quote;
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const formatAmount = (amount: string, decimals: number = 6) => {
     const num = parseFloat(amount);
     return num.toLocaleString(undefined, { maximumFractionDigits: decimals });
+  };
+
+  const handleConfirmSwap = async () => {
+    setIsConfirming(true);
+    try {
+      if (onConfirmSwap) {
+        await onConfirmSwap(quoteRequest);
+      }
+    } catch (error) {
+      console.error('Failed to confirm swap:', error);
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   return (
@@ -85,32 +102,26 @@ export default function QuotePreview({ quote, onReset }: QuotePreviewProps) {
         </div>
       </div>
 
-      {/* Warning */}
-      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <div className="flex">
-          <svg className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <div>
-            <p className="text-sm font-medium text-yellow-900">
-              This is a dry run quote
-            </p>
-            <p className="text-xs text-yellow-700 mt-1">
-              To complete the swap, you'll need to connect a wallet (Phase 1.5) and send funds to the deposit address.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Confirm Swap Button */}
+      {onConfirmSwap && (
+        <button
+          onClick={handleConfirmSwap}
+          disabled={isConfirming}
+          className="btn btn-primary w-full mt-6 py-3"
+        >
+          {isConfirming ? 'Confirming...' : 'Confirm Swap'}
+        </button>
+      )}
 
       {/* Info */}
       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-900">
-          <strong>Next steps after wallet integration:</strong>
+          <strong>Next steps:</strong>
         </p>
         <ol className="mt-2 text-sm text-blue-800 list-decimal list-inside space-y-1">
-          <li>Connect your wallet</li>
-          <li>Approve the transaction</li>
-          <li>Send funds to the deposit address</li>
+          <li>Review the quote details carefully</li>
+          <li>Click "Confirm Swap" to get deposit address</li>
+          <li>Send funds from your wallet to the deposit address</li>
           <li>Track the swap status in real-time</li>
         </ol>
       </div>

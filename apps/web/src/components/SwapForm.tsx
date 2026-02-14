@@ -115,13 +115,17 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to get quote');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || 'Failed to get quote');
+      }
 
       const data = await response.json();
       onQuoteReceived(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Quote error:', error);
-      alert('Failed to get quote. Please try again.');
+      const errorMessage = error.message || 'Failed to get quote. Please try again.';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -35,15 +35,21 @@ export default function StatusTracker({ depositAddress, onReset }: StatusTracker
       const response = await fetch(`http://localhost:3001/api/status/${depositAddress}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch status');
+        if (response.status === 404) {
+          setError('Swap not found. Please check the deposit address.');
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch status');
+        }
+        return;
       }
 
       const data = await response.json();
       setStatus(data.status);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Status fetch error:', err);
-      setError('Failed to fetch status');
+      setError(err.message || 'Failed to fetch status. Check your connection.');
     } finally {
       setLoading(false);
     }
