@@ -1,74 +1,76 @@
 'use client';
 
-import React, { ReactNode, useMemo } from 'react';
-import '@rainbow-me/rainbowkit/styles.css';
-import {
-  getDefaultConfig,
-  RainbowKitProvider,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
-} from 'wagmi/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
+import React, { ReactNode } from 'react';
 
-// Solana Imports
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
-import '@solana/wallet-adapter-react-ui/styles.css';
+// Wagmi & Reown AppKit for EVM
+import { WagmiProvider } from 'wagmi';
+import { mainnet, polygon, optimism, arbitrum, base, sepolia } from 'wagmi/chains';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createAppKit } from '@reown/appkit/react';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import { SolanaAdapter } from '@reown/appkit-adapter-solana';
+import { solana, solanaTestnet, solanaDevnet } from '@reown/appkit/networks';
 
 // Sui Imports
 import { SuiClientProvider, WalletProvider as SuiWalletProvider } from '@mysten/dapp-kit';
-import { getFullnodeUrl } from '@mysten/sui.js/client';
 import '@mysten/dapp-kit/dist/index.css';
 
-const wagmiConfig = getDefaultConfig({
-  appName: 'Sapphire',
-  projectId: 'YOUR_PROJECT_ID', 
-  chains: [mainnet, polygon, optimism, arbitrum, base],
-  ssr: true,
-});
+// Unified Wallet Context
+import { WalletProvider as UnifiedWalletProvider } from '@/contexts/WalletContext';
+import ConnectWalletModal from './ConnectWalletModal';
 
+// Query client (shared for all providers)
 const queryClient = new QueryClient();
 
+// 1. Get projectId from https://cloud.reown.com (formerly WalletConnect)
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || '';
+
+if (!projectId) {
+  console.error('⚠️ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Get your project ID from https://cloud.reown.com');
+}
+
+// 2. Create wagmiConfig
+const metadata = {
+  name: 'Sapphire',
+  description: 'Cross-Chain Swap Platform powered by NEAR Intents',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://sapphire.example.com',
+  icons: ['https://sapphire.example.com/icon.png']
+};
+
+// 3. Set up Wagmi Adapter for EVM chains
+const evmChains = [mainnet, polygon, optimism, arbitrum, base, sepolia];
+const wagmiAdapter = new WagmiAdapter({
+  networks: evmChains,
+  projectId,
+});
+
+// 4. Set up Solana Adapter
+const solanaWeb3JsAdapter = new SolanaAdapter({
+  wallets: []
+});
+
+// 5. Create AppKit with multiple adapters
+createAppKit({
+  adapters: [wagmiAdapter, solanaWeb3JsAdapter],
+  networks: [mainnet, polygon, optimism, arbitrum, base, sepolia, solana, solanaTestnet, solanaDevnet] as any,
+  projectId,
+  metadata,
+  features: {
+    analytics: false,
+  },
+  themeMode: 'light',
+});
+
 export function Web3Provider({ children }: { children: ReactNode }) {
-  // Solana Config
-  const network = WalletAdapterNetwork.Mainnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-  ], []);
-
-  // Sui Config
-  const networks = {
-    mainnet: { url: getFullnodeUrl('mainnet') },
-  };
-
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <SuiClientProvider networks={networks} defaultNetwork="mainnet">
-          <SuiWalletProvider autoConnect>
-            <ConnectionProvider endpoint={endpoint}>
-              <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>
-                  <RainbowKitProvider>
-                    {children}
-                  </RainbowKitProvider>
-                </WalletModalProvider>
-              </WalletProvider>
-            </ConnectionProvider>
+        <SuiClientProvider>
+          <SuiWalletProvider>
+            <UnifiedWalletProvider>
+              {children}
+              <ConnectWalletModal />
+            </UnifiedWalletProvider>
           </SuiWalletProvider>
         </SuiClientProvider>
       </QueryClientProvider>

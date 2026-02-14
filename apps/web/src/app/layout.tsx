@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Web3Provider } from '@/components/Web3Provider';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import UnifiedConnectButton from '@/components/UnifiedConnectButton';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,7 +31,7 @@ export default function RootLayout({
                     </span>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <ConnectButton />
+                    <UnifiedConnectButton />
                   </div>
                 </div>
               </div>

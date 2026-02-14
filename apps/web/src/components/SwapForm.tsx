@@ -2,34 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Token } from '@sapphire/shared';
-import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-
-// Solana
-import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-
-// Sui
-import { useCurrentAccount as useSuiAccount, ConnectButton as SuiConnectButton } from '@mysten/dapp-kit';
-
-// NEAR (Simplified for now as it requires more complex setup)
-// import { setupWalletSelector } from "@near-wallet-selector/core";
+import { useWalletContext } from '@/contexts/WalletContext';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
   onSwapInitiated: (depositAddress: string) => void;
 }
 
-export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormProps) {
-  // EVM
-  const { address: evmAddress, isConnected: isEvmConnected } = useAccount();
-  
-  // Solana
-  const { publicKey: solanaPublicKey, connected: isSolanaConnected } = useSolanaWallet();
-  
-  // Sui
-  const suiAccount = useSuiAccount();
-  const isSuiConnected = !!suiAccount;
+export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
+  // Use unified wallet context
+  const { getAddressForChain } = useWalletContext();
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +28,9 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
   const fetchTokens = async () => {
     try {
       const response = await fetch('http://localhost:3001/api/tokens');
+      if (!response.ok) {
+        throw new Error(`API responded with status ${response.status}`);
+      }
       const data = await response.json();
       setTokens(data);
       
@@ -68,17 +53,19 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
     const chain = token.blockchain?.toLowerCase() || 'near';
     
     if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base'].includes(chain)) {
-      return evmAddress || null;
+      return getAddressForChain('evm');
     }
     if (chain === 'solana') {
-      return solanaPublicKey?.toBase58() || null;
+      return getAddressForChain('solana');
     }
     if (chain === 'sui') {
-      return suiAccount?.address || null;
+      return getAddressForChain('sui');
     }
-    // NEAR logic would go here
+    if (chain === 'near') {
+      return getAddressForChain('near');
+    }
     return null;
-  }, [tokens, evmAddress, solanaPublicKey, suiAccount]);
+  }, [tokens, getAddressForChain]);
 
   // Auto-fill addresses based on token selection and connected wallets
   useEffect(() => {
@@ -137,20 +124,9 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
     setDestinationAsset(temp);
   };
 
-  const isWalletConnectedForChain = (assetId: string) => {
-    return !!getConnectedAddressForChain(assetId);
-  };
-
   return (
     <div className="card p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Swap Tokens</h2>
-        <div className="flex space-x-2">
-          <ConnectButton label="EVM" />
-          <WalletMultiButton />
-          <SuiConnectButton />
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold mb-6">Swap Tokens</h2>
 
       {/* Origin Token */}
       <div className="mb-4">
