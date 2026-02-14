@@ -12,8 +12,8 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 // Sui
 import { useCurrentAccount as useSuiAccount, ConnectButton as SuiConnectButton } from '@mysten/dapp-kit';
 
-// NEAR (Simplified for now as it requires more complex setup)
-// import { setupWalletSelector } from "@near-wallet-selector/core";
+// NEAR
+import { useNearWallet } from './NearWalletProvider';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -30,6 +30,9 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
   // Sui
   const suiAccount = useSuiAccount();
   const isSuiConnected = !!suiAccount;
+
+  // NEAR
+  const { accountId: nearAccountId, isConnected: isNearConnected, connect: connectNear } = useNearWallet();
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,9 +79,11 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
     if (chain === 'sui') {
       return suiAccount?.address || null;
     }
-    // NEAR logic would go here
+    if (chain === 'near') {
+      return nearAccountId || null;
+    }
     return null;
-  }, [tokens, evmAddress, solanaPublicKey, suiAccount]);
+  }, [tokens, evmAddress, solanaPublicKey, suiAccount, nearAccountId]);
 
   // Auto-fill addresses based on token selection and connected wallets
   useEffect(() => {
@@ -145,10 +150,16 @@ export default function SwapForm({ onQuoteReceived, onSwapInitiated }: SwapFormP
     <div className="card p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Swap Tokens</h2>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <ConnectButton label="EVM" />
           <WalletMultiButton />
           <SuiConnectButton />
+          <button
+            onClick={connectNear}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+          >
+            {isNearConnected ? `NEAR: ${nearAccountId?.slice(0, 8)}...` : 'Connect NEAR'}
+          </button>
         </div>
       </div>
 

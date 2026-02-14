@@ -26,11 +26,15 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 import '@solana/wallet-adapter-react-ui/styles.css';
+import { SolanaTransactionProvider } from './SolanaTransactionProvider';
 
 // Sui Imports
 import { SuiClientProvider, WalletProvider as SuiWalletProvider } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui.js/client';
 import '@mysten/dapp-kit/dist/index.css';
+
+// NEAR Imports
+import { NearWalletProvider } from './NearWalletProvider';
 
 const wagmiConfig = getDefaultConfig({
   appName: 'Sapphire',
@@ -63,9 +67,13 @@ export function Web3Provider({ children }: { children: ReactNode }) {
             <ConnectionProvider endpoint={endpoint}>
               <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
-                  <RainbowKitProvider>
-                    {children}
-                  </RainbowKitProvider>
+                  <SolanaTransactionProvider>
+                    <NearWalletProvider>
+                      <RainbowKitProvider>
+                        {children}
+                      </RainbowKitProvider>
+                    </NearWalletProvider>
+                  </SolanaTransactionProvider>
                 </WalletModalProvider>
               </WalletProvider>
             </ConnectionProvider>
