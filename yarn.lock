@@ -1930,6 +1930,7 @@ __metadata:
     "@types/express": "npm:^4.17.21"
     "@types/node": "npm:^20.11.0"
     "@types/pg": "npm:^8.11.0"
+    axios: "npm:^1.13.5"
     cors: "npm:^2.8.5"
     dotenv: "npm:^16.4.0"
     express: "npm:^4.18.0"
@@ -3968,7 +3969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.12.2, axios@npm:^1.6.8":
+"axios@npm:^1.12.2, axios@npm:^1.13.5, axios@npm:^1.6.8":
   version: 1.13.5
   resolution: "axios@npm:1.13.5"
   dependencies:

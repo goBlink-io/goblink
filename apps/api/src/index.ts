@@ -1,13 +1,15 @@
-import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+
+// Load environment variables FIRST, before any other imports that might use them
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+import express from 'express';
+import cors from 'cors';
 import swapRoutes from './routes/swap';
+import balanceRoutes from './routes/balances';
 import * as db from './db';
 import * as cache from './services/cache';
-
-// Load environment variables from root .env if it exists, otherwise from local
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const app = express();
 const port = process.env.API_PORT || 3001;
@@ -46,6 +48,7 @@ app.get('/health', async (req, res) => {
 
 // Routes
 app.use('/api', swapRoutes);
+app.use('/api/balances', balanceRoutes);
 
 // Initialize server
 const startServer = async () => {
@@ -91,6 +94,8 @@ const startServer = async () => {
       console.log(`  POST /api/quote`);
       console.log(`  POST /api/deposit/submit`);
       console.log(`  GET  /api/status/:depositAddress`);
+      console.log(`  GET  /api/balances/near/:accountId`);
+      console.log(`  GET  /api/balances/near-token/:accountId`);
       console.log('');
     });
 

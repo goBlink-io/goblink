@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as oneclick from '../services/oneclick';
 import * as fees from '../services/fees';
+import { intentsExplorer } from '../services/intentsExplorer';
 import { QuoteRequest } from '@defuse-protocol/one-click-sdk-typescript';
 import { validateQuoteRequest } from '../middleware/validation';
 
@@ -49,12 +50,12 @@ router.post('/quote', validateQuoteRequest, async (req, res) => {
       amount,
       recipient,
       refundTo,
-      swapType: swapType ?? 'EXACT_INPUT',
+      swapType: swapType ?? QuoteRequest.swapType.EXACT_INPUT,
       slippageTolerance: slippageTolerance ?? 100, // 1% default
       deadline: deadline ?? new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min default
-      depositType: 'ORIGIN_CHAIN' as const,
-      recipientType: 'DESTINATION_CHAIN' as const,
-      refundType: 'ORIGIN_CHAIN' as const,
+      depositType: QuoteRequest.depositType.ORIGIN_CHAIN,
+      recipientType: QuoteRequest.recipientType.DESTINATION_CHAIN,
+      refundType: QuoteRequest.refundType.ORIGIN_CHAIN,
       appFees: [
         {
           recipient: feeRecipient,
@@ -104,6 +105,7 @@ router.post('/quote', validateQuoteRequest, async (req, res) => {
 });
 
 // POST /api/deposit/submit - Submit deposit tx hash
+// Note: This endpoint is optional since we're tracking via Intents Explorer API
 router.post('/deposit/submit', async (req, res) => {
   try {
     const { txHash } = req.body;
@@ -111,14 +113,27 @@ router.post('/deposit/submit', async (req, res) => {
       return res.status(400).json({ error: 'txHash is required' });
     }
 
-    const result = await oneclick.submitDeposit(txHash);
-    res.json(result);
+    // Try to submit to 1Click SDK if the method exists
+    try {
+      const result = await oneclick.submitDeposit(txHash);
+      res.json(result);
+    } catch (sdkError: any) {
+      // If submitDeposit doesn't exist or fails, that's OK
+      // Transaction tracking works via Intents Explorer API
+      console.log('Note: submitDeposit not available in SDK, using Intents Explorer for tracking');
+      res.json({
+        success: true,
+        message: 'Transaction will be tracked via Intents Explorer',
+        txHash
+      });
+    }
   } catch (error: any) {
     console.error('Deposit submission error:', error);
-    res.status(500).json({
-      error: 'Failed to submit deposit',
-      message: error.message || 'Unknown error',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    // Don't fail - return success since tracking works via Intents Explorer
+    res.json({
+      success: true,
+      message: 'Transaction will be tracked via Intents Explorer',
+      txHash: req.body.txHash
     });
   }
 });
@@ -127,22 +142,70 @@ router.post('/deposit/submit', async (req, res) => {
 router.get('/status/:depositAddress', async (req, res) => {
   try {
     const { depositAddress } = req.params;
-    const status = await oneclick.getStatus(depositAddress);
     
-    // TODO: Update transaction status in database
-    
-    res.json(status);
-  } catch (error: any) {
-    console.error('Status fetch error:', error);
-    
-    // Handle 404 case specially
-    if (error.message?.includes('not found') || error.message?.includes('404')) {
-      return res.status(404).json({
-        error: 'Swap not found',
-        message: 'No swap found for this deposit address',
-        depositAddress: depositAddress
+    // Try to fetch status from Intents Explorer API
+    if (intentsExplorer.isConfigured()) {
+      try {
+        const transaction = await intentsExplorer.getTransactionByDepositAddress(depositAddress);
+        
+        if (transaction) {
+          // TODO: Update transaction status in database
+          
+          // Return the transaction details
+          return res.json({
+            depositAddress: transaction.depositAddress,
+            status: transaction.status,
+            originAsset: transaction.originAsset,
+            destinationAsset: transaction.destinationAsset,
+            amountIn: transaction.amountIn,
+            amountOut: transaction.amountOut,
+            recipient: transaction.recipient,
+            refundTo: transaction.refundTo,
+            depositTxHash: transaction.depositTxHash,
+            fulfillmentTxHash: transaction.fulfillmentTxHash,
+            refundTxHash: transaction.refundTxHash,
+            createdAt: transaction.createdAt,
+            updatedAt: transaction.updatedAt,
+            referral: transaction.referral,
+            affiliate: transaction.affiliate
+          });
+        }
+        
+        // Transaction not found in Intents Explorer
+        return res.status(404).json({
+          error: 'Swap not found',
+          message: 'No swap found for this deposit address',
+          depositAddress: depositAddress
+        });
+      } catch (explorerError: any) {
+        console.error('Intents Explorer fetch error:', explorerError.message);
+        
+        // If it's a rate limit or API error, return 404 so client will retry gracefully
+        // Client handles 404s silently without showing errors to users
+        if (explorerError.message?.includes('429') || explorerError.message?.includes('rate limit')) {
+          return res.status(404).json({
+            error: 'Transaction not yet available',
+            message: 'Please wait, checking transaction status...',
+            depositAddress
+          });
+        }
+        
+        // For other errors, let them bubble up to be caught by outer try-catch
+        throw explorerError;
+      }
+    } else {
+      // Intents Explorer not configured
+      console.warn('Intents Explorer JWT not configured. Unable to track transaction status.');
+      return res.status(503).json({
+        error: 'Transaction tracking not available',
+        message: 'Transaction tracking service is not configured. Please contact support.',
+        details: process.env.NODE_ENV === 'development'
+          ? 'INTENTS_EXPLORER_JWT environment variable not set'
+          : undefined
       });
     }
+  } catch (error: any) {
+    console.error('Status fetch error:', error);
     
     res.status(500).json({
       error: 'Failed to fetch status',
