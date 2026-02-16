@@ -1,5 +1,7 @@
 'use client';
 
+import { isEvmChain, isNativeToken } from './chains';
+
 // Get API URL from environment
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -143,6 +145,65 @@ export async function getSolanaBalance(address: string): Promise<string> {
 }
 
 /**
+ * Fetch native EVM balance (ETH, BNB, BERA, MON, etc.)
+ * @param chain - Chain name (ethereum, base, arbitrum, bsc, polygon, optimism, berachain, monad)
+ * @param address - EVM wallet address
+ */
+export async function getEvmBalance(
+  chain: string,
+  address: string
+): Promise<string> {
+  try {
+    const response = await fetch(
+      `${API_URL}/api/balances/evm/${chain}/${address}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch EVM balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error(`Failed to fetch ${chain} balance:`, error);
+    return '0.00';
+  }
+}
+
+/**
+ * Fetch ERC-20 token balance
+ * @param chain - Chain name
+ * @param address - Wallet address
+ * @param tokenAddress - Token contract address
+ * @param decimals - Token decimals (optional)
+ */
+export async function getEvmTokenBalance(
+  chain: string,
+  address: string,
+  tokenAddress: string,
+  decimals?: number
+): Promise<string> {
+  try {
+    const params = new URLSearchParams({ tokenAddress });
+    if (decimals !== undefined) params.append('decimals', decimals.toString());
+    
+    const response = await fetch(
+      `${API_URL}/api/balances/evm-token/${chain}/${address}?${params}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch EVM token balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error(`Failed to fetch ${chain} token balance:`, error);
+    return '0.00';
+  }
+}
+
+/**
  * Fetch balance for any token based on its configuration
  * @param address - Wallet address
  * @param token - Token configuration
@@ -159,6 +220,27 @@ export async function getTokenBalance(
   }
 ): Promise<string> {
   const blockchain = (token.blockchain || 'near').toLowerCase();
+  
+  // EVM chains
+  if (isEvmChain(blockchain)) {
+    // Check if it's a native token (ETH, BNB, BERA, MON, MATIC)
+    if (isNativeToken(token.symbol)) {
+      return getEvmBalance(blockchain, address);
+    }
+    
+    // ERC-20 token
+    const tokenAddr = token.contractAddress || token.address;
+    if (tokenAddr) {
+      return getEvmTokenBalance(
+        blockchain,
+        address,
+        tokenAddr,
+        token.decimals
+      );
+    }
+    
+    return '0.00';
+  }
   
   if (blockchain === 'near') {
     // Native NEAR token
@@ -196,7 +278,6 @@ export async function getTokenBalance(
     return '0.00';
   }
   
-  // Add other blockchain balance fetching here (EVM, etc.)
-  // For now, return placeholder
+  // Unsupported blockchain
   return '0.00';
 }

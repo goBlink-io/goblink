@@ -89,7 +89,7 @@ export default function ConnectWalletModal() {
     {
       id: 'evm' as ChainType,
       name: 'EVM Chains',
-      description: 'Ethereum, Polygon, Arbitrum, Optimism, Base',
+      description: 'Ethereum, Base, Arbitrum, BNB, Polygon, Berachain, Monad',
       icon: '⟠',
       color: 'from-blue-500 to-purple-500',
       isConnected: isEvmConnected,

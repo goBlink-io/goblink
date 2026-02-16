@@ -4,12 +4,13 @@ import React, { ReactNode } from 'react';
 
 // Wagmi & Reown AppKit for EVM
 import { WagmiProvider } from 'wagmi';
-import { mainnet, polygon, optimism, arbitrum, base, sepolia } from 'wagmi/chains';
+import { mainnet, polygon, optimism, arbitrum, base, sepolia, bsc } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { SolanaAdapter } from '@reown/appkit-adapter-solana';
 import { solana, solanaTestnet, solanaDevnet } from '@reown/appkit/networks';
+import type { Chain } from 'viem';
 
 // Sui Imports
 import { SuiClientProvider, WalletProvider as SuiWalletProvider } from '@mysten/dapp-kit';
@@ -37,8 +38,46 @@ const metadata = {
   icons: ['https://sapphire.example.com/icon.png']
 };
 
+// Custom chain definitions for chains not yet in wagmi
+const berachain = {
+  id: 80094,
+  name: 'Berachain',
+  nativeCurrency: { name: 'BERA', symbol: 'BERA', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.berachain.com'] },
+    public: { http: ['https://rpc.berachain.com'] },
+  },
+  blockExplorers: {
+    default: { name: 'Berascan', url: 'https://berascan.com' },
+  },
+} as const satisfies Chain;
+
+const monad = {
+  id: 143,
+  name: 'Monad',
+  nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+  rpcUrls: {
+    default: { http: [process.env.NEXT_PUBLIC_MONAD_RPC_URL || 'https://rpc.monad.xyz'] },
+    public: { http: ['https://rpc.monad.xyz'] },
+  },
+  blockExplorers: {
+    default: { name: 'Monad Explorer', url: 'https://explorer.monad.xyz' },
+  },
+} as const satisfies Chain;
+
 // 3. Set up Wagmi Adapter for EVM chains
-const evmChains = [mainnet, polygon, optimism, arbitrum, base, sepolia];
+const evmChains = [
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  base,
+  bsc,
+  berachain,
+  monad,
+  sepolia, // Keep for testing
+];
+
 const wagmiAdapter = new WagmiAdapter({
   networks: evmChains,
   projectId,
@@ -52,7 +91,10 @@ const solanaWeb3JsAdapter = new SolanaAdapter({
 // 5. Create AppKit with multiple adapters
 createAppKit({
   adapters: [wagmiAdapter, solanaWeb3JsAdapter],
-  networks: [mainnet, polygon, optimism, arbitrum, base, sepolia, solana, solanaTestnet, solanaDevnet] as any,
+  networks: [
+    mainnet, polygon, optimism, arbitrum, base, bsc, berachain, monad, sepolia,
+    solana, solanaTestnet, solanaDevnet,
+  ] as any,
   projectId,
   metadata,
   features: {

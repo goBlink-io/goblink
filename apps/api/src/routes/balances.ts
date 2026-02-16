@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { providers } from 'near-api-js';
 import axios from 'axios';
 import { getSuiBalance, getSuiAccountTokens, getSuiAccountCoins } from '../services/sui';
+import * as evmService from '../services/evm';
 
 const router = Router();
 
@@ -352,6 +353,102 @@ router.post('/solana-rpc', async (req: Request, res: Response) => {
       jsonrpc: '2.0',
       error: { code: -32000, message: error.message },
       id: req.body?.id || null,
+    });
+  }
+});
+
+// ===========================================
+// EVM Chain Balance Endpoints
+// ===========================================
+
+/**
+ * GET /api/balances/evm/:chain/:address
+ * Get native token balance (ETH, BNB, BERA, MON, etc.)
+ * Supported chains: ethereum, base, arbitrum, bsc, polygon, optimism, berachain, monad
+ */
+router.get('/evm/:chain/:address', async (req: Request, res: Response) => {
+  try {
+    const { chain, address } = req.params;
+
+    if (!chain || !address) {
+      return res.status(400).json({ error: 'Chain and address are required' });
+    }
+
+    // Validate chain
+    const supportedChains = evmService.getSupportedChains();
+    if (!supportedChains.includes(chain)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        supportedChains,
+      });
+    }
+
+    // Validate address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return res.status(400).json({ error: 'Invalid EVM address format' });
+    }
+
+    const result = await evmService.getNativeBalance(
+      chain as evmService.SupportedChain,
+      address
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error(`[EVM] Failed to fetch native balance:`, error);
+    res.status(500).json({
+      error: 'Failed to fetch balance',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/balances/evm-token/:chain/:address
+ * Get ERC-20 token balance
+ * Query params: tokenAddress (required), decimals (optional)
+ */
+router.get('/evm-token/:chain/:address', async (req: Request, res: Response) => {
+  try {
+    const { chain, address } = req.params;
+    const { tokenAddress, decimals } = req.query;
+
+    if (!chain || !address || !tokenAddress) {
+      return res.status(400).json({
+        error: 'Chain, address, and tokenAddress are required',
+      });
+    }
+
+    // Validate chain
+    const supportedChains = evmService.getSupportedChains();
+    if (!supportedChains.includes(chain)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        supportedChains,
+      });
+    }
+
+    // Validate addresses
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return res.status(400).json({ error: 'Invalid EVM address format' });
+    }
+    if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress as string)) {
+      return res.status(400).json({ error: 'Invalid token address format' });
+    }
+
+    const result = await evmService.getTokenBalance(
+      chain as evmService.SupportedChain,
+      address,
+      tokenAddress as string,
+      decimals ? parseInt(decimals as string) : undefined
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error(`[EVM] Failed to fetch token balance:`, error);
+    res.status(500).json({
+      error: 'Failed to fetch token balance',
+      message: error.message,
     });
   }
 });

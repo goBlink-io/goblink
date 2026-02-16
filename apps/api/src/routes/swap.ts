@@ -4,8 +4,47 @@ import * as fees from '../services/fees';
 import { intentsExplorer } from '../services/intentsExplorer';
 import { QuoteRequest } from '@defuse-protocol/one-click-sdk-typescript';
 import { validateQuoteRequest } from '../middleware/validation';
+import * as dexscreener from '../services/dexscreener';
+import tokenIcons from '../data/token-icons.json';
 
 const router = Router();
+
+// Apply icons to ALL tokens (fast dictionary lookup, no API calls)
+function applyIconsToAllTokens(tokens: any[]): void {
+  for (const token of tokens) {
+    const normalizedSymbol = token.symbol.replace(/\.(omft|omdep)$/i, '');
+    const iconUrl = (tokenIcons as Record<string, string>)[normalizedSymbol];
+    if (iconUrl) {
+      token.icon = iconUrl;
+    }
+  }
+}
+
+// Enrich tokens with pricing data (limited subset, API calls)
+async function enrichTokensWithPricing(tokens: any[]): Promise<void> {
+  console.log(`Starting price enrichment for ${tokens.length} tokens...`);
+  
+  for (const token of tokens) {
+    try {
+      const priceData = await dexscreener.enrichTokenData(
+        token.blockchain,
+        token.contractAddress,
+        token.symbol
+      );
+      
+      if (priceData.priceUsd) {
+        token.priceUsd = priceData.priceUsd;
+        token.priceChange24h = priceData.priceChange24h;
+      }
+      
+      console.log(`Price enriched ${token.symbol} on ${token.blockchain}: $${priceData.priceUsd || 'N/A'}`);
+    } catch (error: any) {
+      console.error(`Failed to get price for ${token.symbol}:`, error.message);
+    }
+  }
+  
+  console.log('Price enrichment complete');
+}
 
 // GET /api/tokens - Get supported tokens
 router.get('/tokens', async (req, res) => {
@@ -13,72 +52,183 @@ router.get('/tokens', async (req, res) => {
     // TODO: Implement Redis caching
     const rawTokens = await oneclick.getTokens();
     
-    // Fix blockchain property for tokens based on assetId and normalize chain names
-    const tokens = rawTokens.map((token: any) => {
-      // Determine the correct blockchain from assetId
-      let blockchain = token.blockchain || 'near';
+    // Normalize blockchain names from API to match UI chain IDs
+    const blockchainMapping: Record<string, string> = {
+      'sol': 'solana',
+      'pol': 'polygon',
+      'op': 'optimism',
+    };
+    
+    const nearTokens: any[] = [];
+    const nativeChainTokens: any[] = [];
+    
+    rawTokens.forEach((token: any) => {
+      // Normalize blockchain name
+      const apiBlockchain = blockchainMapping[token.blockchain] || token.blockchain || 'near';
       
+      // ALL nep141 tokens are NEAR-wrapped and belong to NEAR blockchain
       if (token.assetId.startsWith('nep141:')) {
-        blockchain = 'near';
-      } else if (token.assetId.startsWith('sui:')) {
-        blockchain = 'sui';
-      } else if (token.assetId.startsWith('solana:')) {
-        blockchain = 'solana';
-      } else if (token.assetId.includes('@ethereum') || token.assetId.includes(':ethereum')) {
-        blockchain = 'ethereum';
-      } else if (token.assetId.includes('@polygon') || token.assetId.includes(':polygon')) {
-        blockchain = 'polygon';
-      } else if (token.assetId.includes('@optimism') || token.assetId.includes(':optimism')) {
-        blockchain = 'optimism';
-      } else if (token.assetId.includes('@arbitrum') || token.assetId.includes(':arbitrum')) {
-        blockchain = 'arbitrum';
-      } else if (token.assetId.includes('@base') || token.assetId.includes(':base')) {
-        blockchain = 'base';
+        nearTokens.push({
+          ...token,
+          blockchain: 'near'
+        });
+        
+        // Check if this is a cross-chain wrapped token that should also appear on its native chain
+        // Pattern: nep141:CHAIN-ADDRESS or nep141:CHAIN.omft.near
+        if (token.assetId.includes('.omft.near') || token.assetId.includes('.omdep.near')) {
+          const match = token.assetId.match(/^nep141:([a-z]+)[-\.]/);
+          if (match) {
+            const chainPrefix = match[1];
+            let targetBlockchain: string | null = null;
+            
+            // Map chain prefixes to blockchain names
+            const chainPrefixMapping: Record<string, string> = {
+              'eth': 'ethereum',
+              'base': 'base',
+              'arb': 'arbitrum',
+              'bera': 'berachain',
+              'sol': 'solana',
+              'sui': 'sui',
+            };
+            
+            targetBlockchain = chainPrefixMapping[chainPrefix];
+            
+            // If this token should appear on a native chain, create a native version
+            if (targetBlockchain) {
+              // Check if this is a native token (no dash in assetId after chain prefix)
+              const isNativeToken = token.assetId.match(/^nep141:[a-z]+\.omft\.near$/);
+              
+              let nativeAssetId: string;
+              let contractAddress: string;
+              
+              if (isNativeToken) {
+                // Native tokens: use special native asset identifiers
+                if (targetBlockchain === 'ethereum') {
+                  nativeAssetId = 'native'; // Special identifier for ETH
+                  contractAddress = '0x0000000000000000000000000000000000000000';
+                } else if (targetBlockchain === 'solana') {
+                  nativeAssetId = 'So11111111111111111111111111111111111111112'; // SOL mint address
+                  contractAddress = 'So11111111111111111111111111111111111111112';
+                } else if (targetBlockchain === 'sui') {
+                  nativeAssetId = '0x2::sui::SUI'; // SUI coin type
+                  contractAddress = '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
+                } else if (targetBlockchain === 'berachain') {
+                  nativeAssetId = 'native'; // Special identifier for BERA
+                  contractAddress = '0x0000000000000000000000000000000000000000';
+                } else if (targetBlockchain === 'base') {
+                  nativeAssetId = 'native'; // Special identifier for native ETH on Base
+                  contractAddress = '0x0000000000000000000000000000000000000000';
+                } else if (targetBlockchain === 'arbitrum') {
+                  nativeAssetId = 'native'; // Special identifier for native ETH on Arbitrum
+                  contractAddress = '0x0000000000000000000000000000000000000000';
+                } else {
+                  // Skip if we don't know how to handle this native token
+                  return;
+                }
+              } else if (token.contractAddress) {
+                // Token with contract address (ERC-20, SPL, etc.)
+                if (targetBlockchain === 'solana') {
+                  nativeAssetId = token.contractAddress;
+                } else if (targetBlockchain === 'sui') {
+                  nativeAssetId = token.contractAddress;
+                } else {
+                  // EVM chains use 0x addresses
+                  nativeAssetId = token.contractAddress;
+                }
+                contractAddress = token.contractAddress;
+              } else {
+                // Skip if no contract address and not a recognized native token
+                return;
+              }
+              
+              nativeChainTokens.push({
+                ...token,
+                assetId: nativeAssetId, // Native address for wallet
+                defuseAssetId: token.assetId, // NEP-141 for Intents quote
+                blockchain: targetBlockchain,
+                contractAddress: contractAddress,
+                address: contractAddress
+              });
+            }
+          }
+        }
       }
-      
-      // Normalize blockchain names: 1Click API uses "sol" but our UI uses "solana"
-      if (blockchain === 'sol') {
-        blockchain = 'solana';
+      // Handle 1ClickSwap v1 native format tokens (1cs_v1:CHAIN:...)
+      else if (token.assetId.startsWith('1cs_v1:')) {
+        const match = token.assetId.match(/^1cs_v1:([^:]+):/);
+        if (match) {
+          const blockchain = blockchainMapping[match[1]] || match[1];
+          nativeChainTokens.push({
+            ...token,
+            blockchain
+          });
+        }
       }
-      
-      return {
-        ...token,
-        blockchain
-      };
+      // Handle native Sui tokens (sui:...)
+      else if (token.assetId.startsWith('sui:')) {
+        nativeChainTokens.push({
+          ...token,
+          blockchain: 'sui'
+        });
+      }
+      // Handle native Solana tokens (solana:...)
+      else if (token.assetId.startsWith('solana:')) {
+        nativeChainTokens.push({
+          ...token,
+          blockchain: 'solana'
+        });
+      }
+      // Default: use API-provided blockchain
+      else {
+        nativeChainTokens.push({
+          ...token,
+          blockchain: apiBlockchain
+        });
+      }
     });
     
-    // Add native tokens with mapping to their NEP-141 equivalents on Near
-    // The 1Click API uses NEP-141 asset IDs for quotes, but the deposit address is on the native chain
-    // So we use the native asset ID for display/wallet and defuseAssetId for the quote
-    const nativeTokens = [
-      // Native SUI
-      {
-        assetId: 'sui:0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
-        blockchain: 'sui',
-        contractAddress: '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
-        address: '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
-        symbol: 'SUI',
-        name: 'Sui',
-        decimals: 9,
-        icon: 'https://imagedelivery.net/cBNDGgkrsEA-b_ixIp9SkQ/sui-coin.svg/public',
-        defuseAssetId: 'nep141:sui.omft.near'
-      },
-      // Native SOL
-      {
-        assetId: 'solana:native',
-        blockchain: 'solana',
-        contractAddress: '11111111111111111111111111111111',
-        address: '11111111111111111111111111111111',
-        symbol: 'SOL',
-        name: 'Solana',
-        decimals: 9,
-        icon: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-        defuseAssetId: 'nep141:sol.omft.near'
-      },
-    ];
+    // Combine all tokens
+    let allTokens = [...nearTokens, ...nativeChainTokens];
     
-    // Combine NEP-141 tokens with native tokens
-    const allTokens = [...tokens, ...nativeTokens];
+    // STEP 1: Apply icons to ALL tokens (fast, no API calls)
+    console.log(`Applying icons to all ${allTokens.length} tokens...`);
+    applyIconsToAllTokens(allTokens);
+    const tokensWithIcons = allTokens.filter(t => t.icon).length;
+    console.log(`${tokensWithIcons}/${allTokens.length} tokens now have icons`);
+    
+    // STEP 2: Enrich top tokens with pricing data synchronously
+    // Focus on the most popular tokens for immediate enrichment
+    const priorityTokens = nativeChainTokens
+      .filter(t =>
+        t.contractAddress &&
+        t.contractAddress !== 'native' &&
+        ['USDT', 'USDC', 'ETH', 'BTC', 'WBTC', 'SOL', 'SUI', 'ARB', 'OP', 'BNB'].includes(t.symbol)
+      )
+      .slice(0, 10); // Limit to 10 priority tokens
+    
+    if (priorityTokens.length > 0) {
+      console.log(`Enriching ${priorityTokens.length} priority tokens with pricing...`);
+      try {
+        await enrichTokensWithPricing(priorityTokens);
+      } catch (err: any) {
+        console.error('Priority token pricing failed:', err);
+      }
+    }
+    
+    // STEP 3: Start background pricing enrichment for remaining tokens (non-blocking)
+    const remainingTokens = nativeChainTokens
+      .filter(t =>
+        t.contractAddress &&
+        t.contractAddress !== 'native' &&
+        !priorityTokens.includes(t)
+      )
+      .slice(0, 40);
+    
+    if (remainingTokens.length > 0) {
+      enrichTokensWithPricing(remainingTokens).catch((err: any) => {
+        console.error('Background pricing enrichment failed:', err);
+      });
+    }
     
     res.json(allTokens);
   } catch (error: any) {

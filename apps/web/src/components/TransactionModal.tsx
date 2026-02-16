@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getExplorerTxUrl, EVM_CHAINS } from '@/lib/chains';
 
 interface TransactionData {
   depositAddress: string;
@@ -174,21 +175,34 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
   const getExplorerLink = (txHash: string, assetId: string) => {
     // Try to determine chain from asset ID
     const asset = assetId?.toLowerCase() || '';
-    
+
+    // Check EVM chains first (using chain config for comprehensive matching)
+    for (const [chainName, config] of Object.entries(EVM_CHAINS)) {
+      if (asset.includes(chainName) || asset.includes(config.displayName.toLowerCase())) {
+        return getExplorerTxUrl(chainName, txHash);
+      }
+    }
+
+    // Additional keyword matching for common aliases
     if (asset.includes('eth') || asset.includes('ethereum')) {
-      return `https://etherscan.io/tx/${txHash}`;
-    } else if (asset.includes('sol') || asset.includes('solana')) {
+      return getExplorerTxUrl('ethereum', txHash);
+    } else if (asset.includes('bnb') || asset.includes('bsc')) {
+      return getExplorerTxUrl('bsc', txHash);
+    } else if (asset.includes('bera')) {
+      return getExplorerTxUrl('berachain', txHash);
+    } else if (asset.includes('monad') || asset.includes('mon')) {
+      return getExplorerTxUrl('monad', txHash);
+    }
+
+    // Non-EVM chains
+    if (asset.includes('sol') || asset.includes('solana')) {
       return `https://solscan.io/tx/${txHash}`;
     } else if (asset.includes('near')) {
       return `https://nearblocks.io/txns/${txHash}`;
-    } else if (asset.includes('base')) {
-      return `https://basescan.org/tx/${txHash}`;
-    } else if (asset.includes('arb') || asset.includes('arbitrum')) {
-      return `https://arbiscan.io/tx/${txHash}`;
-    } else if (asset.includes('polygon') || asset.includes('matic')) {
-      return `https://polygonscan.com/tx/${txHash}`;
+    } else if (asset.includes('sui')) {
+      return `https://suiscan.xyz/mainnet/tx/${txHash}`;
     }
-    
+
     // Default to generic explorer
     return `https://explorer.near-intents.org/`;
   };

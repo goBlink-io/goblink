@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Token } from '@sapphire/shared';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { getTokenBalance } from '@/lib/balances';
+import TokenSelector from './TokenSelector';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -18,6 +19,9 @@ const SUPPORTED_CHAINS = [
   { id: 'optimism', name: 'Optimism', type: 'evm' as const },
   { id: 'arbitrum', name: 'Arbitrum', type: 'evm' as const },
   { id: 'base', name: 'Base', type: 'evm' as const },
+  { id: 'bsc', name: 'BNB Chain', type: 'evm' as const },
+  { id: 'berachain', name: 'Berachain', type: 'evm' as const },
+  { id: 'monad', name: 'Monad', type: 'evm' as const },
   { id: 'solana', name: 'Solana', type: 'solana' as const },
   { id: 'sui', name: 'Sui', type: 'sui' as const },
 ] as const;
@@ -92,7 +96,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     if (!blockchain) return 'near';
     const chain = blockchain.toLowerCase();
     
-    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base'].includes(chain)) {
+    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'bsc', 'berachain', 'monad'].includes(chain)) {
       return 'evm';
     }
     if (chain === 'solana') return 'solana';
@@ -359,24 +363,15 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         </div>
 
         {/* Token Selector */}
-        <div className="mb-2">
-          <select
-            value={originAsset}
-            onChange={(e) => setOriginAsset(e.target.value)}
-            className="input w-full"
-          >
-            <option value="">Select token...</option>
-            {fromTokens.map((token) => {
-              const balance = balances[token.assetId] || '0.00';
-              const balanceDisplay = loadingBalances ? '...' : balance;
-              return (
-                <option key={token.assetId} value={token.assetId}>
-                  {getTokenDisplayName(token.symbol)} - Balance: {balanceDisplay} - Price: $0.00
-                </option>
-              );
-            })}
-          </select>
-        </div>
+        <TokenSelector
+          tokens={fromTokens}
+          selectedToken={originAsset}
+          onSelect={setOriginAsset}
+          balances={balances}
+          loadingBalances={loadingBalances}
+          label="Select Token"
+          placeholder="Select a token..."
+        />
 
         {/* Amount Input with Percentage Buttons */}
         <div>
@@ -410,15 +405,19 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                         (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ||
                         selectedToken.symbol === 'SUI' ||
                         selectedToken.symbol === 'SOL' ||
-                        (selectedToken.symbol === 'ETH' && selectedToken.blockchain?.toLowerCase() === 'ethereum');
-                      
-                      if (isNativeToken) {
-                        // Reserve gas based on chain
-                        const gasReserve =
-                          (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
-                          selectedToken.symbol === 'SUI' ? 0.01 :
-                          selectedToken.symbol === 'SOL' ? 0.001 :
-                          selectedToken.symbol === 'ETH' ? 0.01 : 0;
+                        ['ETH', 'BNB', 'MATIC', 'BERA', 'MON'].includes(selectedToken.symbol);
+                    
+                    if (isNativeToken) {
+                      // Reserve gas based on chain
+                      const gasReserve =
+                        (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
+                        selectedToken.symbol === 'SUI' ? 0.01 :
+                        selectedToken.symbol === 'SOL' ? 0.001 :
+                        selectedToken.symbol === 'ETH' ? 0.01 :
+                        selectedToken.symbol === 'BNB' ? 0.002 :
+                        selectedToken.symbol === 'MATIC' ? 0.1 :
+                        selectedToken.symbol === 'BERA' ? 0.01 :
+                        selectedToken.symbol === 'MON' ? 0.01 : 0;
                         
                         amountToSet = Math.max(0, balance - gasReserve);
                       }
@@ -480,18 +479,15 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         </div>
 
         {/* Token Selector */}
-        <select
-          value={destinationAsset}
-          onChange={(e) => setDestinationAsset(e.target.value)}
-          className="input w-full"
-        >
-          <option value="">Select token...</option>
-          {toTokens.map((token) => (
-            <option key={token.assetId} value={token.assetId}>
-              {getTokenDisplayName(token.symbol)} - Price: $0.00
-            </option>
-          ))}
-        </select>
+        <TokenSelector
+          tokens={toTokens}
+          selectedToken={destinationAsset}
+          onSelect={setDestinationAsset}
+          balances={{}}
+          loadingBalances={false}
+          label="Select Token"
+          placeholder="Select a token..."
+        />
       </div>
 
       {/* Recipient Address */}
