@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { sendNearTransaction } from '@/lib/transactions';
+import { sendNearTransaction, sendSuiTransaction } from '@/lib/transactions';
+import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
+import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
 
 interface QuotePreviewProps {
   quote: any;
@@ -10,12 +12,21 @@ interface QuotePreviewProps {
 }
 
 export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuotePreviewProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain } = quote;
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationStep, setConfirmationStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [depositAddress, setDepositAddress] = useState<string | null>(null);
   const [showDepositInfo, setShowDepositInfo] = useState(false);
+  
+  // Sui wallet hooks
+  const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  
+  // Solana wallet via Reown AppKit
+  const { walletProvider: solanaProvider } = useAppKitProvider<any>('solana');
+  const { isConnected: isAppKitConnected, caipAddress } = useAppKitAccount();
 
   const formatAmount = (amount: string, decimals: number = 6) => {
     const num = parseFloat(amount);
@@ -79,16 +90,23 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       setDepositAddress(receivedDepositAddress);
       setConfirmationStep('Preparing transaction...');
 
-      // Step 2: Determine the origin chain from the asset ID
-      const originAssetId = quoteRequest.originAsset;
-      const originChain = getChainFromAssetId(originAssetId);
+      // Step 2: Determine the origin chain
+      // Use fromChain passed from SwapForm (the actual chain the user selected),
+      // NOT the asset ID (which may be a NEP-141 wrapper like nep141:sui.omft.near)
+      const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
       
-      // Step 3: For NEAR, automatically trigger the wallet
+      console.log('=== CHAIN DETECTION DEBUG ===');
+      console.log('fromChain (from SwapForm):', fromChain);
+      console.log('originAssetId:', quoteRequest.originAsset);
+      console.log('resolved originChain:', originChain);
+      console.log('===========================');
+      
+      // Step 3: Handle transaction based on origin chain
       if (originChain === 'near') {
         try {
           setConfirmationStep('Please sign the transaction in your NEAR wallet...');
           
-          const tokenAddress = getTokenAddressFromAssetId(originAssetId);
+          const tokenAddress = getTokenAddressFromAssetId(quoteRequest.originAsset);
           const txHash = await sendNearTransaction({
             chain: 'near',
             tokenAddress,
@@ -108,6 +126,131 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           setShowDepositInfo(true);
           setConfirmationStep('');
           setError('Transaction cancelled. You can manually send the funds to the deposit address below.');
+        }
+      } else if (originChain === 'sui') {
+        // For Sui, trigger wallet transaction
+        try {
+          if (!currentAccount) {
+            throw new Error('Please connect your Sui wallet first');
+          }
+          
+          setConfirmationStep('Please sign the transaction in your Sui wallet...');
+          
+          // For Sui swaps, we send native SUI to the deposit address on Sui chain
+          const tokenAddress = 'native';
+          const txHash = await sendSuiTransaction({
+            chain: 'sui',
+            tokenAddress,
+            recipientAddress: receivedDepositAddress,
+            amount: quoteRequest.amount,
+            decimals: originTokenMetadata?.decimals || 9,
+          }, suiClient, currentAccount, signAndExecuteTransaction);
+          
+          console.log('Sui transaction sent:', txHash);
+          setConfirmationStep('Transaction sent! Tracking status...');
+
+          // Navigate to status tracker with tx hash
+          onSwapInitiated(receivedDepositAddress, txHash);
+        } catch (txError: any) {
+          console.error('Sui transaction error:', txError);
+          // If user cancels or transaction fails, show deposit address instead
+          setShowDepositInfo(true);
+          setConfirmationStep('');
+          setError('Transaction cancelled. You can manually send the funds to the deposit address below.');
+        }
+      } else if (originChain === 'solana') {
+        // For Solana: wallet signs the transaction, backend broadcasts it
+        // (Solana public RPC blocks browser requests with 403, so we proxy through backend)
+        try {
+          if (!solanaProvider || !isAppKitConnected || !caipAddress?.startsWith('solana:')) {
+            throw new Error('Please connect your Solana wallet first');
+          }
+          
+          setConfirmationStep('Preparing Solana transaction...');
+          console.log('[SOL] Solana provider methods:', Object.keys(solanaProvider));
+          
+          const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
+          
+          const fromPubkey = new PublicKey(solanaProvider.publicKey);
+          const toPubkey = new PublicKey(receivedDepositAddress);
+          const lamports = Number(BigInt(quoteRequest.amount));
+          console.log('[SOL] Transfer:', { from: fromPubkey.toString(), to: toPubkey.toString(), lamports });
+          
+          // Step 1: Fetch blockhash via backend proxy
+          console.log('[SOL] Fetching blockhash...');
+          const blockhashRes = await fetch('http://localhost:3001/api/balances/solana-blockhash');
+          if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
+          const { blockhash } = await blockhashRes.json();
+          console.log('[SOL] Blockhash:', blockhash);
+          
+          // Step 2: Build transaction
+          const transaction = new Transaction({
+            recentBlockhash: blockhash,
+            feePayer: fromPubkey,
+          }).add(
+            SystemProgram.transfer({
+              fromPubkey,
+              toPubkey,
+              lamports,
+            })
+          );
+          
+          // Step 3: Sign via wallet — user sees approval popup
+          setConfirmationStep('Please approve the transaction in your Solana wallet...');
+          console.log('[SOL] Requesting wallet signature...');
+          console.log('[SOL] signTransaction available:', typeof solanaProvider.signTransaction);
+          
+          let signed;
+          if (typeof solanaProvider.signTransaction === 'function') {
+            signed = await solanaProvider.signTransaction(transaction);
+          } else {
+            // Fallback: use signAllTransactions if signTransaction isn't available
+            console.log('[SOL] signAllTransactions available:', typeof solanaProvider.signAllTransactions);
+            const signedTxns = await solanaProvider.signAllTransactions([transaction]);
+            signed = signedTxns[0];
+          }
+          console.log('[SOL] Transaction signed successfully');
+          
+          // Step 4: Broadcast via backend proxy
+          setConfirmationStep('Broadcasting transaction...');
+          const serialized = signed.serialize();
+          // Convert to base58 for Solana RPC (default encoding)
+          const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+          const bytes = new Uint8Array(serialized);
+          
+          // Use base64 encoding which is simpler and supported
+          const base64Tx = btoa(String.fromCharCode(...bytes));
+          console.log('[SOL] Broadcasting transaction, size:', bytes.length);
+          
+          const sendRes = await fetch('http://localhost:3001/api/balances/solana-rpc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'sendTransaction',
+              params: [
+                base64Tx,
+                { encoding: 'base64', skipPreflight: false, preflightCommitment: 'confirmed' }
+              ],
+            }),
+          });
+          const sendData = await sendRes.json();
+          console.log('[SOL] Broadcast response:', sendData);
+          
+          if (sendData.error) {
+            throw new Error(sendData.error.message || 'Failed to broadcast Solana transaction');
+          }
+          
+          const signature = sendData.result;
+          console.log('[SOL] Transaction sent:', signature);
+          setConfirmationStep('Transaction sent! Tracking status...');
+          onSwapInitiated(receivedDepositAddress, signature);
+        } catch (txError: any) {
+          console.error('Solana transaction error:', txError);
+          setShowDepositInfo(true);
+          setConfirmationStep('');
+          setError(txError.message || 'Transaction cancelled. You can manually send the funds to the deposit address below.');
         }
       } else {
         // For other chains, show deposit address for manual transfer
@@ -140,15 +283,21 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   const getChainFromAssetId = (assetId: string): string | null => {
     // Asset ID format examples:
     // nep141:wrap.near -> near
+    // sui:0x0000...::sui::SUI -> sui (or just the hex address for native SUI)
     // erc20:0x...@ethereum -> ethereum
     // spl:...@solana -> solana
     
     if (assetId.startsWith('nep141:')) return 'near';
+    if (assetId.startsWith('sui:')) return 'sui';
+    
+    // Check if it's a Sui address (starts with 0x and contains ::)
+    if (assetId.startsWith('0x') && assetId.includes('::')) return 'sui';
+    
     if (assetId.includes('@')) {
       const chain = assetId.split('@')[1];
       return chain;
     }
-    return 'near'; // Default to NEAR
+    return null; // Return null instead of defaulting to avoid wrong chain
   };
 
   // Helper to extract token address from asset ID

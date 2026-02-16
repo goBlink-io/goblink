@@ -11,8 +11,76 @@ const router = Router();
 router.get('/tokens', async (req, res) => {
   try {
     // TODO: Implement Redis caching
-    const tokens = await oneclick.getTokens();
-    res.json(tokens);
+    const rawTokens = await oneclick.getTokens();
+    
+    // Fix blockchain property for tokens based on assetId and normalize chain names
+    const tokens = rawTokens.map((token: any) => {
+      // Determine the correct blockchain from assetId
+      let blockchain = token.blockchain || 'near';
+      
+      if (token.assetId.startsWith('nep141:')) {
+        blockchain = 'near';
+      } else if (token.assetId.startsWith('sui:')) {
+        blockchain = 'sui';
+      } else if (token.assetId.startsWith('solana:')) {
+        blockchain = 'solana';
+      } else if (token.assetId.includes('@ethereum') || token.assetId.includes(':ethereum')) {
+        blockchain = 'ethereum';
+      } else if (token.assetId.includes('@polygon') || token.assetId.includes(':polygon')) {
+        blockchain = 'polygon';
+      } else if (token.assetId.includes('@optimism') || token.assetId.includes(':optimism')) {
+        blockchain = 'optimism';
+      } else if (token.assetId.includes('@arbitrum') || token.assetId.includes(':arbitrum')) {
+        blockchain = 'arbitrum';
+      } else if (token.assetId.includes('@base') || token.assetId.includes(':base')) {
+        blockchain = 'base';
+      }
+      
+      // Normalize blockchain names: 1Click API uses "sol" but our UI uses "solana"
+      if (blockchain === 'sol') {
+        blockchain = 'solana';
+      }
+      
+      return {
+        ...token,
+        blockchain
+      };
+    });
+    
+    // Add native tokens with mapping to their NEP-141 equivalents on Near
+    // The 1Click API uses NEP-141 asset IDs for quotes, but the deposit address is on the native chain
+    // So we use the native asset ID for display/wallet and defuseAssetId for the quote
+    const nativeTokens = [
+      // Native SUI
+      {
+        assetId: 'sui:0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
+        blockchain: 'sui',
+        contractAddress: '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
+        address: '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI',
+        symbol: 'SUI',
+        name: 'Sui',
+        decimals: 9,
+        icon: 'https://imagedelivery.net/cBNDGgkrsEA-b_ixIp9SkQ/sui-coin.svg/public',
+        defuseAssetId: 'nep141:sui.omft.near'
+      },
+      // Native SOL
+      {
+        assetId: 'solana:native',
+        blockchain: 'solana',
+        contractAddress: '11111111111111111111111111111111',
+        address: '11111111111111111111111111111111',
+        symbol: 'SOL',
+        name: 'Solana',
+        decimals: 9,
+        icon: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+        defuseAssetId: 'nep141:sol.omft.near'
+      },
+    ];
+    
+    // Combine NEP-141 tokens with native tokens
+    const allTokens = [...tokens, ...nativeTokens];
+    
+    res.json(allTokens);
   } catch (error: any) {
     console.error('Failed to fetch tokens:', error);
     res.status(500).json({
@@ -23,20 +91,33 @@ router.get('/tokens', async (req, res) => {
   }
 });
 
+// Mapping of native chain asset IDs to their NEP-141 equivalents for 1Click quotes
+const NATIVE_TO_NEP141_MAP: Record<string, string> = {
+  'sui:0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI': 'nep141:sui.omft.near',
+  'solana:native': 'nep141:sol.omft.near',
+};
+
 // POST /api/quote - Request a swap quote
 router.post('/quote', validateQuoteRequest, async (req, res) => {
   try {
-    const { 
-      dry, 
-      originAsset, 
-      destinationAsset, 
-      amount, 
-      recipient, 
+    const {
+      dry,
+      originAsset,
+      destinationAsset,
+      amount,
+      recipient,
       refundTo,
       swapType,
       slippageTolerance,
       deadline
     } = req.body;
+
+    // Translate native chain asset IDs to NEP-141 equivalents for 1Click API
+    const resolvedOriginAsset = NATIVE_TO_NEP141_MAP[originAsset] || originAsset;
+    const resolvedDestinationAsset = NATIVE_TO_NEP141_MAP[destinationAsset] || destinationAsset;
+
+    console.log('Quote request - originAsset:', originAsset, '-> resolved:', resolvedOriginAsset);
+    console.log('Quote request - destinationAsset:', destinationAsset, '-> resolved:', resolvedDestinationAsset);
 
     // Calculate fees
     // For now, we use the default fee. In the future, we can estimate USD value for tiered pricing.
@@ -45,8 +126,8 @@ router.post('/quote', validateQuoteRequest, async (req, res) => {
 
     const quoteRequest: QuoteRequest = {
       dry: dry ?? true,
-      originAsset,
-      destinationAsset,
+      originAsset: resolvedOriginAsset,
+      destinationAsset: resolvedDestinationAsset,
       amount,
       recipient,
       refundTo,

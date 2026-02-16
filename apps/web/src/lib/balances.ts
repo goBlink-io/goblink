@@ -37,6 +37,20 @@ export async function getNearTokenBalance(
   decimals: number
 ): Promise<string> {
   try {
+    // Validate NEAR contract address format
+    // Skip if it's an address from another blockchain:
+    // - Ethereum: starts with 0x (42 chars total)
+    // - Solana: base58 (typically 32-44 chars, capital letters indicate base58)
+    // - Sui: contains ::
+    if (
+      contractAddress.startsWith('0x') || // Ethereum/EVM
+      contractAddress.includes('::') || // Sui
+      /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(contractAddress) // Likely Solana base58
+    ) {
+      console.log(`Skipping non-NEAR contract address: ${contractAddress}`);
+      return '0.00';
+    }
+    
     const params = new URLSearchParams({
       contractAddress,
       decimals: decimals.toString(),
@@ -59,6 +73,76 @@ export async function getNearTokenBalance(
 }
 
 /**
+ * Fetch SUI balance using backend API
+ * @param address - Sui wallet address
+ * @returns Balance in SUI (not MIST)
+ */
+export async function getSuiBalance(address: string): Promise<string> {
+  try {
+    const response = await fetch(`${API_URL}/api/balances/sui/${address}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SUI balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error('Failed to fetch SUI balance:', error);
+    return '0.00';
+  }
+}
+
+/**
+ * Fetch Sui token balance (non-native tokens like USDC)
+ * @param address - Sui wallet address
+ * @param coinType - Full coin type address
+ * @returns Token balance formatted
+ */
+export async function getSuiTokenBalance(
+  address: string,
+  coinType: string
+): Promise<string> {
+  try {
+    const params = new URLSearchParams({ coinType });
+    const response = await fetch(
+      `${API_URL}/api/balances/sui-token/${address}?${params}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Sui token balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error('Failed to fetch Sui token balance:', error);
+    return '0.00';
+  }
+}
+
+/**
+ * Fetch native SOL balance using backend API
+ * @param address - Solana wallet address
+ * @returns Balance in SOL (not lamports)
+ */
+export async function getSolanaBalance(address: string): Promise<string> {
+  try {
+    const response = await fetch(`${API_URL}/api/balances/solana/${address}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SOL balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error('Failed to fetch SOL balance:', error);
+    return '0.00';
+  }
+}
+
+/**
  * Fetch balance for any token based on its configuration
  * @param address - Wallet address
  * @param token - Token configuration
@@ -69,6 +153,7 @@ export async function getTokenBalance(
   token: {
     blockchain?: string;
     contractAddress?: string;
+    address?: string;
     decimals: number;
     symbol: string;
   }
@@ -87,7 +172,31 @@ export async function getTokenBalance(
     }
   }
   
-  // Add other blockchain balance fetching here (EVM, Solana, etc.)
+  if (blockchain === 'sui') {
+    // Native SUI token
+    if (token.symbol === 'SUI') {
+      return getSuiBalance(address);
+    }
+    
+    // Other Sui tokens (like USDC) - use the full coin type address
+    if (token.address) {
+      return getSuiTokenBalance(address, token.address);
+    }
+    
+    return '0.00';
+  }
+  
+  if (blockchain === 'solana') {
+    // Native SOL token
+    if (token.symbol === 'SOL') {
+      return getSolanaBalance(address);
+    }
+    
+    // SPL tokens - not yet implemented
+    return '0.00';
+  }
+  
+  // Add other blockchain balance fetching here (EVM, etc.)
   // For now, return placeholder
   return '0.00';
 }

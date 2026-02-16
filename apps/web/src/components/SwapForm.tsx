@@ -24,7 +24,7 @@ const SUPPORTED_CHAINS = [
 
 export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   // Use unified wallet context
-  const { getAddressForChain, getConnectedChains } = useWalletContext();
+  const { walletState, getAddressForChain, getConnectedChains } = useWalletContext();
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,25 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [refundTo, setRefundTo] = useState('');
+
+  // Map ChainType to chain id used in SUPPORTED_CHAINS
+  const getChainIdFromType = (chainType: string | null): string => {
+    switch (chainType) {
+      case 'near': return 'near';
+      case 'evm': return 'ethereum'; // Default EVM to Ethereum
+      case 'solana': return 'solana';
+      case 'sui': return 'sui';
+      default: return 'near';
+    }
+  };
+
+  // Auto-detect and set fromChain based on connected wallet
+  useEffect(() => {
+    if (walletState.isConnected && walletState.chain) {
+      const chainId = getChainIdFromType(walletState.chain);
+      setFromChain(chainId);
+    }
+  }, [walletState.isConnected, walletState.chain]);
 
   useEffect(() => {
     fetchTokens();
@@ -157,6 +176,8 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     const fetchBalances = async () => {
       const address = fromAddress();
       if (!address || fromTokens.length === 0) {
+        // Clear balances when no address or no tokens
+        setBalances({});
         return;
       }
 
@@ -185,8 +206,10 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       setLoadingBalances(false);
     };
 
+    // Reset balances immediately when chain or wallet changes to prevent stale data
+    setBalances({});
     fetchBalances();
-  }, [fromAddress, fromTokens]);
+  }, [fromAddress(), fromTokens, fromChain]);
 
   // Convert amount to smallest unit without scientific notation
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
@@ -247,6 +270,8 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       // Attach token metadata to the quote for proper decimal handling
       const enrichedData = {
         ...data,
+        fromChain,
+        toChain,
         originTokenMetadata: {
           symbol: originToken.symbol,
           decimals: originToken.decimals,
@@ -333,12 +358,12 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           </select>
         </div>
 
-        {/* Token Selector and Amount */}
-        <div className="flex space-x-2">
+        {/* Token Selector */}
+        <div className="mb-2">
           <select
             value={originAsset}
             onChange={(e) => setOriginAsset(e.target.value)}
-            className="input flex-1"
+            className="input w-full"
           >
             <option value="">Select token...</option>
             {fromTokens.map((token) => {
@@ -351,13 +376,63 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
               );
             })}
           </select>
-          <input
-            type="text"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.0"
-            className="input w-32"
-          />
+        </div>
+
+        {/* Amount Input with Percentage Buttons */}
+        <div>
+          <div className="flex items-center space-x-2 mb-2">
+            <input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.0"
+              className="input flex-1"
+            />
+          </div>
+          
+          {/* Percentage Buttons */}
+          {originAsset && balances[originAsset] && parseFloat(balances[originAsset]) > 0 && (
+            <div className="flex space-x-1">
+              {[25, 50, 75, 100].map((percentage) => (
+                <button
+                  key={percentage}
+                  type="button"
+                  onClick={() => {
+                    const selectedToken = fromTokens.find(t => t.assetId === originAsset);
+                    if (!selectedToken) return;
+                    
+                    const balance = parseFloat(balances[originAsset] || '0');
+                    let amountToSet = balance * (percentage / 100);
+                    
+                    // For 100%, reserve gas for native tokens
+                    if (percentage === 100) {
+                      const isNativeToken =
+                        (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ||
+                        selectedToken.symbol === 'SUI' ||
+                        selectedToken.symbol === 'SOL' ||
+                        (selectedToken.symbol === 'ETH' && selectedToken.blockchain?.toLowerCase() === 'ethereum');
+                      
+                      if (isNativeToken) {
+                        // Reserve gas based on chain
+                        const gasReserve =
+                          (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
+                          selectedToken.symbol === 'SUI' ? 0.01 :
+                          selectedToken.symbol === 'SOL' ? 0.001 :
+                          selectedToken.symbol === 'ETH' ? 0.01 : 0;
+                        
+                        amountToSet = Math.max(0, balance - gasReserve);
+                      }
+                    }
+                    
+                    setAmount(amountToSet.toFixed(6).replace(/\.?0+$/, ''));
+                  }}
+                  className="flex-1 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                >
+                  {percentage}%
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

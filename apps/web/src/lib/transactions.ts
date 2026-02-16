@@ -210,9 +210,10 @@ export async function sendSolanaTransaction(
 export async function sendSuiTransaction(
   params: TransactionParams,
   suiClient: any,
-  currentAccount: any
+  currentAccount: any,
+  signAndExecuteTransaction: any
 ): Promise<string> {
-  const { tokenAddress, recipientAddress, amount } = params;
+  const { tokenAddress, recipientAddress, amount, decimals } = params;
 
   if (!currentAccount) {
     throw new Error('Sui wallet not connected');
@@ -223,11 +224,14 @@ export async function sendSuiTransaction(
     const txb = new Transaction();
 
     // Check if it's native SUI or custom token
-    const isNativeSui = tokenAddress === 'native' || tokenAddress === 'sui';
+    const isNativeSui = tokenAddress === 'native' || tokenAddress === 'sui' ||
+                        tokenAddress === '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
 
     if (isNativeSui) {
       // Native SUI transfer
-      const [coin] = txb.splitCoins(txb.gas, [amount]);
+      // Convert the amount string to a number (amount is in MIST - smallest unit)
+      const amountInMist = BigInt(amount);
+      const [coin] = txb.splitCoins(txb.gas, [amountInMist]);
       txb.transferObjects([coin], recipientAddress);
     } else {
       // Custom token transfer would go here
@@ -235,10 +239,9 @@ export async function sendSuiTransaction(
       throw new Error('Custom Sui token transfers not yet implemented');
     }
 
-    // Sign and execute transaction
-    const result = await suiClient.signAndExecuteTransaction({
+    // Sign and execute transaction using the hook
+    const result = await signAndExecuteTransaction({
       transaction: txb,
-      account: currentAccount,
     });
 
     return result.digest;
@@ -259,6 +262,7 @@ export async function sendTransaction(
     solanaWallet?: any;
     suiClient?: any;
     suiAccount?: any;
+    suiSignAndExecute?: any;
   }
 ): Promise<string> {
   const chain = params.chain.toLowerCase();
@@ -280,10 +284,15 @@ export async function sendTransaction(
       chainContext.solanaWallet
     );
   } else if (chain === 'sui') {
-    if (!chainContext?.suiClient || !chainContext?.suiAccount) {
-      throw new Error('Sui client or account not available');
+    if (!chainContext?.suiClient || !chainContext?.suiAccount || !chainContext?.suiSignAndExecute) {
+      throw new Error('Sui client, account, or sign function not available');
     }
-    return sendSuiTransaction(params, chainContext.suiClient, chainContext.suiAccount);
+    return sendSuiTransaction(
+      params,
+      chainContext.suiClient,
+      chainContext.suiAccount,
+      chainContext.suiSignAndExecute
+    );
   } else {
     throw new Error(`Unsupported chain: ${chain}`);
   }

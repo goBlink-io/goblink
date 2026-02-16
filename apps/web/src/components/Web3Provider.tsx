@@ -61,11 +61,17 @@ createAppKit({
   themeMode: 'light',
 });
 
+// Sui network configuration
+const suiNetworks = {
+  mainnet: { url: 'https://fullnode.mainnet.sui.io:443' },
+  testnet: { url: 'https://fullnode.testnet.sui.io:443' },
+};
+
 export function Web3Provider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <SuiClientProvider>
+        <SuiClientProvider networks={suiNetworks} defaultNetwork="mainnet">
           <SuiWalletProvider>
             <UnifiedWalletProvider>
               {children}
