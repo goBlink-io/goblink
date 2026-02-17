@@ -91,19 +91,16 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     }
   };
 
-  // Get chain type from blockchain string
-  const getChainType = (blockchain?: string): 'evm' | 'solana' | 'sui' | 'near' | null => {
-    if (!blockchain) return 'near';
-    const chain = blockchain.toLowerCase();
-    
-    if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'bsc', 'berachain', 'monad'].includes(chain)) {
-      return 'evm';
-    }
-    if (chain === 'solana') return 'solana';
-    if (chain === 'sui') return 'sui';
-    if (chain === 'near') return 'near';
-    return null;
-  };
+  // TODO: Re-enable when EVM signing is implemented (Phase 4)
+  // const getChainType = (blockchain?: string): 'evm' | 'solana' | 'sui' | 'near' | null => {
+  //   if (!blockchain) return 'near';
+  //   const chain = blockchain.toLowerCase();
+  //   if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'bsc', 'berachain', 'monad'].includes(chain)) return 'evm';
+  //   if (chain === 'solana') return 'solana';
+  //   if (chain === 'sui') return 'sui';
+  //   if (chain === 'near') return 'near';
+  //   return null;
+  // };
 
   // Get connected address for the from chain
   const fromAddress = useCallback(() => {
@@ -321,11 +318,11 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
-  // Get display name for token (show "NEAR" instead of "wNEAR" for better UX)
-  const getTokenDisplayName = (symbol: string) => {
-    if (symbol === 'wNEAR') return 'NEAR';
-    return symbol;
-  };
+  // TODO: Use in token display UI (Phase 6 UX polish)
+  // const getTokenDisplayName = (symbol: string) => {
+  //   if (symbol === 'wNEAR') return 'NEAR';
+  //   return symbol;
+  // };
 
   return (
     <div className="card p-6">

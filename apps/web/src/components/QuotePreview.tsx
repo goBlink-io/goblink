@@ -12,7 +12,7 @@ interface QuotePreviewProps {
 }
 
 export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuotePreviewProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain: _toChain } = quote;
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationStep, setConfirmationStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -214,8 +214,6 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           // Step 4: Broadcast via backend proxy
           setConfirmationStep('Broadcasting transaction...');
           const serialized = signed.serialize();
-          // Convert to base58 for Solana RPC (default encoding)
-          const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
           const bytes = new Uint8Array(serialized);
           
           // Use base64 encoding which is simpler and supported

@@ -105,8 +105,8 @@ createAppKit({
 
 // Sui network configuration
 const suiNetworks = {
-  mainnet: { url: 'https://fullnode.mainnet.sui.io:443' },
-  testnet: { url: 'https://fullnode.testnet.sui.io:443' },
+  mainnet: { url: 'https://fullnode.mainnet.sui.io:443', network: 'mainnet' as const },
+  testnet: { url: 'https://fullnode.testnet.sui.io:443', network: 'testnet' as const },
 };
 
 export function Web3Provider({ children }: { children: ReactNode }) {

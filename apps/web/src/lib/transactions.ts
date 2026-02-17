@@ -1,7 +1,7 @@
 'use client';
 
 import { getNearConnector } from './nearConnector';
-import { parseNearAmount } from 'near-api-js/lib/utils/format';
+// import { parseNearAmount } from 'near-api-js/lib/utils/format'; // TODO: Re-enable when needed
 
 export interface TransactionParams {
   chain: string;
@@ -92,7 +92,7 @@ export async function sendEvmTransaction(
 
   try {
     const signer = await provider.getSigner();
-    const userAddress = await signer.getAddress();
+    void signer.getAddress(); // Validates signer is available
 
     // Check if it's a native token transfer or ERC-20
     const isNativeToken = tokenAddress === '0x0000000000000000000000000000000000000000' || 
@@ -213,7 +213,8 @@ export async function sendSuiTransaction(
   currentAccount: any,
   signAndExecuteTransaction: any
 ): Promise<string> {
-  const { tokenAddress, recipientAddress, amount, decimals } = params;
+  const { tokenAddress, recipientAddress, amount } = params;
+  void suiClient; // Reserved for direct Sui RPC calls
 
   if (!currentAccount) {
     throw new Error('Sui wallet not connected');
