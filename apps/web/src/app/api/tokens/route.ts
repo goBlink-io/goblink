@@ -3,6 +3,9 @@ import * as oneclick from '@/lib/server/oneclick';
 import { enrichTokenData } from '@/lib/server/dexscreener';
 import tokenIcons from '@/data/token-icons.json';
 
+// Cache token list for 5 minutes
+export const revalidate = 300;
+
 function applyIconsToAllTokens(tokens: Record<string, unknown>[]): void {
   for (const token of tokens) {
     const normalizedSymbol = (token.symbol as string).replace(/\.(omft|omdep)$/i, '');
@@ -12,59 +15,80 @@ function applyIconsToAllTokens(tokens: Record<string, unknown>[]): void {
 }
 
 async function enrichTokensWithPricing(tokens: Record<string, unknown>[]): Promise<void> {
-  for (const token of tokens) {
-    try {
-      const priceData = await enrichTokenData(
-        token.blockchain as string, token.contractAddress as string, token.symbol as string
-      );
-      if (priceData.priceUsd) {
-        token.priceUsd = priceData.priceUsd;
-        token.priceChange24h = priceData.priceChange24h;
-      }
-    } catch { /* skip */ }
+  // Batch pricing lookups with concurrency limit
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+    const batch = tokens.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(async (token) => {
+        try {
+          const priceData = await enrichTokenData(
+            token.blockchain as string, token.contractAddress as string, token.symbol as string
+          );
+          if (priceData.priceUsd) {
+            token.priceUsd = priceData.priceUsd;
+            token.priceChange24h = priceData.priceChange24h;
+          }
+        } catch { /* skip */ }
+      })
+    );
   }
 }
+
+// Map 1Click API chain prefixes → our blockchain names
+const CHAIN_PREFIX_MAP: Record<string, string> = {
+  'eth': 'ethereum', 'base': 'base', 'arb': 'arbitrum',
+  'bera': 'berachain', 'sol': 'solana', 'sui': 'sui',
+  'gnosis': 'gnosis', 'tron': 'tron', 'starknet': 'starknet',
+  'cardano': 'cardano', 'aptos': 'aptos', 'aleo': 'aleo',
+};
+
+// Native token asset IDs per chain
+const NATIVE_TOKEN_MAP: Record<string, [string, string]> = {
+  'ethereum': ['native', '0x0000000000000000000000000000000000000000'],
+  'base': ['native', '0x0000000000000000000000000000000000000000'],
+  'arbitrum': ['native', '0x0000000000000000000000000000000000000000'],
+  'optimism': ['native', '0x0000000000000000000000000000000000000000'],
+  'avalanche': ['native', '0x0000000000000000000000000000000000000000'],
+  'gnosis': ['native', '0x0000000000000000000000000000000000000000'],
+  'berachain': ['native', '0x0000000000000000000000000000000000000000'],
+  'monad': ['native', '0x0000000000000000000000000000000000000000'],
+  'aurora': ['native', '0x0000000000000000000000000000000000000000'],
+  'polygon': ['native', '0x0000000000000000000000000000000000000000'],
+  'bsc': ['native', '0x0000000000000000000000000000000000000000'],
+  'solana': ['So11111111111111111111111111111111111111112', 'So11111111111111111111111111111111111111112'],
+  'sui': ['0x2::sui::SUI', '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI'],
+};
+
+const BLOCKCHAIN_ALIASES: Record<string, string> = {
+  'sol': 'solana', 'pol': 'polygon', 'op': 'optimism', 'avax': 'avalanche',
+};
 
 export async function GET() {
   try {
     const rawTokens = await oneclick.getTokens();
 
-    const blockchainMapping: Record<string, string> = {
-      'sol': 'solana', 'pol': 'polygon', 'op': 'optimism',
-    };
-
     const nearTokens: Record<string, unknown>[] = [];
     const nativeChainTokens: Record<string, unknown>[] = [];
 
     (rawTokens as Record<string, unknown>[]).forEach((token) => {
-      const apiBlockchain = blockchainMapping[token.blockchain as string] || token.blockchain || 'near';
       const assetId = token.assetId as string;
+      const apiBlockchain = BLOCKCHAIN_ALIASES[token.blockchain as string] || token.blockchain || 'near';
 
       if (assetId.startsWith('nep141:')) {
         nearTokens.push({ ...token, blockchain: 'near' });
 
+        // Create native-chain representations for cross-chain tokens
         if (assetId.includes('.omft.near') || assetId.includes('.omdep.near')) {
           const match = assetId.match(/^nep141:([a-z]+)[-\.]/);
           if (match) {
-            const chainPrefixMapping: Record<string, string> = {
-              'eth': 'ethereum', 'base': 'base', 'arb': 'arbitrum',
-              'bera': 'berachain', 'sol': 'solana', 'sui': 'sui',
-            };
-            const targetBlockchain = chainPrefixMapping[match[1]];
+            const targetBlockchain = CHAIN_PREFIX_MAP[match[1]];
             if (targetBlockchain) {
               const isNativeToken = assetId.match(/^nep141:[a-z]+\.omft\.near$/);
               let nativeAssetId: string, contractAddress: string;
 
               if (isNativeToken) {
-                const nativeMap: Record<string, [string, string]> = {
-                  'ethereum': ['native', '0x0000000000000000000000000000000000000000'],
-                  'solana': ['So11111111111111111111111111111111111111112', 'So11111111111111111111111111111111111111112'],
-                  'sui': ['0x2::sui::SUI', '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI'],
-                  'berachain': ['native', '0x0000000000000000000000000000000000000000'],
-                  'base': ['native', '0x0000000000000000000000000000000000000000'],
-                  'arbitrum': ['native', '0x0000000000000000000000000000000000000000'],
-                };
-                const entry = nativeMap[targetBlockchain];
+                const entry = NATIVE_TOKEN_MAP[targetBlockchain];
                 if (!entry) return;
                 [nativeAssetId, contractAddress] = entry;
               } else if (token.contractAddress) {
@@ -85,15 +109,19 @@ export async function GET() {
             }
           }
         }
+      } else if (assetId.startsWith('nep245:')) {
+        // HOT protocol tokens (BSC, Polygon, Optimism, Avalanche, TON, Stellar, Monad, Plasma, XLayer)
+        // These already have blockchain set by the API
+        nativeChainTokens.push({ ...token, blockchain: apiBlockchain, defuseAssetId: assetId });
       } else if (assetId.startsWith('1cs_v1:')) {
         const match = assetId.match(/^1cs_v1:([^:]+):/);
         if (match) {
-          nativeChainTokens.push({ ...token, blockchain: blockchainMapping[match[1]] || match[1] });
+          nativeChainTokens.push({
+            ...token,
+            blockchain: BLOCKCHAIN_ALIASES[match[1]] || match[1],
+            defuseAssetId: assetId,
+          });
         }
-      } else if (assetId.startsWith('sui:')) {
-        nativeChainTokens.push({ ...token, blockchain: 'sui' });
-      } else if (assetId.startsWith('solana:')) {
-        nativeChainTokens.push({ ...token, blockchain: 'solana' });
       } else {
         nativeChainTokens.push({ ...token, blockchain: apiBlockchain });
       }
@@ -102,19 +130,20 @@ export async function GET() {
     const allTokens = [...nearTokens, ...nativeChainTokens];
     applyIconsToAllTokens(allTokens);
 
-    // Enrich priority tokens synchronously
+    // Enrich priority tokens with DexScreener pricing
+    const prioritySymbols = new Set(['USDT', 'USDC', 'ETH', 'BTC', 'WBTC', 'SOL', 'SUI', 'ARB', 'OP', 'BNB', 'AVAX', 'MATIC']);
     const priorityTokens = nativeChainTokens
       .filter(t =>
         t.contractAddress && t.contractAddress !== 'native' &&
-        ['USDT', 'USDC', 'ETH', 'BTC', 'WBTC', 'SOL', 'SUI', 'ARB', 'OP', 'BNB'].includes(t.symbol as string)
+        prioritySymbols.has(t.symbol as string)
       )
-      .slice(0, 10);
+      .slice(0, 15);
 
     if (priorityTokens.length > 0) {
       try { await enrichTokensWithPricing(priorityTokens); } catch { /* skip */ }
     }
 
-    // Background enrichment (non-blocking)
+    // Background enrichment for remaining tokens (non-blocking)
     const remainingTokens = nativeChainTokens
       .filter(t => t.contractAddress && t.contractAddress !== 'native' && !priorityTokens.includes(t))
       .slice(0, 40);
@@ -122,7 +151,11 @@ export async function GET() {
       enrichTokensWithPricing(remainingTokens).catch(() => {});
     }
 
-    return NextResponse.json(allTokens);
+    return NextResponse.json(allTokens, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: 'Failed to fetch tokens', message }, { status: 500 });
