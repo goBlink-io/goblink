@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SwapStatus } from '@sapphire/shared';
+import { SwapStatus } from '@goblink/shared';
 
 interface StatusTrackerProps {
   depositAddress: string;

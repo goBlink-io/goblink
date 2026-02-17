@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Token } from '@sapphire/shared';
+import { Token } from '@goblink/shared';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';

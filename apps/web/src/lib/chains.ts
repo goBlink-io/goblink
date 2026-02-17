@@ -1,5 +1,5 @@
 // Re-export from shared package for consistency
-// This file exists for backward compatibility — prefer importing from @sapphire/shared directly
+// This file exists for backward compatibility — prefer importing from @goblink/shared directly
 export {
   EVM_CHAINS,
   EVM_CHAIN_NAMES,
@@ -8,6 +8,6 @@ export {
   isNativeToken,
   getExplorerTxUrl,
   getExplorerAddressUrl,
-} from '@sapphire/shared';
+} from '@goblink/shared';
 
-export type { ChainConfig } from '@sapphire/shared';
+export type { ChainConfig } from '@goblink/shared';

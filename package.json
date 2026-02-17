@@ -1,5 +1,5 @@
 {
-  "name": "sapphire",
+  "name": "goblink",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -10,8 +10,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-    "dev:web": "turbo run dev --filter=@sapphire/web",
-    "build:web": "turbo run build --filter=@sapphire/web"
+    "dev:web": "turbo run dev --filter=@goblink/web",
+    "build:web": "turbo run build --filter=@goblink/web"
   },
   "devDependencies": {
     "eslint": "^9.18.0",

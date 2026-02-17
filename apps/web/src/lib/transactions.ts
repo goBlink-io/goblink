@@ -59,7 +59,7 @@ export async function sendNearTransaction(params: TransactionParams): Promise<st
               args: {
                 receiver_id: recipientAddress,
                 amount: amount,
-                memo: 'Sapphire cross-chain swap',
+                memo: 'goBlink cross-chain transfer',
               },
               gas: '30000000000000', // 30 TGas
               deposit: '1', // 1 yoctoNEAR for storage

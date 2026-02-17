@@ -7,7 +7,7 @@ import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
 import { useSwitchChain } from 'wagmi';
 import { getWalletClient } from 'wagmi/actions';
 import { useConfig as useWagmiConfig } from 'wagmi';
-import { isEvmChain, isNativeToken, EVM_CHAINS } from '@sapphire/shared';
+import { isEvmChain, isNativeToken, EVM_CHAINS } from '@goblink/shared';
 
 interface QuotePreviewProps {
   quote: any;

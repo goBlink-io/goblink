@@ -1,4 +1,4 @@
-import type { FeeTier } from '@sapphire/shared';
+import type { FeeTier } from '@goblink/shared';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 

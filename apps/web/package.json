@@ -1,5 +1,5 @@
 {
-  "name": "@sapphire/web",
+  "name": "@goblink/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
     "@reown/appkit": "^1.8.18",
     "@reown/appkit-adapter-solana": "^1.8.18",
     "@reown/appkit-adapter-wagmi": "^1.8.18",
-    "@sapphire/shared": "workspace:*",
+    "@goblink/shared": "workspace:*",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@starknet-react/chains": "^5.0.3",
