@@ -77,22 +77,22 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
           Send Across Any Chain, Instantly
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 dark:text-gray-400">
           Transfer tokens between 20+ blockchains in seconds. No bridges, no complexity.
         </p>
       </div>
 
       <div className="space-y-6">
         {error && (
-          <div className="card p-4 bg-red-50 border border-red-200">
+          <div className="card p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800">
             <div className="flex items-start">
               <svg className="h-5 w-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <p className="text-sm font-medium text-red-900">{error}</p>
+              <p className="text-sm font-medium text-red-900 dark:text-red-200">{error}</p>
             </div>
           </div>
         )}
@@ -125,27 +125,27 @@ export default function Home() {
       {/* Features Section */}
       <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-6">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-            <Zap className="h-6 w-6 text-blue-600" />
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">
+            <Zap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Lightning Fast</h3>
-          <p className="text-gray-600">Transfers complete in seconds, not minutes. Real-time status updates.</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Lightning Fast</h3>
+          <p className="text-gray-600 dark:text-gray-400">Transfers complete in seconds, not minutes. Real-time status updates.</p>
         </div>
 
         <div className="card p-6">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-            <Shield className="h-6 w-6 text-purple-600" />
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/50">
+            <Shield className="h-6 w-6 text-purple-600 dark:text-purple-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Secure</h3>
-          <p className="text-gray-600">Non-custodial and transparent. Your keys, your tokens, always.</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Secure</h3>
+          <p className="text-gray-600 dark:text-gray-400">Non-custodial and transparent. Your keys, your tokens, always.</p>
         </div>
 
         <div className="card p-6">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-            <TrendingUp className="h-6 w-6 text-green-600" />
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/50">
+            <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Best Rates</h3>
-          <p className="text-gray-600">Competitive pricing with transparent fees. No hidden costs.</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Best Rates</h3>
+          <p className="text-gray-600 dark:text-gray-400">Competitive pricing with transparent fees. No hidden costs.</p>
         </div>
       </div>
     </div>

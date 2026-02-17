@@ -297,7 +297,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       {/* From Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">You send</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">You send</label>
           <div className="text-xs text-gray-500">
             {fromAddress() ? (
               <span className="flex items-center gap-1">
@@ -382,7 +382,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                     }
                     setAmount(amountToSet.toFixed(6).replace(/\.?0+$/, ''));
                   }}
-                  className="flex-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors active:scale-95"
+                  className="flex-1 px-2 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors active:scale-95"
                 >
                   {percentage}%
                 </button>
@@ -396,7 +396,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       <div className="flex justify-center my-2">
         <button 
           onClick={swapTokens} 
-          className="rounded-full bg-gray-100 p-2 hover:bg-gray-200 transition-colors active:scale-95"
+          className="rounded-full bg-gray-100 dark:bg-gray-800 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors active:scale-95"
         >
           <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -407,7 +407,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       {/* To Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">You receive</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">You receive</label>
           <div className="text-xs text-gray-500">
             {toAddress() ? (
               <span className="flex items-center gap-1">
@@ -445,10 +445,10 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
       {/* Receiving Address */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Receiving Address
           {!toAddress() && (
-            <span className="text-xs text-amber-600 ml-2">(Enter manually)</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(Enter manually)</span>
           )}
         </label>
         <input
@@ -467,16 +467,16 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
       {/* Return Address */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Return Address
-          <span className="text-xs text-gray-500 ml-2">(Auto-filled)</span>
+          <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">(Auto-filled)</span>
         </label>
         <input
           type="text"
           value={refundTo}
           readOnly
           placeholder="Connect wallet on the sending chain"
-          className="input w-full bg-gray-50 cursor-not-allowed"
+          className="input w-full bg-gray-50 dark:bg-gray-900 cursor-not-allowed"
         />
         <p className="text-xs text-gray-500 mt-1">
           If the transfer can&apos;t complete, funds are returned here
@@ -485,7 +485,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
       {/* Error Banner */}
       {formError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
           {formError}
         </div>
       )}
@@ -500,8 +500,8 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       </button>
 
       {/* Tip */}
-      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-        <p className="text-sm text-blue-900">
+      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+        <p className="text-sm text-blue-900 dark:text-blue-200">
           <strong>Tip:</strong> Connect wallets for both chains to auto-fill addresses, or manually enter a receiving address to send to someone else.
         </p>
       </div>
