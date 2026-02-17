@@ -1,9 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useAppKitAccount, useDisconnect as useAppKitDisconnect } from '@reown/appkit/react';
-import { useCurrentAccount as useSuiAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount as useSuiAccount, useDisconnectWallet as useSuiDisconnect } from '@mysten/dapp-kit';
 import { initNearConnector, disconnectNearWallet, getNearAccount } from '@/lib/nearConnector';
 import { useWallet as useAptosWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount as useStarknetAccount, useDisconnect as useStarknetDisconnect } from '@starknet-react/core';
@@ -12,44 +12,27 @@ import { useWallet as useTronWallet } from '@tronweb3/tronwallet-adapter-react-h
 
 export type ChainType = 'evm' | 'solana' | 'sui' | 'near' | 'bitcoin' | 'aptos' | 'starknet' | 'ton' | 'tron';
 
-export interface WalletState {
-  chain: ChainType | null;
-  address: string | null;
-  isConnected: boolean;
+interface ConnectedWallet {
+  chain: ChainType;
+  address: string;
 }
 
 interface WalletContextType {
-  walletState: WalletState;
+  // All connected wallets (multiple can be connected simultaneously)
+  connectedWallets: ConnectedWallet[];
   
-  evmAddress: string | null;
-  solanaAddress: string | null;
-  suiAddress: string | null;
-  nearAddress: string | null;
-  bitcoinAddress: string | null;
-  aptosAddress: string | null;
-  starknetAddress: string | null;
-  tonAddress: string | null;
-  tronAddress: string | null;
+  // Quick lookups
+  getAddressForChain: (chain: ChainType) => string | null;
+  isChainConnected: (chain: ChainType) => boolean;
   
-  isEvmConnected: boolean;
-  isSolanaConnected: boolean;
-  isSuiConnected: boolean;
-  isNearConnected: boolean;
-  isBitcoinConnected: boolean;
-  isAptosConnected: boolean;
-  isStarknetConnected: boolean;
-  isTonConnected: boolean;
-  isTronConnected: boolean;
-  
+  // Modal
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
   
-  disconnectAll: () => void;
-  disconnectChain: (chain: ChainType) => void;
-  switchChain: (chain: ChainType) => void;
-  getAddressForChain: (chain: ChainType) => string | null;
-  getConnectedChains: () => Array<{ chain: ChainType; address: string }>;
+  // Disconnect
+  disconnectChain: (chain: ChainType) => Promise<void>;
+  disconnectAll: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -57,272 +40,169 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nearAddress, setNearAddress] = useState<string | null>(null);
-  const [isNearConnected, setIsNearConnected] = useState(false);
-  const [activeChain, setActiveChain] = useState<ChainType | null>(null);
   
-  // ReOwn AppKit (EVM, Solana, Bitcoin)
+  // ── Wallet SDKs ──
+  
+  // ReOwn AppKit (EVM + Solana + Bitcoin — shared connection)
   const { address: appKitAddress, isConnected: appKitConnected, caipAddress } = useAppKitAccount();
   const { disconnect: appKitDisconnect } = useAppKitDisconnect();
-  
-  // Wagmi (EVM backup)
   const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   
   // Sui
   const suiAccount = useSuiAccount();
-  const isSuiConnected = !!suiAccount;
-  const suiAddress = suiAccount?.address || null;
+  const { mutate: suiDisconnect } = useSuiDisconnect();
   
   // Aptos
-  const { account: aptosAccount, connected: isAptosConnected, disconnect: aptosDisconnect } = useAptosWallet();
-  const aptosAddress = aptosAccount?.address?.toString() || null;
+  const { account: aptosAccount, connected: aptosConnected, disconnect: aptosDisconnect } = useAptosWallet();
   
   // Starknet
-  const { address: starknetAddr, isConnected: _isStarknetConnected } = useStarknetAccount();
+  const { address: starknetAddr, isConnected: _starknetConnected } = useStarknetAccount();
   const { disconnect: starknetDisconnect } = useStarknetDisconnect();
-  const isStarknetConnected = !!_isStarknetConnected;
-  const starknetAddress = starknetAddr || null;
   
   // TON
   const [tonConnectUI] = useTonConnectUI();
   const tonAddr = useTonAddress();
-  const isTonConnected = !!tonAddr;
-  const tonAddress = tonAddr || null;
   
   // Tron
-  const { address: tronAddr, connected: isTronConnected, disconnect: tronDisconnect } = useTronWallet();
-  const tronAddress = tronAddr || null;
+  const { address: tronAddr, connected: tronConnected, disconnect: tronDisconnect } = useTronWallet();
   
-  // Determine chain from CAIP address
-  const getChainFromCaip = (caip?: string): ChainType | null => {
-    if (!caip) return null;
-    if (caip.startsWith('eip155:')) return 'evm';
-    if (caip.startsWith('solana:')) return 'solana';
-    if (caip.startsWith('bip122:')) return 'bitcoin';
+  // ── Derive connection states ──
+  
+  const appKitChain = (() => {
+    if (!caipAddress) return null;
+    if (caipAddress.startsWith('eip155:')) return 'evm' as ChainType;
+    if (caipAddress.startsWith('solana:')) return 'solana' as ChainType;
+    if (caipAddress.startsWith('bip122:')) return 'bitcoin' as ChainType;
     return null;
+  })();
+  
+  // Build the wallet map — each chain independently
+  const walletMap: Record<ChainType, string | null> = {
+    evm: (appKitChain === 'evm' && appKitAddress) || (wagmiConnected && wagmiAddress) || null,
+    solana: (appKitChain === 'solana' && appKitAddress) || null,
+    bitcoin: (appKitChain === 'bitcoin' && appKitAddress) || null,
+    sui: suiAccount?.address || null,
+    near: nearAddress,
+    aptos: aptosConnected ? (aptosAccount?.address?.toString() || null) : null,
+    starknet: _starknetConnected ? (starknetAddr || null) : null,
+    ton: tonAddr || null,
+    tron: tronConnected ? (tronAddr || null) : null,
   };
   
-  const appKitChain = getChainFromCaip(caipAddress);
-  
-  const evmAddress: string | null = (appKitChain === 'evm' && appKitAddress) || (wagmiConnected && wagmiAddress) || null;
-  const solanaAddress: string | null = (appKitChain === 'solana' && appKitAddress) || null;
-  const bitcoinAddress: string | null = (appKitChain === 'bitcoin' && appKitAddress) || null;
-  
-  const isEvmConnected = appKitChain === 'evm' || wagmiConnected;
-  const isSolanaConnected = appKitChain === 'solana';
-  const isBitcoinConnected = appKitChain === 'bitcoin';
-  
-  // NEAR
+  // ── NEAR init ──
   useEffect(() => {
     const connector = initNearConnector();
     if (!connector) return;
     
-    const checkNearConnection = async () => {
+    const checkConnection = async () => {
       try {
         const account = await getNearAccount();
-        if (account) {
-          setNearAddress(account);
-          setIsNearConnected(true);
-        }
-      } catch (error) {
-        console.error('[NEAR] Failed to check connection:', error);
+        if (account) setNearAddress(account);
+      } catch (e) {
+        console.error('[NEAR] check failed:', e);
       }
     };
     
-    const timer = setTimeout(() => checkNearConnection(), 500);
+    const timer = setTimeout(checkConnection, 500);
     
-    const handleSignIn = async () => {
-      try {
-        const account = await getNearAccount();
-        if (account) {
-          setNearAddress(account);
-          setIsNearConnected(true);
-        }
-      } catch (error) {
-        console.error('[NEAR] Error in handleSignIn:', error);
-      }
+    const onSignIn = async () => {
+      const account = await getNearAccount().catch(() => null);
+      if (account) setNearAddress(account);
     };
+    const onSignOut = () => setNearAddress(null);
     
-    const handleSignOut = () => {
-      setNearAddress(null);
-      setIsNearConnected(false);
-    };
-    
-    connector.on('wallet:signIn', handleSignIn);
-    connector.on('wallet:signOut', handleSignOut);
-    
-    return () => {
-      clearTimeout(timer);
-      connector.off('wallet:signIn', handleSignIn);
-      connector.off('wallet:signOut', handleSignOut);
-    };
+    connector.on('wallet:signIn', onSignIn);
+    connector.on('wallet:signOut', onSignOut);
+    return () => { clearTimeout(timer); connector.off('wallet:signIn', onSignIn); connector.off('wallet:signOut', onSignOut); };
   }, []);
   
-  const [walletState, setWalletState] = useState<WalletState>({
-    chain: null, address: null, isConnected: false,
-  });
+  // ── Build connected wallets list ──
+  const connectedWallets: ConnectedWallet[] = [];
+  for (const [chain, address] of Object.entries(walletMap)) {
+    if (address) connectedWallets.push({ chain: chain as ChainType, address });
+  }
   
-  const getAddressForChain = (chain: ChainType): string | null => {
-    switch (chain) {
-      case 'evm': return evmAddress;
-      case 'solana': return solanaAddress;
-      case 'bitcoin': return bitcoinAddress;
-      case 'sui': return suiAddress;
-      case 'near': return nearAddress;
-      case 'aptos': return aptosAddress;
-      case 'starknet': return starknetAddress;
-      case 'ton': return tonAddress;
-      case 'tron': return tronAddress;
-      default: return null;
-    }
-  };
+  const getAddressForChain = useCallback((chain: ChainType): string | null => {
+    return walletMap[chain] || null;
+  }, [walletMap.evm, walletMap.solana, walletMap.bitcoin, walletMap.sui, walletMap.near,
+      walletMap.aptos, walletMap.starknet, walletMap.ton, walletMap.tron]);
   
-  const isChainConnected = (chain: ChainType): boolean => {
-    switch (chain) {
-      case 'evm': return isEvmConnected;
-      case 'solana': return isSolanaConnected;
-      case 'bitcoin': return isBitcoinConnected;
-      case 'sui': return isSuiConnected;
-      case 'near': return isNearConnected;
-      case 'aptos': return isAptosConnected;
-      case 'starknet': return isStarknetConnected;
-      case 'ton': return isTonConnected;
-      case 'tron': return isTronConnected;
-      default: return false;
-    }
-  };
+  const isChainConnected = useCallback((chain: ChainType): boolean => {
+    return !!walletMap[chain];
+  }, [walletMap.evm, walletMap.solana, walletMap.bitcoin, walletMap.sui, walletMap.near,
+      walletMap.aptos, walletMap.starknet, walletMap.ton, walletMap.tron]);
   
-  // Update wallet state
-  useEffect(() => {
-    if (activeChain) {
-      const address = getAddressForChain(activeChain);
-      if (isChainConnected(activeChain) && address) {
-        setWalletState({ chain: activeChain, address, isConnected: true });
-        return;
-      } else {
-        setActiveChain(null);
+  // ── Disconnect ──
+  // Note: EVM, Solana, Bitcoin share AppKit — disconnecting one disconnects all three.
+  // This is an AppKit limitation. We warn the user in the UI.
+  
+  const disconnectChain = useCallback(async (chain: ChainType) => {
+    try {
+      switch (chain) {
+        case 'evm':
+        case 'solana':
+        case 'bitcoin':
+          // AppKit shares session — disconnects all three
+          if (appKitConnected) await appKitDisconnect();
+          if (wagmiConnected) wagmiDisconnect();
+          break;
+        case 'sui':
+          suiDisconnect();
+          break;
+        case 'near':
+          await disconnectNearWallet();
+          setNearAddress(null);
+          break;
+        case 'aptos':
+          await aptosDisconnect();
+          break;
+        case 'starknet':
+          starknetDisconnect();
+          break;
+        case 'ton':
+          await tonConnectUI.disconnect();
+          break;
+        case 'tron':
+          await tronDisconnect();
+          break;
       }
+    } catch (e) {
+      console.error(`Failed to disconnect ${chain}:`, e);
     }
-    
-    // Auto-select priority order
-    const priority: ChainType[] = ['near', 'evm', 'solana', 'bitcoin', 'sui', 'aptos', 'starknet', 'ton', 'tron'];
-    for (const chain of priority) {
-      const addr = getAddressForChain(chain);
-      if (isChainConnected(chain) && addr) {
-        setWalletState({ chain, address: addr, isConnected: true });
-        if (!activeChain) setActiveChain(chain);
-        return;
-      }
-    }
-    
-    setWalletState({ chain: null, address: null, isConnected: false });
-  }, [evmAddress, solanaAddress, bitcoinAddress, suiAddress, nearAddress,
-      aptosAddress, starknetAddress, tonAddress, tronAddress,
-      isEvmConnected, isSolanaConnected, isBitcoinConnected, isSuiConnected, isNearConnected,
-      isAptosConnected, isStarknetConnected, isTonConnected, isTronConnected]);
+  }, [appKitConnected, appKitDisconnect, wagmiConnected, wagmiDisconnect,
+      suiDisconnect, aptosDisconnect, starknetDisconnect, tonConnectUI, tronDisconnect]);
   
-  useEffect(() => {
-    if (!activeChain) return;
-    const address = getAddressForChain(activeChain);
-    if (isChainConnected(activeChain) && address) {
-      setWalletState({ chain: activeChain, address, isConnected: true });
-    }
-  }, [activeChain]);
-  
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  
-  const disconnectChain = async (chain: ChainType) => {
-    switch (chain) {
-      case 'evm':
-      case 'solana':
-      case 'bitcoin':
-        await appKitDisconnect();
-        if (wagmiConnected) wagmiDisconnect();
-        break;
-      case 'sui':
-        console.log('Sui: disconnect from wallet extension');
-        break;
-      case 'near':
-        await disconnectNearWallet();
-        setNearAddress(null);
-        setIsNearConnected(false);
-        break;
-      case 'aptos':
-        await aptosDisconnect();
-        break;
-      case 'starknet':
-        starknetDisconnect();
-        break;
-      case 'ton':
-        await tonConnectUI.disconnect();
-        break;
-      case 'tron':
-        await tronDisconnect();
-        break;
-    }
-  };
-  
-  const disconnectAll = async () => {
-    if (appKitConnected) await appKitDisconnect();
-    if (wagmiConnected) wagmiDisconnect();
-    if (isNearConnected) {
-      await disconnectNearWallet();
-      setNearAddress(null);
-      setIsNearConnected(false);
-    }
-    if (isAptosConnected) await aptosDisconnect();
-    if (isStarknetConnected) starknetDisconnect();
-    if (isTonConnected) await tonConnectUI.disconnect();
-    if (isTronConnected) await tronDisconnect();
-    setActiveChain(null);
-  };
-  
-  const switchChain = async (chain: ChainType) => {
-    const address = getAddressForChain(chain);
-    if (!address) {
-      console.warn(`Cannot switch to ${chain}: wallet not connected`);
-      return;
-    }
-    if (activeChain && activeChain !== chain) {
-      await disconnectChain(activeChain);
-    }
-    setActiveChain(chain);
-  };
-  
-  const getConnectedChains = () => {
-    const chains: Array<{ chain: ChainType; address: string }> = [];
-    const allChains: ChainType[] = ['evm', 'solana', 'bitcoin', 'sui', 'near', 'aptos', 'starknet', 'ton', 'tron'];
-    for (const chain of allChains) {
-      const addr = getAddressForChain(chain);
-      if (isChainConnected(chain) && addr) {
-        chains.push({ chain, address: addr });
-      }
-    }
-    return chains;
-  };
+  const disconnectAll = useCallback(async () => {
+    try { if (appKitConnected) await appKitDisconnect(); } catch {}
+    try { if (wagmiConnected) wagmiDisconnect(); } catch {}
+    try { suiDisconnect(); } catch {}
+    try { if (aptosConnected) aptosDisconnect(); } catch {}
+    try { if (_starknetConnected) starknetDisconnect(); } catch {}
+    try { if (tonAddr) await tonConnectUI.disconnect(); } catch {}
+    try { if (tronConnected) await tronDisconnect(); } catch {}
+    try { await disconnectNearWallet(); } catch {}
+    setNearAddress(null);
+  }, [appKitConnected, wagmiConnected, aptosConnected, _starknetConnected, tonAddr, tronConnected]);
   
   return (
-    <WalletContext.Provider
-      value={{
-        walletState,
-        evmAddress, solanaAddress, suiAddress, nearAddress, bitcoinAddress,
-        aptosAddress, starknetAddress, tonAddress, tronAddress,
-        isEvmConnected, isSolanaConnected, isSuiConnected, isNearConnected, isBitcoinConnected,
-        isAptosConnected, isStarknetConnected, isTonConnected, isTronConnected,
-        isModalOpen, openModal, closeModal,
-        disconnectAll, disconnectChain, switchChain, getAddressForChain, getConnectedChains,
-      }}
-    >
+    <WalletContext.Provider value={{
+      connectedWallets,
+      getAddressForChain,
+      isChainConnected,
+      isModalOpen,
+      openModal: () => setIsModalOpen(true),
+      closeModal: () => setIsModalOpen(false),
+      disconnectChain,
+      disconnectAll,
+    }}>
       {children}
     </WalletContext.Provider>
   );
 }
 
 export function useWalletContext() {
-  const context = useContext(WalletContext);
-  if (context === undefined) {
-    throw new Error('useWalletContext must be used within a WalletProvider');
-  }
-  return context;
+  const ctx = useContext(WalletContext);
+  if (!ctx) throw new Error('useWalletContext must be used within WalletProvider');
+  return ctx;
 }

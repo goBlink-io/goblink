@@ -36,7 +36,7 @@ function SkeletonPulse({ className }: { className?: string }) {
 }
 
 export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
-  const { walletState, getAddressForChain, getConnectedChains } = useWalletContext();
+  const { getAddressForChain, connectedWallets } = useWalletContext();
   const { toast } = useToast();
 
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -68,12 +68,14 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     }
   };
 
+  // Auto-set from chain when first wallet connects
   useEffect(() => {
-    if (walletState.isConnected && walletState.chain) {
-      const chainId = getChainIdFromType(walletState.chain);
+    if (connectedWallets.length > 0) {
+      const first = connectedWallets[0];
+      const chainId = getChainIdFromType(first.chain);
       setFromChain(chainId);
     }
-  }, [walletState.isConnected, walletState.chain]);
+  }, [connectedWallets.length]);
 
   useEffect(() => {
     fetchTokens();
@@ -136,7 +138,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       setRecipient(addr);
     } else {
       const prevAddr = recipient;
-      const isAutoPopulated = getConnectedChains().some(c => c.address === prevAddr);
+      const isAutoPopulated = connectedWallets.some(c => c.address === prevAddr);
       if (isAutoPopulated) setRecipient('');
     }
   }, [toChain, toAddress]);
