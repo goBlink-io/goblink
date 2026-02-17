@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 
 // Wagmi & Reown AppKit for EVM
 import { WagmiProvider } from 'wagmi';
-import { mainnet, polygon, optimism, arbitrum, base, sepolia, bsc } from 'wagmi/chains';
+import { mainnet, polygon, optimism, arbitrum, base, sepolia, bsc, gnosis, avalanche } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
@@ -65,6 +65,58 @@ const monad = {
   },
 } as const satisfies Chain;
 
+const aurora = {
+  id: 1313161554,
+  name: 'Aurora',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://mainnet.aurora.dev'] },
+    public: { http: ['https://mainnet.aurora.dev'] },
+  },
+  blockExplorers: {
+    default: { name: 'Aurora Explorer', url: 'https://explorer.aurora.dev' },
+  },
+} as const satisfies Chain;
+
+const plasma = {
+  id: 9745,
+  name: 'Plasma',
+  nativeCurrency: { name: 'XPL', symbol: 'XPL', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.plasma.cash'] },
+    public: { http: ['https://rpc.plasma.cash'] },
+  },
+  blockExplorers: {
+    default: { name: 'Plasma Explorer', url: 'https://explorer.plasma.cash' },
+  },
+} as const satisfies Chain;
+
+const xlayer = {
+  id: 196,
+  name: 'X Layer',
+  nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.xlayer.tech'] },
+    public: { http: ['https://rpc.xlayer.tech'] },
+  },
+  blockExplorers: {
+    default: { name: 'OKLink', url: 'https://www.oklink.com/xlayer' },
+  },
+} as const satisfies Chain;
+
+const adiChain = {
+  id: 36900,
+  name: 'ADI Chain',
+  nativeCurrency: { name: 'ADI', symbol: 'ADI', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.adichain.io'] },
+    public: { http: ['https://rpc.adichain.io'] },
+  },
+  blockExplorers: {
+    default: { name: 'ADI Explorer', url: 'https://explorer.adichain.io' },
+  },
+} as const satisfies Chain;
+
 // 3. Set up Wagmi Adapter for EVM chains
 const evmChains = [
   mainnet,
@@ -73,8 +125,14 @@ const evmChains = [
   arbitrum,
   base,
   bsc,
+  avalanche,
+  gnosis,
   berachain,
   monad,
+  aurora,
+  plasma,
+  xlayer,
+  adiChain,
   sepolia, // Keep for testing
 ];
 

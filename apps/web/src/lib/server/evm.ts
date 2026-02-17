@@ -1,5 +1,5 @@
 import { createPublicClient, http, formatUnits, type PublicClient, type Address, type Chain } from 'viem';
-import { mainnet, polygon, optimism, arbitrum, base, bsc } from 'viem/chains';
+import { mainnet, polygon, optimism, arbitrum, base, bsc, gnosis, avalanche } from 'viem/chains';
 
 const ERC20_ABI = [
   {
@@ -30,6 +30,30 @@ const monad: Chain = {
   rpcUrls: { default: { http: ['https://rpc.monad.xyz'] } },
 };
 
+const aurora: Chain = {
+  id: 1313161554, name: 'Aurora',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://mainnet.aurora.dev'] } },
+};
+
+const plasma: Chain = {
+  id: 9745, name: 'Plasma',
+  nativeCurrency: { name: 'XPL', symbol: 'XPL', decimals: 18 },
+  rpcUrls: { default: { http: ['https://rpc.plasma.cash'] } },
+};
+
+const xlayer: Chain = {
+  id: 196, name: 'X Layer',
+  nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
+  rpcUrls: { default: { http: ['https://rpc.xlayer.tech'] } },
+};
+
+const adi: Chain = {
+  id: 36900, name: 'ADI Chain',
+  nativeCurrency: { name: 'ADI', symbol: 'ADI', decimals: 18 },
+  rpcUrls: { default: { http: ['https://rpc.adichain.io'] } },
+};
+
 const CHAIN_CONFIGS: Record<string, { chain: Chain; rpcUrl: string }> = {
   ethereum: { chain: mainnet, rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://eth.llamarpc.com' },
   base: { chain: base, rpcUrl: process.env.BASE_RPC_URL || 'https://mainnet.base.org' },
@@ -37,8 +61,14 @@ const CHAIN_CONFIGS: Record<string, { chain: Chain; rpcUrl: string }> = {
   bsc: { chain: bsc, rpcUrl: process.env.BSC_RPC_URL || 'https://bsc-dataseed1.binance.org' },
   polygon: { chain: polygon, rpcUrl: process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com' },
   optimism: { chain: optimism, rpcUrl: process.env.OPTIMISM_RPC_URL || 'https://mainnet.optimism.io' },
+  avalanche: { chain: avalanche, rpcUrl: process.env.AVALANCHE_RPC_URL || 'https://api.avax.network/ext/bc/C/rpc' },
+  gnosis: { chain: gnosis, rpcUrl: process.env.GNOSIS_RPC_URL || 'https://rpc.gnosischain.com' },
   berachain: { chain: berachain, rpcUrl: process.env.BERACHAIN_RPC_URL || 'https://rpc.berachain.com' },
   monad: { chain: monad, rpcUrl: process.env.MONAD_RPC_URL || 'https://rpc.monad.xyz' },
+  aurora: { chain: aurora, rpcUrl: process.env.AURORA_RPC_URL || 'https://mainnet.aurora.dev' },
+  plasma: { chain: plasma, rpcUrl: process.env.PLASMA_RPC_URL || 'https://rpc.plasma.cash' },
+  xlayer: { chain: xlayer, rpcUrl: process.env.XLAYER_RPC_URL || 'https://rpc.xlayer.tech' },
+  adi: { chain: adi, rpcUrl: process.env.ADI_RPC_URL || 'https://rpc.adichain.io' },
 };
 
 export type SupportedChain = keyof typeof CHAIN_CONFIGS;
