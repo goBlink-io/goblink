@@ -111,8 +111,37 @@ export async function GET() {
         }
       } else if (assetId.startsWith('nep245:')) {
         // HOT protocol tokens (BSC, Polygon, Optimism, Avalanche, TON, Stellar, Monad, Plasma, XLayer)
-        // These already have blockchain set by the API
-        nativeChainTokens.push({ ...token, blockchain: apiBlockchain, defuseAssetId: assetId });
+        // Detect native chain tokens (suffix _11111111111111111111 = native gas token)
+        const isNativeHot = assetId.includes('_11111111111111111111');
+        // Extract chain ID from nep245:v2_1.omni.hot.tg:<chainId>_...
+        const chainIdMatch = assetId.match(/:(\d+)_/);
+        const hotChainId = chainIdMatch ? parseInt(chainIdMatch[1]) : null;
+        const HOT_CHAIN_ID_MAP: Record<number, string> = {
+          56: 'bsc', 137: 'polygon', 10: 'optimism', 43114: 'avalanche',
+          143: 'monad', 196: 'xlayer', 9745: 'plasma', 36900: 'adi',
+          1117: 'ton', 1100: 'stellar',
+        };
+        const resolvedBlockchain = (hotChainId && HOT_CHAIN_ID_MAP[hotChainId]) || apiBlockchain;
+
+        if (isNativeHot && hotChainId) {
+          // Native gas token — set assetId to 'native' for wallet signing
+          nativeChainTokens.push({
+            ...token,
+            assetId: 'native',
+            defuseAssetId: assetId,
+            blockchain: resolvedBlockchain,
+            contractAddress: '0x0000000000000000000000000000000000000000',
+            address: '0x0000000000000000000000000000000000000000',
+          });
+        } else {
+          nativeChainTokens.push({
+            ...token,
+            blockchain: resolvedBlockchain,
+            defuseAssetId: assetId,
+            contractAddress: token.contractAddress || undefined,
+            address: token.contractAddress || undefined,
+          });
+        }
       } else if (assetId.startsWith('1cs_v1:')) {
         const match = assetId.match(/^1cs_v1:([^:]+):/);
         if (match) {
