@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { sendNearTransaction, sendSuiTransaction } from '@/lib/transactions';
 import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
-import { useWalletClient, useSwitchChain } from 'wagmi';
+import { useSwitchChain } from 'wagmi';
+import { getWalletClient } from 'wagmi/actions';
+import { useConfig as useWagmiConfig } from 'wagmi';
 import { isEvmChain, isNativeToken, EVM_CHAINS } from '@sapphire/shared';
 
 interface QuotePreviewProps {
@@ -28,7 +30,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
   // EVM wallet via wagmi
-  const { data: walletClient } = useWalletClient();
+  const wagmiConfig = useWagmiConfig();
   const { switchChainAsync } = useSwitchChain();
 
   // Solana wallet via Reown AppKit
@@ -260,13 +262,18 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       } else if (isEvmChain(originChain)) {
         // EVM chain transaction signing via wagmi
         try {
-          if (!walletClient) throw new Error('Please connect your EVM wallet first');
+          // Get fresh wallet client (ensures correct chain after any switch)
+          let wc = await getWalletClient(wagmiConfig);
+          if (!wc) throw new Error('Please connect your EVM wallet first');
 
           // Ensure wallet is on the correct chain
           const requiredChainId = EVM_CHAINS[originChain]?.id;
-          if (requiredChainId && walletClient.chain.id !== requiredChainId) {
+          if (requiredChainId && wc.chain.id !== requiredChainId) {
             setConfirmationStep('Switching network...');
             await switchChainAsync({ chainId: requiredChainId });
+            // Re-fetch wallet client after chain switch (old ref is stale)
+            wc = await getWalletClient(wagmiConfig);
+            if (!wc) throw new Error('Wallet disconnected during network switch');
           }
 
           setConfirmationStep('Please approve the transaction in your wallet...');
@@ -277,7 +284,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           let txHash: string;
           if (isNative) {
             // Native token transfer (ETH, BNB, AVAX, etc.)
-            txHash = await walletClient.sendTransaction({
+            txHash = await wc.sendTransaction({
               to: receivedDepositAddress as `0x${string}`,
               value: BigInt(quoteRequest.amount),
             });
@@ -286,7 +293,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             const contractAddr = originTokenMetadata?.contractAddress;
             if (!contractAddr) throw new Error('Token contract address not found');
 
-            txHash = await walletClient.writeContract({
+            txHash = await wc.writeContract({
               address: contractAddr as `0x${string}`,
               abi: [{
                 name: 'transfer',
