@@ -19,7 +19,8 @@
     "eslint": "^9.18.0",
     "prettier": "^3.4.0",
     "turbo": "^2.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "next": "^16.1.6"
   },
   "engines": {
     "node": ">=20.0.0"
