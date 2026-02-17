@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { sendNearTransaction, sendSuiTransaction } from '@/lib/transactions';
 import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
+import { useWalletClient, useSwitchChain } from 'wagmi';
+import { isEvmChain, isNativeToken, EVM_CHAINS } from '@sapphire/shared';
 
 interface QuotePreviewProps {
   quote: any;
@@ -25,6 +27,10 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   const currentAccount = useCurrentAccount();
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
+  // EVM wallet via wagmi
+  const { data: walletClient } = useWalletClient();
+  const { switchChainAsync } = useSwitchChain();
+
   // Solana wallet via Reown AppKit
   const { walletProvider: solanaProvider } = useAppKitProvider<any>('solana');
   const { isConnected: isAppKitConnected, caipAddress } = useAppKitAccount();
@@ -251,8 +257,62 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           setConfirmationStep('');
           setError(txError.message || 'Transaction cancelled. You can manually send the funds to the deposit address below.');
         }
+      } else if (isEvmChain(originChain)) {
+        // EVM chain transaction signing via wagmi
+        try {
+          if (!walletClient) throw new Error('Please connect your EVM wallet first');
+
+          // Ensure wallet is on the correct chain
+          const requiredChainId = EVM_CHAINS[originChain]?.id;
+          if (requiredChainId && walletClient.chain.id !== requiredChainId) {
+            setConfirmationStep('Switching network...');
+            await switchChainAsync({ chainId: requiredChainId });
+          }
+
+          setConfirmationStep('Please approve the transaction in your wallet...');
+
+          const tokenSymbol = originTokenMetadata?.symbol || '';
+          const isNative = isNativeToken(tokenSymbol);
+
+          let txHash: string;
+          if (isNative) {
+            // Native token transfer (ETH, BNB, AVAX, etc.)
+            txHash = await walletClient.sendTransaction({
+              to: receivedDepositAddress as `0x${string}`,
+              value: BigInt(quoteRequest.amount),
+            });
+          } else {
+            // ERC-20 token transfer
+            const contractAddr = originTokenMetadata?.contractAddress;
+            if (!contractAddr) throw new Error('Token contract address not found');
+
+            txHash = await walletClient.writeContract({
+              address: contractAddr as `0x${string}`,
+              abi: [{
+                name: 'transfer',
+                type: 'function',
+                inputs: [
+                  { name: 'to', type: 'address' },
+                  { name: 'amount', type: 'uint256' },
+                ],
+                outputs: [{ type: 'bool' }],
+              }],
+              functionName: 'transfer',
+              args: [receivedDepositAddress as `0x${string}`, BigInt(quoteRequest.amount)],
+            });
+          }
+
+          console.log('EVM transaction sent:', txHash);
+          setConfirmationStep('Transaction sent! Tracking status...');
+          onSwapInitiated(receivedDepositAddress, txHash);
+        } catch (txError: any) {
+          console.error('EVM transaction error:', txError);
+          setShowDepositInfo(true);
+          setConfirmationStep('');
+          setError(txError.shortMessage || txError.message || 'Transaction cancelled. You can manually send the funds to the deposit address below.');
+        }
       } else {
-        // For other chains, show deposit address for manual transfer
+        // For other chains (Bitcoin, Tron, etc.), show deposit address for manual transfer
         setShowDepositInfo(true);
         setConfirmationStep('');
       }

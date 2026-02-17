@@ -254,8 +254,8 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          originAsset,
-          destinationAsset,
+          originAsset: (originToken as any).defuseAssetId || originAsset,
+          destinationAsset: (destinationToken as any).defuseAssetId || destinationAsset,
           amount: amountInSmallestUnit,
           recipient,
           refundTo,
