@@ -2,30 +2,26 @@
 
 import { useState } from 'react';
 import SwapForm from '@/components/SwapForm';
-import QuotePreview from '@/components/QuotePreview';
-import TransactionModal from '@/components/TransactionModal';
+import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
+import { getChainsByType } from '@/lib/chain-logos';
 import { Zap, Shield, TrendingUp } from 'lucide-react';
 
 export default function Home() {
   const [quoteData, setQuoteData] = useState<any>(null);
-  const [depositAddress, setDepositAddress] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setTrackingAddress] = useState<string>('');
   const { history, addEntry } = useTransactionHistory();
 
   const handleQuoteReceived = (quote: any) => {
     setQuoteData(quote);
-    setError(null);
+    setShowModal(true);
   };
 
-  const handleSwapInitiated = (address: string, txHash?: string) => {
-    setDepositAddress(address);
-    setShowModal(true);
-    setError(null);
+  const handleTransferComplete = (depositAddress: string, txHash?: string) => {
+    setTrackingAddress(depositAddress);
 
-    // Save to history
     if (quoteData) {
       addEntry({
         fromChain: quoteData.fromChain || '?',
@@ -33,96 +29,98 @@ export default function Home() {
         fromToken: quoteData.originTokenMetadata?.symbol || '?',
         toToken: quoteData.destinationTokenMetadata?.symbol || '?',
         amount: quoteData.quote?.amountInFormatted || '',
-        depositAddress: address,
+        depositAddress,
         status: 'PENDING_DEPOSIT',
       });
     }
 
-    if (txHash) submitDepositTransaction(txHash, address);
-  };
-
-  const submitDepositTransaction = async (txHash: string, depAddr: string) => {
-    try {
-      const response = await fetch('/api/deposit/submit', {
+    if (txHash) {
+      fetch('/api/deposit/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash, depositAddress: depAddr }),
-      });
-      if (!response.ok) console.error('Failed to submit transaction hash to API');
-    } catch (err) {
-      console.error('Error submitting transaction:', err);
+        body: JSON.stringify({ txHash, depositAddress }),
+      }).catch(err => console.error('Error submitting tx:', err));
     }
-  };
-
-  const handleReset = () => {
-    setQuoteData(null);
-    setDepositAddress('');
-    setShowModal(false);
-    setError(null);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setTimeout(() => {
-      setQuoteData(null);
-      setDepositAddress('');
-    }, 300);
+    setTimeout(() => { setQuoteData(null); setTrackingAddress(''); }, 300);
   };
 
   const handleHistorySelect = (addr: string) => {
-    setDepositAddress(addr);
-    setShowModal(true);
+    setTrackingAddress(addr);
+    // For history items, we create a minimal quote to open tracking
+    setQuoteData(null);
+    setShowModal(false);
+    // TODO: Open a tracking-only modal
   };
+
+  const chainGroups = getChainsByType();
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Hero */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
           Send Across Any Chain, Instantly
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
-          Transfer tokens between 20+ blockchains in seconds. No bridges, no complexity.
+          Transfer tokens between 29 blockchains in seconds. No bridges, no complexity.
         </p>
       </div>
 
       <div className="space-y-6">
-        {error && (
-          <div className="card p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800">
-            <div className="flex items-start">
-              <svg className="h-5 w-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <p className="text-sm font-medium text-red-900 dark:text-red-200">{error}</p>
-            </div>
-          </div>
-        )}
-
+        {/* Swap Form */}
         <SwapForm
           onQuoteReceived={handleQuoteReceived}
-          onSwapInitiated={handleSwapInitiated}
+          onSwapInitiated={() => {}}
         />
-        
-        {quoteData && (
-          <QuotePreview
-            quote={quoteData}
-            onReset={handleReset}
-            onSwapInitiated={handleSwapInitiated}
-          />
-        )}
 
         {/* Recent Transfers */}
         <RecentTransfers history={history} onSelect={handleHistorySelect} />
+
+        {/* Supported Chains */}
+        <div className="card p-6">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Supported Chains</h3>
+          
+          {/* Wallet-connected chains */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {chainGroups.wallet.map(chain => (
+              <div key={chain.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 transition-colors hover:border-gray-300 dark:hover:border-gray-600"
+                title={chain.name}>
+                <img src={chain.icon} alt={chain.name} className="w-5 h-5 rounded-full"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{chain.name}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Destination-only */}
+          <div className="text-xs text-gray-500 dark:text-gray-500 mb-2">+ receive on</div>
+          <div className="flex flex-wrap gap-2">
+            {chainGroups.destinationOnly.map(chain => (
+              <div key={chain.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 opacity-75"
+                title={`${chain.name} (receive only)`}>
+                <img src={chain.icon} alt={chain.name} className="w-5 h-5 rounded-full"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{chain.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Transaction Modal */}
-      {showModal && depositAddress && (
-        <TransactionModal
-          depositAddress={depositAddress}
+      {/* Transfer Modal */}
+      {showModal && quoteData && (
+        <TransferModal
+          quote={quoteData}
           onClose={handleCloseModal}
+          onComplete={handleTransferComplete}
         />
       )}
 
-      {/* Features Section */}
+      {/* Features */}
       <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-6">
           <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">

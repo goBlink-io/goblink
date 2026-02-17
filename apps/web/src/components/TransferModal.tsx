@@ -1,0 +1,519 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { sendNearTransaction, sendSuiTransaction } from '@/lib/transactions';
+import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
+import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
+import { useSwitchChain, useConfig as useWagmiConfig } from 'wagmi';
+import { getWalletClient } from 'wagmi/actions';
+import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
+import { getChainLogo } from '@/lib/chain-logos';
+import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, ExternalLink, ArrowRight } from 'lucide-react';
+
+type ModalStep = 'preview' | 'confirming' | 'tracking';
+
+interface TransferModalProps {
+  quote: any;
+  onClose: () => void;
+  onComplete: (depositAddress: string, txHash?: string) => void;
+}
+
+interface TransactionData {
+  depositAddress: string;
+  status: string;
+  depositTxHash: string | null;
+  fulfillmentTxHash: string | null;
+  amountIn: string;
+  amountOut: string | null;
+  createdAt: string;
+}
+
+export default function TransferModal({ quote, onClose, onComplete }: TransferModalProps) {
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo } = quote;
+  
+  const [step, setStep] = useState<ModalStep>('preview');
+  const [confirmationStep, setConfirmationStep] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [depositAddress, setDepositAddress] = useState<string | null>(null);
+  const [transaction, setTransaction] = useState<TransactionData | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showManualDeposit, setShowManualDeposit] = useState(false);
+  
+  // Wallet hooks
+  const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const wagmiConfig = useWagmiConfig();
+  const { switchChainAsync } = useSwitchChain();
+  const { walletProvider: solanaProvider } = useAppKitProvider<any>('solana');
+  const { isConnected: isAppKitConnected, caipAddress } = useAppKitAccount();
+
+  const fromLogo = getChainLogo(fromChain);
+  const toLogo = getChainLogo(toChain);
+
+  const formatAtomicAmount = (atomicAmount: string, decimals: number) => {
+    try {
+      const num = parseFloat(atomicAmount.replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return '0';
+      const human = num / Math.pow(10, decimals);
+      return human.toLocaleString(undefined, { maximumFractionDigits: Math.min(decimals, 6), minimumFractionDigits: 2 });
+    } catch { return atomicAmount; }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getChainFromAssetId = (assetId: string): string | null => {
+    if (assetId.startsWith('nep141:')) return 'near';
+    if (assetId.startsWith('sui:') || (assetId.startsWith('0x') && assetId.includes('::'))) return 'sui';
+    if (assetId.includes('@')) return assetId.split('@')[1];
+    return null;
+  };
+
+  const getTokenAddressFromAssetId = (assetId: string): string => {
+    let address = assetId;
+    if (address.includes(':')) address = address.split(':')[1];
+    if (address.includes('@')) address = address.split('@')[0];
+    return address;
+  };
+
+  // Poll for transaction status
+  const pollStatus = useCallback(async (depAddr: string) => {
+    try {
+      const response = await fetch(`/api/status/${depAddr}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setTransaction(data);
+      
+      if (['COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'].includes(data.status)) {
+        return true; // Stop polling
+      }
+    } catch { /* retry */ }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'tracking' || !depositAddress) return;
+    
+    pollStatus(depositAddress);
+    const interval = setInterval(async () => {
+      const done = await pollStatus(depositAddress);
+      if (done) clearInterval(interval);
+    }, 6000);
+    
+    return () => clearInterval(interval);
+  }, [step, depositAddress, pollStatus]);
+
+  const handleConfirm = async () => {
+    setStep('confirming');
+    setError(null);
+    setConfirmationStep('Getting transfer address...');
+    
+    try {
+      // Get actual deposit address
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...quoteRequest, dry: false }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to get transfer address');
+      }
+
+      const actualQuote = await response.json();
+      const depAddr = actualQuote.depositAddress || actualQuote.quote?.depositAddress || actualQuote.address;
+      if (!depAddr) throw new Error('No deposit address in response');
+      
+      setDepositAddress(depAddr);
+      const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
+
+      // NEAR
+      if (originChain === 'near') {
+        setConfirmationStep('Approve in your NEAR wallet...');
+        const tokenAddress = getTokenAddressFromAssetId(quoteRequest.originAsset);
+        const txHash = await sendNearTransaction({
+          chain: 'near', tokenAddress, recipientAddress: depAddr,
+          amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 18,
+        });
+        onComplete(depAddr, txHash);
+        setStep('tracking');
+      }
+      // Sui
+      else if (originChain === 'sui') {
+        if (!currentAccount) throw new Error('Connect your Sui wallet first');
+        setConfirmationStep('Approve in your Sui wallet...');
+        const txHash = await sendSuiTransaction({
+          chain: 'sui', tokenAddress: 'native', recipientAddress: depAddr,
+          amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
+        }, suiClient, currentAccount, signAndExecuteTransaction);
+        onComplete(depAddr, txHash);
+        setStep('tracking');
+      }
+      // Solana
+      else if (originChain === 'solana') {
+        if (!solanaProvider || !isAppKitConnected || !caipAddress?.startsWith('solana:'))
+          throw new Error('Connect your Solana wallet first');
+        
+        setConfirmationStep('Preparing Solana transaction...');
+        const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
+        const fromPubkey = new PublicKey(solanaProvider.publicKey);
+        const toPubkey = new PublicKey(depAddr);
+        const lamports = Number(BigInt(quoteRequest.amount));
+        
+        const blockhashRes = await fetch('/api/balances/solana-blockhash');
+        if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
+        const { blockhash } = await blockhashRes.json();
+        
+        const transaction = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey })
+          .add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports }));
+        
+        setConfirmationStep('Approve in your Solana wallet...');
+        const signed = typeof solanaProvider.signTransaction === 'function'
+          ? await solanaProvider.signTransaction(transaction)
+          : (await solanaProvider.signAllTransactions([transaction]))[0];
+        
+        setConfirmationStep('Broadcasting...');
+        const base64Tx = btoa(String.fromCharCode(...new Uint8Array(signed.serialize())));
+        const sendRes = await fetch('/api/balances/solana-rpc', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 1, method: 'sendTransaction',
+            params: [base64Tx, { encoding: 'base64', skipPreflight: false, preflightCommitment: 'confirmed' }],
+          }),
+        });
+        const sendData = await sendRes.json();
+        if (sendData.error) throw new Error(sendData.error.message || 'Failed to broadcast');
+        
+        onComplete(depAddr, sendData.result);
+        setStep('tracking');
+      }
+      // EVM
+      else if (isEvmChain(originChain!)) {
+        let wc = await getWalletClient(wagmiConfig);
+        if (!wc) throw new Error('Connect your EVM wallet first');
+        
+        const requiredChainId = EVM_CHAINS[originChain!]?.id;
+        if (requiredChainId && wc.chain.id !== requiredChainId) {
+          setConfirmationStep('Switching network...');
+          await switchChainAsync({ chainId: requiredChainId });
+          wc = await getWalletClient(wagmiConfig);
+          if (!wc) throw new Error('Wallet disconnected during switch');
+        }
+        
+        setConfirmationStep('Approve in your wallet...');
+        const isNative = isNativeToken(originTokenMetadata?.symbol || '');
+        let txHash: string;
+        
+        if (isNative) {
+          txHash = await wc.sendTransaction({
+            to: depAddr as `0x${string}`, value: BigInt(quoteRequest.amount),
+          });
+        } else {
+          const contractAddr = originTokenMetadata?.contractAddress;
+          if (!contractAddr) throw new Error('Token contract address not found');
+          txHash = await wc.writeContract({
+            address: contractAddr as `0x${string}`,
+            abi: [{ name: 'transfer', type: 'function', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] }],
+            functionName: 'transfer',
+            args: [depAddr as `0x${string}`, BigInt(quoteRequest.amount)],
+          });
+        }
+        
+        onComplete(depAddr, txHash);
+        setStep('tracking');
+      }
+      // Other chains — manual deposit
+      else {
+        setShowManualDeposit(true);
+        setStep('preview');
+        setConfirmationStep('');
+      }
+    } catch (err: any) {
+      console.error('Transfer error:', err);
+      if (depositAddress) {
+        // Wallet rejected but we have deposit address — show manual option
+        setShowManualDeposit(true);
+        setStep('preview');
+      } else {
+        setStep('preview');
+      }
+      setError(err.shortMessage || err.message || 'Transfer failed');
+      setConfirmationStep('');
+    }
+  };
+
+  const handleManualDeposit = () => {
+    if (depositAddress) {
+      onComplete(depositAddress);
+      setStep('tracking');
+    }
+  };
+
+  const getExplorerLink = (txHash: string, chain: string) => {
+    if (isEvmChain(chain)) return getExplorerTxUrl(chain, txHash);
+    if (chain === 'solana') return `https://solscan.io/tx/${txHash}`;
+    if (chain === 'near') return `https://nearblocks.io/txns/${txHash}`;
+    if (chain === 'sui') return `https://suiscan.xyz/mainnet/tx/${txHash}`;
+    return `https://explorer.near-intents.org/`;
+  };
+
+  const getStatusDisplay = (status: string) => {
+    const s = status?.toUpperCase();
+    if (s === 'SUCCESS' || s === 'COMPLETED') return { icon: <Check className="h-6 w-6" />, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Complete!' };
+    if (s === 'FAILED' || s === 'REFUNDED') return { icon: <AlertTriangle className="h-6 w-6" />, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: s === 'REFUNDED' ? 'Refunded' : 'Failed' };
+    if (s === 'PROCESSING' || s === 'DEPOSIT_RECEIVED') return { icon: <Loader2 className="h-6 w-6 animate-spin" />, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30', label: 'Processing...' };
+    return { icon: <Loader2 className="h-6 w-6 animate-spin" />, color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-900/30', label: 'Waiting for deposit...' };
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-end sm:items-center justify-center sm:p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={step !== 'confirming' ? onClose : undefined} />
+        
+        <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-lg w-full transform transition-all max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {step === 'preview' && 'Confirm Transfer'}
+              {step === 'confirming' && 'Processing...'}
+              {step === 'tracking' && 'Transfer Status'}
+            </h2>
+            {step !== 'confirming' && (
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            )}
+          </div>
+
+          <div className="p-6">
+            {/* ── STEP: PREVIEW ── */}
+            {step === 'preview' && (
+              <div className="space-y-5">
+                {/* From → To visual */}
+                <div className="space-y-3">
+                  {/* You Send */}
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">You send</div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {fromLogo && <img src={fromLogo.icon} alt={fromLogo.name} className="w-8 h-8 rounded-full" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">{originTokenMetadata?.symbol}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">on {fromLogo?.name || fromChain}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900 dark:text-white">{quoteData.amountInFormatted}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">${quoteData.amountInUsd}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center -my-1">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-4 border-white dark:border-gray-900">
+                      <ArrowDown className="h-4 w-4 text-gray-500" />
+                    </div>
+                  </div>
+
+                  {/* You Receive */}
+                  <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                    <div className="text-xs text-green-600 dark:text-green-400 mb-2">You receive</div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {toLogo && <img src={toLogo.icon} alt={toLogo.name} className="w-8 h-8 rounded-full" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">{destinationTokenMetadata?.symbol}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">on {toLogo?.name || toChain}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600 dark:text-green-400">{quoteData.amountOutFormatted}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">${quoteData.amountOutUsd}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-gray-500 dark:text-gray-400">Minimum received</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {destinationTokenMetadata
+                        ? formatAtomicAmount(quoteData.minAmountOut, destinationTokenMetadata.decimals)
+                        : quoteData.minAmountOut} {destinationTokenMetadata?.symbol}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-gray-500 dark:text-gray-400">Estimated time</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{quoteData.timeEstimate}s</span>
+                  </div>
+                  {feeInfo && (
+                    <div className="flex justify-between py-1.5">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Fee {feeInfo.tier && feeInfo.tier !== 'Standard' && <span className="text-green-500 text-xs">({feeInfo.tier})</span>}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {feeInfo.estimatedUsd ? `$${feeInfo.estimatedUsd}` : `${feeInfo.percent}%`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-gray-500 dark:text-gray-400">Price protection</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{(quoteRequest.slippageTolerance / 100)}%</span>
+                  </div>
+                </div>
+
+                {/* Manual deposit (shown when wallet signing failed or unsupported chain) */}
+                {showManualDeposit && depositAddress && (
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <div className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Transfer Address</div>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
+                      Send {quoteData.amountInFormatted} to complete the transfer:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 px-3 py-2 bg-white dark:bg-gray-900 rounded-lg border border-blue-200 dark:border-blue-700 text-xs break-all font-mono text-gray-900 dark:text-gray-100">
+                        {depositAddress}
+                      </code>
+                      <button onClick={() => copyToClipboard(depositAddress)}
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <button onClick={handleManualDeposit}
+                      className="w-full mt-3 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors text-sm">
+                      I&apos;ve Sent — Track Status
+                    </button>
+                  </div>
+                )}
+
+                {/* Error */}
+                {error && (
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  </div>
+                )}
+
+                {/* Confirm button */}
+                {!showManualDeposit && (
+                  <button onClick={handleConfirm}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold hover:opacity-90 transition-all text-base shadow-lg">
+                    Confirm Transfer
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ── STEP: CONFIRMING ── */}
+            {step === 'confirming' && (
+              <div className="flex flex-col items-center py-12">
+                <div className="relative w-20 h-20 mb-6">
+                  <div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-800 animate-ping" />
+                  <div className="absolute inset-2 rounded-full border-4 border-blue-400 animate-pulse" />
+                  <div className="absolute inset-4 rounded-full bg-blue-600 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {confirmationStep || 'Processing...'}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs">
+                  Please don&apos;t close this window. Check your wallet for approval.
+                </p>
+              </div>
+            )}
+
+            {/* ── STEP: TRACKING ── */}
+            {step === 'tracking' && (
+              <div className="space-y-5">
+                {/* Status badge */}
+                {transaction ? (
+                  <>
+                    {(() => {
+                      const s = getStatusDisplay(transaction.status);
+                      return (
+                        <div className={`flex flex-col items-center py-6 rounded-xl ${s.bg}`}>
+                          <div className={`mb-3 ${s.color}`}>{s.icon}</div>
+                          <div className={`text-lg font-bold ${s.color}`}>{s.label}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider">{transaction.status}</div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Transfer summary */}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <div className="flex items-center gap-2">
+                        {fromLogo && <img src={fromLogo.icon} alt="" className="w-6 h-6 rounded-full" />}
+                        <span className="font-medium text-gray-900 dark:text-white text-sm">{quoteData.amountInFormatted}</span>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-gray-400" />
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-green-600 dark:text-green-400 text-sm">
+                          {transaction.amountOut || quoteData.amountOutFormatted}
+                        </span>
+                        {toLogo && <img src={toLogo.icon} alt="" className="w-6 h-6 rounded-full" />}
+                      </div>
+                    </div>
+
+                    {/* Transaction hashes */}
+                    {(transaction.depositTxHash || transaction.fulfillmentTxHash) && (
+                      <div className="space-y-2">
+                        {transaction.depositTxHash && (
+                          <a href={getExplorerLink(transaction.depositTxHash, fromChain)} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">Deposit tx</div>
+                              <code className="text-xs font-mono text-gray-700 dark:text-gray-300">
+                                {transaction.depositTxHash.slice(0, 10)}...{transaction.depositTxHash.slice(-8)}
+                              </code>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-gray-400" />
+                          </a>
+                        )}
+                        {transaction.fulfillmentTxHash && (
+                          <a href={getExplorerLink(transaction.fulfillmentTxHash, toChain)} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                            <div>
+                              <div className="text-xs text-green-600 dark:text-green-400">Fulfillment tx</div>
+                              <code className="text-xs font-mono text-green-700 dark:text-green-300">
+                                {transaction.fulfillmentTxHash.slice(0, 10)}...{transaction.fulfillmentTxHash.slice(-8)}
+                              </code>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-green-400" />
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center py-12">
+                    <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Waiting for confirmation...</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">This may take a few moments</p>
+                  </div>
+                )}
+
+                {/* Action button */}
+                <button onClick={onClose}
+                  className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                    transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS'
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}>
+                  {transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS' ? 'Done' : 'Close'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
