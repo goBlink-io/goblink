@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import * as oneclick from '@/lib/server/oneclick';
-import { enrichTokenData } from '@/lib/server/dexscreener';
 import tokenIcons from '@/data/token-icons.json';
 
 // Cache token list for 5 minutes
 export const revalidate = 300;
 
-function applyIconsToAllTokens(tokens: Record<string, unknown>[]): void {
+function applyIcons(tokens: Record<string, unknown>[]): void {
   for (const token of tokens) {
     const normalizedSymbol = (token.symbol as string).replace(/\.(omft|omdep)$/i, '');
     const iconUrl = (tokenIcons as Record<string, string>)[normalizedSymbol];
@@ -14,25 +13,15 @@ function applyIconsToAllTokens(tokens: Record<string, unknown>[]): void {
   }
 }
 
-async function enrichTokensWithPricing(tokens: Record<string, unknown>[]): Promise<void> {
-  // Batch pricing lookups with concurrency limit
-  const BATCH_SIZE = 5;
-  for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
-    const batch = tokens.slice(i, i + BATCH_SIZE);
-    await Promise.allSettled(
-      batch.map(async (token) => {
-        try {
-          const priceData = await enrichTokenData(
-            token.blockchain as string, token.contractAddress as string, token.symbol as string
-          );
-          if (priceData.priceUsd) {
-            token.priceUsd = priceData.priceUsd;
-            token.priceChange24h = priceData.priceChange24h;
-          }
-        } catch { /* skip */ }
-      })
-    );
+/** Carry over the `price` field from 1Click API as `priceUsd` */
+function applyPricing(token: Record<string, unknown>): void {
+  const price = token.price as number | undefined;
+  if (price != null && price > 0) {
+    token.priceUsd = String(price);
   }
+  // Remove raw field so clients get a consistent shape
+  delete token.price;
+  delete token.priceUpdatedAt;
 }
 
 // Map 1Click API chain prefixes → our blockchain names
@@ -110,10 +99,7 @@ export async function GET() {
           }
         }
       } else if (assetId.startsWith('nep245:')) {
-        // HOT protocol tokens (BSC, Polygon, Optimism, Avalanche, TON, Stellar, Monad, Plasma, XLayer)
-        // Detect native chain tokens (suffix _11111111111111111111 = native gas token)
         const isNativeHot = assetId.includes('_11111111111111111111');
-        // Extract chain ID from nep245:v2_1.omni.hot.tg:<chainId>_...
         const chainIdMatch = assetId.match(/:(\d+)_/);
         const hotChainId = chainIdMatch ? parseInt(chainIdMatch[1]) : null;
         const HOT_CHAIN_ID_MAP: Record<number, string> = {
@@ -124,7 +110,6 @@ export async function GET() {
         const resolvedBlockchain = (hotChainId && HOT_CHAIN_ID_MAP[hotChainId]) || apiBlockchain;
 
         if (isNativeHot && hotChainId) {
-          // Native gas token — set assetId to 'native' for wallet signing
           nativeChainTokens.push({
             ...token,
             assetId: 'native',
@@ -157,28 +142,10 @@ export async function GET() {
     });
 
     const allTokens = [...nearTokens, ...nativeChainTokens];
-    applyIconsToAllTokens(allTokens);
 
-    // Enrich priority tokens with DexScreener pricing
-    const prioritySymbols = new Set(['USDT', 'USDC', 'ETH', 'BTC', 'WBTC', 'SOL', 'SUI', 'ARB', 'OP', 'BNB', 'AVAX', 'MATIC']);
-    const priorityTokens = nativeChainTokens
-      .filter(t =>
-        t.contractAddress && t.contractAddress !== 'native' &&
-        prioritySymbols.has(t.symbol as string)
-      )
-      .slice(0, 15);
-
-    if (priorityTokens.length > 0) {
-      try { await enrichTokensWithPricing(priorityTokens); } catch { /* skip */ }
-    }
-
-    // Background enrichment for remaining tokens (non-blocking)
-    const remainingTokens = nativeChainTokens
-      .filter(t => t.contractAddress && t.contractAddress !== 'native' && !priorityTokens.includes(t))
-      .slice(0, 40);
-    if (remainingTokens.length > 0) {
-      enrichTokensWithPricing(remainingTokens).catch(() => {});
-    }
+    // Apply static icons + 1Click pricing (no external API calls needed)
+    applyIcons(allTokens);
+    allTokens.forEach(applyPricing);
 
     return NextResponse.json(allTokens, {
       headers: {
