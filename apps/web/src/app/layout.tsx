@@ -8,7 +8,7 @@ import UnifiedConnectButton from '@/components/UnifiedConnectButton';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Blink - Cross-Chain Transfers Made Simple',
+  title: 'goBlink - Cross-Chain Transfers Made Simple',
   description: 'Send and convert tokens across 20+ blockchains in seconds. No bridges, no complexity.',
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({
                   <div className="flex items-center space-x-2">
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
                     <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      Blink
+                      goBlink
                     </span>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -45,7 +45,7 @@ export default function RootLayout({
               <div className="container mx-auto px-4 text-center text-sm text-gray-600">
                 <p>Cross-chain transfers made simple</p>
                 <p className="mt-2">Supporting 20+ blockchains including Ethereum, Bitcoin, Solana, NEAR, and more</p>
-                <p className="mt-2 text-xs">&copy; 2026 Blink. Powered by NEAR Intents.</p>
+                <p className="mt-2 text-xs">&copy; 2026 goBlink. Powered by NEAR Intents.</p>
               </div>
             </footer>
           </div>

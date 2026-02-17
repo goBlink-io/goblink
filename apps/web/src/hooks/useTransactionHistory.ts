@@ -14,7 +14,7 @@ export interface HistoryEntry {
   timestamp: number;
 }
 
-const STORAGE_KEY = 'blink_tx_history';
+const STORAGE_KEY = 'goblink_tx_history';
 const MAX_ENTRIES = 20;
 
 function loadHistory(): HistoryEntry[] {

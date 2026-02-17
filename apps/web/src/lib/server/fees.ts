@@ -76,5 +76,5 @@ export const calculateEffectiveFeeBps = (amountUsd?: number): number => {
 export const getFeeTiers = (): FeeTier[] => feeTiers;
 
 export const getFeeRecipient = (): string => {
-  return process.env.APP_FEE_RECIPIENT || 'urbanblazer.near';
+  return process.env.APP_FEE_RECIPIENT || 'goblink.near';
 };
