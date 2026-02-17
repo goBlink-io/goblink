@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getExplorerTxUrl, EVM_CHAINS } from '@/lib/chains';
+import { getExplorerTxUrl, EVM_CHAINS } from '@goblink/shared';
 
 interface TransactionData {
   depositAddress: string;
@@ -37,7 +37,7 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
       if (!depositAddress) return;
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/status/${depositAddress}`);
+        const response = await fetch(`/api/status/${depositAddress}`);
         
         if (!response.ok) {
           // Handle 404 and 429 silently - don't stress users with error messages
@@ -208,8 +208,8 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-2xl font-bold text-gray-900">Transaction Status</h2>

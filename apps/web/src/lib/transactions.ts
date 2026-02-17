@@ -1,7 +1,7 @@
 'use client';
 
 import { getNearConnector } from './nearConnector';
-import { parseNearAmount } from 'near-api-js/lib/utils/format';
+// import { parseNearAmount } from 'near-api-js/lib/utils/format'; // TODO: Re-enable when needed
 
 export interface TransactionParams {
   chain: string;
@@ -59,7 +59,7 @@ export async function sendNearTransaction(params: TransactionParams): Promise<st
               args: {
                 receiver_id: recipientAddress,
                 amount: amount,
-                memo: 'Sapphire cross-chain swap',
+                memo: 'goBlink cross-chain transfer',
               },
               gas: '30000000000000', // 30 TGas
               deposit: '1', // 1 yoctoNEAR for storage
@@ -92,7 +92,7 @@ export async function sendEvmTransaction(
 
   try {
     const signer = await provider.getSigner();
-    const userAddress = await signer.getAddress();
+    void signer.getAddress(); // Validates signer is available
 
     // Check if it's a native token transfer or ERC-20
     const isNativeToken = tokenAddress === '0x0000000000000000000000000000000000000000' || 
@@ -213,7 +213,8 @@ export async function sendSuiTransaction(
   currentAccount: any,
   signAndExecuteTransaction: any
 ): Promise<string> {
-  const { tokenAddress, recipientAddress, amount, decimals } = params;
+  const { tokenAddress, recipientAddress, amount } = params;
+  void suiClient; // Reserved for direct Sui RPC calls
 
   if (!currentAccount) {
     throw new Error('Sui wallet not connected');
@@ -252,6 +253,166 @@ export async function sendSuiTransaction(
 }
 
 /**
+ * Trigger a token transfer transaction for Aptos
+ */
+export async function sendAptosTransaction(
+  params: TransactionParams,
+  signAndSubmitTransaction: any
+): Promise<string> {
+  const { tokenAddress, recipientAddress, amount } = params;
+
+  if (!signAndSubmitTransaction) {
+    throw new Error('Aptos wallet not connected');
+  }
+
+  try {
+    const isNativeApt = tokenAddress === 'native' || tokenAddress === 'apt' ||
+                        tokenAddress === '0x1::aptos_coin::AptosCoin';
+
+    if (isNativeApt) {
+      const payload = {
+        type: 'entry_function_payload',
+        function: '0x1::aptos_account::transfer',
+        type_arguments: [],
+        arguments: [recipientAddress, amount],
+      };
+      const result = await signAndSubmitTransaction({ payload });
+      return result.hash;
+    } else {
+      // Fungible asset transfer
+      const payload = {
+        type: 'entry_function_payload',
+        function: '0x1::primary_fungible_store::transfer',
+        type_arguments: [tokenAddress],
+        arguments: [recipientAddress, amount],
+      };
+      const result = await signAndSubmitTransaction({ payload });
+      return result.hash;
+    }
+  } catch (error) {
+    console.error('Aptos transaction failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Trigger a token transfer transaction for Starknet
+ */
+export async function sendStarknetTransaction(
+  params: TransactionParams,
+  account: any
+): Promise<string> {
+  const { tokenAddress, recipientAddress, amount } = params;
+
+  if (!account) {
+    throw new Error('Starknet wallet not connected');
+  }
+
+  try {
+    const { uint256, CallData } = await import('starknet');
+    const amountUint256 = uint256.bnToUint256(amount);
+
+    const result = await account.execute({
+      contractAddress: tokenAddress,
+      entrypoint: 'transfer',
+      calldata: CallData.compile({
+        recipient: recipientAddress,
+        amount: amountUint256,
+      }),
+    });
+
+    return result.transaction_hash;
+  } catch (error) {
+    console.error('Starknet transaction failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Trigger a token transfer transaction for TON
+ */
+export async function sendTonTransaction(
+  params: TransactionParams,
+  tonConnectUI: any
+): Promise<string> {
+  const { recipientAddress, amount, tokenAddress } = params;
+
+  if (!tonConnectUI) {
+    throw new Error('TON wallet not connected');
+  }
+
+  try {
+    const isNativeTon = tokenAddress === 'native' || tokenAddress === 'ton';
+
+    if (isNativeTon) {
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300, // 5 min
+        messages: [{
+          address: recipientAddress,
+          amount: amount, // in nanotons
+        }],
+      });
+      return result.boc; // TON returns BOC (Bag of Cells)
+    } else {
+      // Jetton transfer — requires calling the jetton wallet contract
+      // For now, encode a simple jetton transfer
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{
+          address: tokenAddress, // Jetton wallet address
+          amount: '50000000', // 0.05 TON for gas
+          payload: '', // TODO: Encode jetton transfer payload
+        }],
+      });
+      return result.boc;
+    }
+  } catch (error) {
+    console.error('TON transaction failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Trigger a token transfer transaction for Tron
+ */
+export async function sendTronTransaction(
+  params: TransactionParams,
+  signTransaction: any,
+  address: string
+): Promise<string> {
+  const { tokenAddress, recipientAddress, amount } = params;
+
+  if (!signTransaction || !address) {
+    throw new Error('Tron wallet not connected');
+  }
+
+  try {
+    const isNativeTrx = tokenAddress === 'native' || tokenAddress === 'trx';
+
+    // Access TronWeb from window (injected by TronLink)
+    const tronWeb = (window as any).tronWeb;
+    if (!tronWeb) {
+      throw new Error('TronWeb not available. Please install TronLink.');
+    }
+
+    if (isNativeTrx) {
+      const tx = await tronWeb.transactionBuilder.sendTrx(recipientAddress, parseInt(amount), address);
+      const signedTx = await signTransaction(tx);
+      const result = await tronWeb.trx.sendRawTransaction(signedTx);
+      return result.txid || result.transaction?.txID || 'unknown';
+    } else {
+      // TRC-20 transfer
+      const contract = await tronWeb.contract().at(tokenAddress);
+      const result = await contract.transfer(recipientAddress, amount).send();
+      return result;
+    }
+  } catch (error) {
+    console.error('Tron transaction failed:', error);
+    throw error;
+  }
+}
+
+/**
  * Main function to send a transaction based on chain type
  */
 export async function sendTransaction(
@@ -263,13 +424,18 @@ export async function sendTransaction(
     suiClient?: any;
     suiAccount?: any;
     suiSignAndExecute?: any;
+    aptosSignAndSubmit?: any;
+    starknetAccount?: any;
+    tonConnectUI?: any;
+    tronSignTransaction?: any;
+    tronAddress?: string;
   }
 ): Promise<string> {
   const chain = params.chain.toLowerCase();
 
   if (chain === 'near') {
     return sendNearTransaction(params);
-  } else if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base'].includes(chain)) {
+  } else if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'bsc', 'berachain', 'monad', 'avalanche', 'gnosis', 'aurora', 'plasma', 'xlayer', 'adi'].includes(chain)) {
     if (!chainContext?.evmProvider) {
       throw new Error('EVM provider not available');
     }
@@ -278,21 +444,32 @@ export async function sendTransaction(
     if (!chainContext?.solanaConnection || !chainContext?.solanaWallet) {
       throw new Error('Solana connection or wallet not available');
     }
-    return sendSolanaTransaction(
-      params,
-      chainContext.solanaConnection,
-      chainContext.solanaWallet
-    );
+    return sendSolanaTransaction(params, chainContext.solanaConnection, chainContext.solanaWallet);
   } else if (chain === 'sui') {
     if (!chainContext?.suiClient || !chainContext?.suiAccount || !chainContext?.suiSignAndExecute) {
       throw new Error('Sui client, account, or sign function not available');
     }
-    return sendSuiTransaction(
-      params,
-      chainContext.suiClient,
-      chainContext.suiAccount,
-      chainContext.suiSignAndExecute
-    );
+    return sendSuiTransaction(params, chainContext.suiClient, chainContext.suiAccount, chainContext.suiSignAndExecute);
+  } else if (chain === 'aptos') {
+    if (!chainContext?.aptosSignAndSubmit) {
+      throw new Error('Aptos wallet not available');
+    }
+    return sendAptosTransaction(params, chainContext.aptosSignAndSubmit);
+  } else if (chain === 'starknet') {
+    if (!chainContext?.starknetAccount) {
+      throw new Error('Starknet wallet not available');
+    }
+    return sendStarknetTransaction(params, chainContext.starknetAccount);
+  } else if (chain === 'ton') {
+    if (!chainContext?.tonConnectUI) {
+      throw new Error('TON wallet not available');
+    }
+    return sendTonTransaction(params, chainContext.tonConnectUI);
+  } else if (chain === 'tron') {
+    if (!chainContext?.tronSignTransaction || !chainContext?.tronAddress) {
+      throw new Error('Tron wallet not available');
+    }
+    return sendTronTransaction(params, chainContext.tronSignTransaction, chainContext.tronAddress);
   } else {
     throw new Error(`Unsupported chain: ${chain}`);
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SwapStatus } from '@sapphire/shared';
+import { SwapStatus } from '@goblink/shared';
 
 interface StatusTrackerProps {
   depositAddress: string;
@@ -32,7 +32,7 @@ export default function StatusTracker({ depositAddress, onReset }: StatusTracker
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/status/${depositAddress}`);
+      const response = await fetch(`/api/status/${depositAddress}`);
       
       if (!response.ok) {
         if (response.status === 404) {

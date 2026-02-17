@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { sendNearTransaction, sendSuiTransaction } from '@/lib/transactions';
 import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
+import { useSwitchChain } from 'wagmi';
+import { getWalletClient } from 'wagmi/actions';
+import { useConfig as useWagmiConfig } from 'wagmi';
+import { isEvmChain, isNativeToken, EVM_CHAINS } from '@goblink/shared';
 
 interface QuotePreviewProps {
   quote: any;
@@ -12,18 +16,23 @@ interface QuotePreviewProps {
 }
 
 export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuotePreviewProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain: _toChain, feeInfo } = quote;
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationStep, setConfirmationStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [depositAddress, setDepositAddress] = useState<string | null>(null);
   const [showDepositInfo, setShowDepositInfo] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Sui wallet hooks
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
+  // EVM wallet via wagmi
+  const wagmiConfig = useWagmiConfig();
+  const { switchChainAsync } = useSwitchChain();
+
   // Solana wallet via Reown AppKit
   const { walletProvider: solanaProvider } = useAppKitProvider<any>('solana');
   const { isConnected: isAppKitConnected, caipAddress } = useAppKitAccount();
@@ -59,7 +68,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
     
     try {
       // Step 1: Get actual quote with deposit address (dry: false)
-      const response = await fetch('http://localhost:3001/api/quote', {
+      const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,7 +187,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           
           // Step 1: Fetch blockhash via backend proxy
           console.log('[SOL] Fetching blockhash...');
-          const blockhashRes = await fetch('http://localhost:3001/api/balances/solana-blockhash');
+          const blockhashRes = await fetch('/api/balances/solana-blockhash');
           if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
           const { blockhash } = await blockhashRes.json();
           console.log('[SOL] Blockhash:', blockhash);
@@ -214,15 +223,13 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           // Step 4: Broadcast via backend proxy
           setConfirmationStep('Broadcasting transaction...');
           const serialized = signed.serialize();
-          // Convert to base58 for Solana RPC (default encoding)
-          const bs58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
           const bytes = new Uint8Array(serialized);
           
           // Use base64 encoding which is simpler and supported
           const base64Tx = btoa(String.fromCharCode(...bytes));
           console.log('[SOL] Broadcasting transaction, size:', bytes.length);
           
-          const sendRes = await fetch('http://localhost:3001/api/balances/solana-rpc', {
+          const sendRes = await fetch('/api/balances/solana-rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -252,8 +259,67 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           setConfirmationStep('');
           setError(txError.message || 'Transaction cancelled. You can manually send the funds to the deposit address below.');
         }
+      } else if (isEvmChain(originChain)) {
+        // EVM chain transaction signing via wagmi
+        try {
+          // Get fresh wallet client (ensures correct chain after any switch)
+          let wc = await getWalletClient(wagmiConfig);
+          if (!wc) throw new Error('Please connect your EVM wallet first');
+
+          // Ensure wallet is on the correct chain
+          const requiredChainId = EVM_CHAINS[originChain]?.id;
+          if (requiredChainId && wc.chain.id !== requiredChainId) {
+            setConfirmationStep('Switching network...');
+            await switchChainAsync({ chainId: requiredChainId });
+            // Re-fetch wallet client after chain switch (old ref is stale)
+            wc = await getWalletClient(wagmiConfig);
+            if (!wc) throw new Error('Wallet disconnected during network switch');
+          }
+
+          setConfirmationStep('Please approve the transaction in your wallet...');
+
+          const tokenSymbol = originTokenMetadata?.symbol || '';
+          const isNative = isNativeToken(tokenSymbol);
+
+          let txHash: string;
+          if (isNative) {
+            // Native token transfer (ETH, BNB, AVAX, etc.)
+            txHash = await wc.sendTransaction({
+              to: receivedDepositAddress as `0x${string}`,
+              value: BigInt(quoteRequest.amount),
+            });
+          } else {
+            // ERC-20 token transfer
+            const contractAddr = originTokenMetadata?.contractAddress;
+            if (!contractAddr) throw new Error('Token contract address not found');
+
+            txHash = await wc.writeContract({
+              address: contractAddr as `0x${string}`,
+              abi: [{
+                name: 'transfer',
+                type: 'function',
+                inputs: [
+                  { name: 'to', type: 'address' },
+                  { name: 'amount', type: 'uint256' },
+                ],
+                outputs: [{ type: 'bool' }],
+              }],
+              functionName: 'transfer',
+              args: [receivedDepositAddress as `0x${string}`, BigInt(quoteRequest.amount)],
+            });
+          }
+
+          console.log('EVM transaction sent:', txHash);
+          setConfirmationStep('Transaction sent! Tracking status...');
+          onSwapInitiated(receivedDepositAddress, txHash);
+        } catch (txError: any) {
+          console.error('EVM transaction error:', txError);
+          setShowDepositInfo(true);
+          setConfirmationStep('');
+          setError(txError.shortMessage || txError.message || 'Transaction cancelled. You can manually send the funds to the deposit address below.');
+        }
       } else {
-        // For other chains, show deposit address for manual transfer
+        // For other chains (Bitcoin, Tron, etc.), show deposit address for manual transfer
         setShowDepositInfo(true);
         setConfirmationStep('');
       }
@@ -276,7 +342,8 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Helper to extract chain from asset ID
@@ -319,7 +386,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   return (
     <div className="card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">Quote Preview</h3>
+        <h3 className="text-xl font-semibold">Transfer Preview</h3>
         <button
           onClick={onReset}
           className="text-sm text-gray-500 hover:text-gray-700"
@@ -375,7 +442,25 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           </div>
 
           {/* Fees */}
-          {quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
+          {/* Fee display — show dollar amount (behavioral: absolute feels smaller) */}
+          {feeInfo && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">
+                Platform fee
+                {feeInfo.tier && feeInfo.tier !== 'Standard' && (
+                  <span className="ml-1 text-xs text-green-600 font-medium">
+                    ({feeInfo.tier} rate)
+                  </span>
+                )}
+              </span>
+              <span className="font-medium">
+                {feeInfo.estimatedUsd
+                  ? `$${feeInfo.estimatedUsd}`
+                  : `${feeInfo.percent}%`}
+              </span>
+            </div>
+          )}
+          {!feeInfo && quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Platform fee</span>
               <span className="font-medium">
@@ -386,7 +471,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
 
           {/* Slippage */}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Max slippage</span>
+            <span className="text-gray-600">Price protection</span>
             <span className="font-medium">{(quoteRequest.slippageTolerance / 100)}%</span>
           </div>
         </div>
@@ -395,9 +480,9 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       {/* Deposit Address Info (shown after getting deposit address for non-NEAR or on error) */}
       {showDepositInfo && depositAddress && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">Deposit Address</h4>
+          <h4 className="font-semibold text-blue-900 mb-2">Transfer Address</h4>
           <p className="text-sm text-blue-800 mb-3">
-            Send {quoteData.amountInFormatted} to the address below to complete the swap:
+            Send {quoteData.amountInFormatted} to the address below to complete the transfer:
           </p>
           <div className="flex items-center space-x-2">
             <code className="flex-1 px-3 py-2 bg-white rounded border border-blue-300 text-sm break-all">
@@ -407,14 +492,14 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
               onClick={() => copyToClipboard(depositAddress)}
               className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
             >
-              Copy
+              {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
           <button
             onClick={handleManualDeposit}
             className="btn btn-primary w-full mt-4"
           >
-            I've Sent the Funds - Track Status
+            I&apos;ve Sent the Funds — Track Status
           </button>
         </div>
       )}
@@ -435,7 +520,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
               {confirmationStep || 'Processing...'}
             </span>
           ) : (
-            'Confirm Swap'
+            'Confirm Transfer'
           )}
         </button>
       )}
@@ -459,10 +544,10 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             <strong>Next steps:</strong>
           </p>
           <ol className="mt-2 text-sm text-blue-800 list-decimal list-inside space-y-1">
-            <li>Review the quote details carefully</li>
-            <li>Click "Confirm Swap" to initiate</li>
-            <li>Sign the transaction in your wallet (NEAR auto-triggers)</li>
-            <li>Track the swap status in real-time</li>
+            <li>Review the transfer details above</li>
+            <li>Click &quot;Confirm Transfer&quot; to proceed</li>
+            <li>Approve the transaction in your wallet</li>
+            <li>Track the transfer status in real-time</li>
           </ol>
         </div>
       )}

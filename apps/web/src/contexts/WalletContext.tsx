@@ -5,8 +5,12 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { useAppKitAccount, useDisconnect as useAppKitDisconnect } from '@reown/appkit/react';
 import { useCurrentAccount as useSuiAccount } from '@mysten/dapp-kit';
 import { initNearConnector, disconnectNearWallet, getNearAccount } from '@/lib/nearConnector';
+import { useWallet as useAptosWallet } from '@aptos-labs/wallet-adapter-react';
+import { useAccount as useStarknetAccount, useDisconnect as useStarknetDisconnect } from '@starknet-react/core';
+import { useTonConnectUI, useTonAddress } from '@tonconnect/ui-react';
+import { useWallet as useTronWallet } from '@tronweb3/tronwallet-adapter-react-hooks';
 
-export type ChainType = 'evm' | 'solana' | 'sui' | 'near' | 'bitcoin';
+export type ChainType = 'evm' | 'solana' | 'sui' | 'near' | 'bitcoin' | 'aptos' | 'starknet' | 'ton' | 'tron';
 
 export interface WalletState {
   chain: ChainType | null;
@@ -15,39 +19,36 @@ export interface WalletState {
 }
 
 interface WalletContextType {
-  // Current connected wallet
   walletState: WalletState;
   
-  // Individual chain states
   evmAddress: string | null;
   solanaAddress: string | null;
   suiAddress: string | null;
   nearAddress: string | null;
   bitcoinAddress: string | null;
+  aptosAddress: string | null;
+  starknetAddress: string | null;
+  tonAddress: string | null;
+  tronAddress: string | null;
   
-  // Connection states
   isEvmConnected: boolean;
   isSolanaConnected: boolean;
   isSuiConnected: boolean;
   isNearConnected: boolean;
   isBitcoinConnected: boolean;
+  isAptosConnected: boolean;
+  isStarknetConnected: boolean;
+  isTonConnected: boolean;
+  isTronConnected: boolean;
   
-  // Modal control
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
   
-  // Disconnect functions
   disconnectAll: () => void;
   disconnectChain: (chain: ChainType) => void;
-  
-  // Chain switching
   switchChain: (chain: ChainType) => void;
-  
-  // Get address for specific chain
   getAddressForChain: (chain: ChainType) => string | null;
-  
-  // Get all connected chains
   getConnectedChains: () => Array<{ chain: ChainType; address: string }>;
 }
 
@@ -59,15 +60,40 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isNearConnected, setIsNearConnected] = useState(false);
   const [activeChain, setActiveChain] = useState<ChainType | null>(null);
   
-  // ReOwn AppKit account (handles EVM, Solana, Bitcoin)
+  // ReOwn AppKit (EVM, Solana, Bitcoin)
   const { address: appKitAddress, isConnected: appKitConnected, caipAddress } = useAppKitAccount();
   const { disconnect: appKitDisconnect } = useAppKitDisconnect();
   
-  // Legacy Wagmi for EVM (backup)
+  // Wagmi (EVM backup)
   const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   
-  // Determine chain type from CAIP address
+  // Sui
+  const suiAccount = useSuiAccount();
+  const isSuiConnected = !!suiAccount;
+  const suiAddress = suiAccount?.address || null;
+  
+  // Aptos
+  const { account: aptosAccount, connected: isAptosConnected, disconnect: aptosDisconnect } = useAptosWallet();
+  const aptosAddress = aptosAccount?.address?.toString() || null;
+  
+  // Starknet
+  const { address: starknetAddr, isConnected: _isStarknetConnected } = useStarknetAccount();
+  const { disconnect: starknetDisconnect } = useStarknetDisconnect();
+  const isStarknetConnected = !!_isStarknetConnected;
+  const starknetAddress = starknetAddr || null;
+  
+  // TON
+  const [tonConnectUI] = useTonConnectUI();
+  const tonAddr = useTonAddress();
+  const isTonConnected = !!tonAddr;
+  const tonAddress = tonAddr || null;
+  
+  // Tron
+  const { address: tronAddr, connected: isTronConnected, disconnect: tronDisconnect } = useTronWallet();
+  const tronAddress = tronAddr || null;
+  
+  // Determine chain from CAIP address
   const getChainFromCaip = (caip?: string): ChainType | null => {
     if (!caip) return null;
     if (caip.startsWith('eip155:')) return 'evm';
@@ -78,7 +104,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   
   const appKitChain = getChainFromCaip(caipAddress);
   
-  // Extract addresses by chain
   const evmAddress: string | null = (appKitChain === 'evm' && appKitAddress) || (wagmiConnected && wagmiAddress) || null;
   const solanaAddress: string | null = (appKitChain === 'solana' && appKitAddress) || null;
   const bitcoinAddress: string | null = (appKitChain === 'bitcoin' && appKitAddress) || null;
@@ -87,48 +112,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const isSolanaConnected = appKitChain === 'solana';
   const isBitcoinConnected = appKitChain === 'bitcoin';
   
-  // Sui
-  const suiAccount = useSuiAccount();
-  const isSuiConnected = !!suiAccount;
-  const suiAddress = suiAccount?.address || null;
-  
-  // NEAR - Initialize connector and listen for account changes
+  // NEAR
   useEffect(() => {
     const connector = initNearConnector();
     if (!connector) return;
     
-    // Check initial connection state
     const checkNearConnection = async () => {
       try {
-        // Check if wallet is already connected using the helper function
         const account = await getNearAccount();
-        
-        console.log('[NEAR] Checking connection, accountId:', account);
-        
         if (account) {
-          console.log('[NEAR] Found connected account:', account);
           setNearAddress(account);
           setIsNearConnected(true);
-        } else {
-          console.log('[NEAR] No connected account found');
         }
       } catch (error) {
-        console.error('[NEAR] Failed to check NEAR connection:', error);
+        console.error('[NEAR] Failed to check connection:', error);
       }
     };
     
-    // Wait a bit for connector to fully initialize
-    const timer = setTimeout(() => {
-      checkNearConnection();
-    }, 500);
+    const timer = setTimeout(() => checkNearConnection(), 500);
     
-    // Subscribe to NEAR wallet events
     const handleSignIn = async () => {
-      console.log('[NEAR] Sign in event triggered');
       try {
         const account = await getNearAccount();
         if (account) {
-          console.log('[NEAR] Setting account from signIn:', account);
           setNearAddress(account);
           setIsNearConnected(true);
         }
@@ -138,7 +144,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
     
     const handleSignOut = () => {
-      console.log('[NEAR] Sign out event triggered');
       setNearAddress(null);
       setIsNearConnected(false);
     };
@@ -153,95 +158,73 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
   
-  // Determine primary connected wallet
   const [walletState, setWalletState] = useState<WalletState>({
-    chain: null,
-    address: null,
-    isConnected: false,
+    chain: null, address: null, isConnected: false,
   });
   
-  // Helper function to get address for a chain
   const getAddressForChain = (chain: ChainType): string | null => {
     switch (chain) {
-      case 'evm':
-        return evmAddress;
-      case 'solana':
-        return solanaAddress;
-      case 'bitcoin':
-        return bitcoinAddress;
-      case 'sui':
-        return suiAddress;
-      case 'near':
-        return nearAddress;
-      default:
-        return null;
+      case 'evm': return evmAddress;
+      case 'solana': return solanaAddress;
+      case 'bitcoin': return bitcoinAddress;
+      case 'sui': return suiAddress;
+      case 'near': return nearAddress;
+      case 'aptos': return aptosAddress;
+      case 'starknet': return starknetAddress;
+      case 'ton': return tonAddress;
+      case 'tron': return tronAddress;
+      default: return null;
     }
   };
   
-  // Update wallet state based on active chain or first available connection
+  const isChainConnected = (chain: ChainType): boolean => {
+    switch (chain) {
+      case 'evm': return isEvmConnected;
+      case 'solana': return isSolanaConnected;
+      case 'bitcoin': return isBitcoinConnected;
+      case 'sui': return isSuiConnected;
+      case 'near': return isNearConnected;
+      case 'aptos': return isAptosConnected;
+      case 'starknet': return isStarknetConnected;
+      case 'ton': return isTonConnected;
+      case 'tron': return isTronConnected;
+      default: return false;
+    }
+  };
+  
+  // Update wallet state
   useEffect(() => {
-    // If we have an active chain set, use it (if still connected)
     if (activeChain) {
       const address = getAddressForChain(activeChain);
-      const isConnected = (() => {
-        switch (activeChain) {
-          case 'evm': return isEvmConnected;
-          case 'solana': return isSolanaConnected;
-          case 'bitcoin': return isBitcoinConnected;
-          case 'sui': return isSuiConnected;
-          case 'near': return isNearConnected;
-          default: return false;
-        }
-      })();
-      
-      if (isConnected && address) {
+      if (isChainConnected(activeChain) && address) {
         setWalletState({ chain: activeChain, address, isConnected: true });
         return;
       } else {
-        // Active chain is no longer connected, clear it and fall through to auto-select
         setActiveChain(null);
       }
     }
     
-    // Auto-select first connected wallet (priority order)
-    if (isNearConnected && nearAddress) {
-      setWalletState({ chain: 'near', address: nearAddress, isConnected: true });
-      if (!activeChain) setActiveChain('near');
-    } else if (isEvmConnected && evmAddress) {
-      setWalletState({ chain: 'evm', address: evmAddress, isConnected: true });
-      if (!activeChain) setActiveChain('evm');
-    } else if (isSolanaConnected && solanaAddress) {
-      setWalletState({ chain: 'solana', address: solanaAddress, isConnected: true });
-      if (!activeChain) setActiveChain('solana');
-    } else if (isBitcoinConnected && bitcoinAddress) {
-      setWalletState({ chain: 'bitcoin', address: bitcoinAddress, isConnected: true });
-      if (!activeChain) setActiveChain('bitcoin');
-    } else if (isSuiConnected && suiAddress) {
-      setWalletState({ chain: 'sui', address: suiAddress, isConnected: true });
-      if (!activeChain) setActiveChain('sui');
-    } else {
-      setWalletState({ chain: null, address: null, isConnected: false });
+    // Auto-select priority order
+    const priority: ChainType[] = ['near', 'evm', 'solana', 'bitcoin', 'sui', 'aptos', 'starknet', 'ton', 'tron'];
+    for (const chain of priority) {
+      const addr = getAddressForChain(chain);
+      if (isChainConnected(chain) && addr) {
+        setWalletState({ chain, address: addr, isConnected: true });
+        if (!activeChain) setActiveChain(chain);
+        return;
+      }
     }
+    
+    setWalletState({ chain: null, address: null, isConnected: false });
   }, [evmAddress, solanaAddress, bitcoinAddress, suiAddress, nearAddress,
-      isEvmConnected, isSolanaConnected, isBitcoinConnected, isSuiConnected, isNearConnected]);
+      aptosAddress, starknetAddress, tonAddress, tronAddress,
+      isEvmConnected, isSolanaConnected, isBitcoinConnected, isSuiConnected, isNearConnected,
+      isAptosConnected, isStarknetConnected, isTonConnected, isTronConnected]);
   
-  // Separate effect to handle activeChain changes (for manual switching)
   useEffect(() => {
     if (!activeChain) return;
-    
     const address = getAddressForChain(activeChain);
-    const isConnected = (() => {
-      switch (activeChain) {
-        case 'evm': return isEvmConnected;
-        case 'solana': return isSolanaConnected;
-        case 'bitcoin': return isBitcoinConnected;
-        case 'sui': return isSuiConnected;
-        case 'near': return isNearConnected;
-        default: return false;
-      }
-    })();
-    
-    if (isConnected && address) {
+    if (isChainConnected(activeChain) && address) {
       setWalletState({ chain: activeChain, address, isConnected: true });
     }
   }, [activeChain]);
@@ -265,6 +248,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setNearAddress(null);
         setIsNearConnected(false);
         break;
+      case 'aptos':
+        await aptosDisconnect();
+        break;
+      case 'starknet':
+        starknetDisconnect();
+        break;
+      case 'ton':
+        await tonConnectUI.disconnect();
+        break;
+      case 'tron':
+        await tronDisconnect();
+        break;
     }
   };
   
@@ -276,33 +271,34 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setNearAddress(null);
       setIsNearConnected(false);
     }
+    if (isAptosConnected) await aptosDisconnect();
+    if (isStarknetConnected) starknetDisconnect();
+    if (isTonConnected) await tonConnectUI.disconnect();
+    if (isTronConnected) await tronDisconnect();
     setActiveChain(null);
   };
   
   const switchChain = async (chain: ChainType) => {
-    // Check if the target chain is connected
     const address = getAddressForChain(chain);
     if (!address) {
       console.warn(`Cannot switch to ${chain}: wallet not connected`);
       return;
     }
-    
-    // Disconnect the current active chain if different
     if (activeChain && activeChain !== chain) {
       await disconnectChain(activeChain);
     }
-    
-    // Set the new active chain
     setActiveChain(chain);
   };
   
   const getConnectedChains = () => {
     const chains: Array<{ chain: ChainType; address: string }> = [];
-    if (isEvmConnected && evmAddress) chains.push({ chain: 'evm', address: evmAddress });
-    if (isSolanaConnected && solanaAddress) chains.push({ chain: 'solana', address: solanaAddress });
-    if (isBitcoinConnected && bitcoinAddress) chains.push({ chain: 'bitcoin', address: bitcoinAddress });
-    if (isSuiConnected && suiAddress) chains.push({ chain: 'sui', address: suiAddress });
-    if (isNearConnected && nearAddress) chains.push({ chain: 'near', address: nearAddress });
+    const allChains: ChainType[] = ['evm', 'solana', 'bitcoin', 'sui', 'near', 'aptos', 'starknet', 'ton', 'tron'];
+    for (const chain of allChains) {
+      const addr = getAddressForChain(chain);
+      if (isChainConnected(chain) && addr) {
+        chains.push({ chain, address: addr });
+      }
+    }
     return chains;
   };
   
@@ -310,24 +306,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     <WalletContext.Provider
       value={{
         walletState,
-        evmAddress,
-        solanaAddress,
-        suiAddress,
-        nearAddress,
-        bitcoinAddress,
-        isEvmConnected,
-        isSolanaConnected,
-        isSuiConnected,
-        isNearConnected,
-        isBitcoinConnected,
-        isModalOpen,
-        openModal,
-        closeModal,
-        disconnectAll,
-        disconnectChain,
-        switchChain,
-        getAddressForChain,
-        getConnectedChains,
+        evmAddress, solanaAddress, suiAddress, nearAddress, bitcoinAddress,
+        aptosAddress, starknetAddress, tonAddress, tronAddress,
+        isEvmConnected, isSolanaConnected, isSuiConnected, isNearConnected, isBitcoinConnected,
+        isAptosConnected, isStarknetConnected, isTonConnected, isTronConnected,
+        isModalOpen, openModal, closeModal,
+        disconnectAll, disconnectChain, switchChain, getAddressForChain, getConnectedChains,
       }}
     >
       {children}

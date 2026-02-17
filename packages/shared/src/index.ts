@@ -1,3 +1,5 @@
+export * from './chains';
+
 export type ChainType = 'EVM' | 'NEAR' | 'SOLANA' | 'SUI' | 'TON' | 'BITCOIN' | 'TRON' | 'STELLAR' | 'STARKNET' | 'XRP' | 'DOGE' | 'LITECOIN' | 'BITCOIN_CASH';
 
 export interface Token {
@@ -9,6 +11,8 @@ export interface Token {
   chain?: ChainType;
   blockchain?: string;
   contractAddress?: string;
+  defuseAssetId?: string;
+  address?: string;
   price?: number;
   priceUpdatedAt?: string;
 }
