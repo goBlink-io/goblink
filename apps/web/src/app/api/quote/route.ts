@@ -8,6 +8,60 @@ const NATIVE_TO_NEP141_MAP: Record<string, string> = {
   'solana:native': 'nep141:sol.omft.near',
 };
 
+// Token price cache (refreshed from /api/tokens data)
+let tokenPriceCache: Map<string, { price: number; decimals: number }> = new Map();
+let tokenCacheTimestamp = 0;
+const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getTokenPrices(): Promise<Map<string, { price: number; decimals: number }>> {
+  if (Date.now() - tokenCacheTimestamp < TOKEN_CACHE_TTL && tokenPriceCache.size > 0) {
+    return tokenPriceCache;
+  }
+
+  try {
+    const tokens = await oneclick.getTokens() as Array<{
+      assetId: string;
+      price?: number;
+      decimals: number;
+      symbol?: string;
+    }>;
+
+    const cache = new Map<string, { price: number; decimals: number }>();
+    for (const token of tokens) {
+      if (token.price && token.price > 0) {
+        cache.set(token.assetId, { price: token.price, decimals: token.decimals });
+      }
+    }
+
+    tokenPriceCache = cache;
+    tokenCacheTimestamp = Date.now();
+    return cache;
+  } catch (error) {
+    console.error('Failed to fetch token prices for fee calculation:', error);
+    return tokenPriceCache; // Return stale cache on error
+  }
+}
+
+/**
+ * Estimate the USD value of a transaction amount.
+ * Uses the origin asset's price from the 1Click API.
+ */
+async function estimateAmountUsd(
+  assetId: string,
+  atomicAmount: string
+): Promise<number | undefined> {
+  const prices = await getTokenPrices();
+  const tokenInfo = prices.get(assetId);
+  if (!tokenInfo) return undefined;
+
+  try {
+    const amount = Number(BigInt(atomicAmount)) / Math.pow(10, tokenInfo.decimals);
+    return amount * tokenInfo.price;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -23,7 +77,9 @@ export async function POST(request: NextRequest) {
     const resolvedOriginAsset = NATIVE_TO_NEP141_MAP[originAsset] || originAsset;
     const resolvedDestinationAsset = NATIVE_TO_NEP141_MAP[destinationAsset] || destinationAsset;
 
-    const feeBps = fees.calculateFeeBps();
+    // Estimate USD value for tiered fee calculation
+    const amountUsd = await estimateAmountUsd(resolvedOriginAsset, amount);
+    const feeBps = fees.calculateEffectiveFeeBps(amountUsd);
     const feeRecipient = fees.getFeeRecipient();
 
     const quoteRequest: QuoteRequest = {
@@ -43,7 +99,24 @@ export async function POST(request: NextRequest) {
     };
 
     const quote = await oneclick.getQuote(quoteRequest);
-    return NextResponse.json(quote);
+
+    // Attach fee metadata for frontend display
+    const response = {
+      ...quote as Record<string, unknown>,
+      feeInfo: {
+        bps: feeBps,
+        percent: (feeBps / 100).toFixed(2),
+        estimatedUsd: amountUsd
+          ? (amountUsd * feeBps / 10000).toFixed(2)
+          : null,
+        tier: amountUsd !== undefined
+          ? (amountUsd <= 5000 ? 'Standard' : amountUsd <= 50000 ? 'Pro' : 'Whale')
+          : 'Standard',
+        recipient: feeRecipient,
+      },
+    };
+
+    return NextResponse.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     let statusCode = 500;

@@ -16,7 +16,7 @@ interface QuotePreviewProps {
 }
 
 export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuotePreviewProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain: _toChain } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain: _toChain, feeInfo } = quote;
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationStep, setConfirmationStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -442,7 +442,25 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           </div>
 
           {/* Fees */}
-          {quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
+          {/* Fee display — show dollar amount (behavioral: absolute feels smaller) */}
+          {feeInfo && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">
+                Platform fee
+                {feeInfo.tier && feeInfo.tier !== 'Standard' && (
+                  <span className="ml-1 text-xs text-green-600 font-medium">
+                    ({feeInfo.tier} rate)
+                  </span>
+                )}
+              </span>
+              <span className="font-medium">
+                {feeInfo.estimatedUsd
+                  ? `$${feeInfo.estimatedUsd}`
+                  : `${feeInfo.percent}%`}
+              </span>
+            </div>
+          )}
+          {!feeInfo && quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Platform fee</span>
               <span className="font-medium">
