@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Token } from '@sapphire/shared';
 import { useWalletContext } from '@/contexts/WalletContext';
+import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
 
@@ -26,40 +27,39 @@ const SUPPORTED_CHAINS = [
   { id: 'sui', name: 'Sui', type: 'sui' as const },
 ] as const;
 
+function SkeletonPulse({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
+}
+
 export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
-  // Use unified wallet context
   const { walletState, getAddressForChain, getConnectedChains } = useWalletContext();
+  const { toast } = useToast();
 
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [tokensLoading, setTokensLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [loadingBalances, setLoadingBalances] = useState(false);
   
-  // Chain selections
   const [fromChain, setFromChain] = useState<string>('near');
   const [toChain, setToChain] = useState<string>('near');
-  
-  // Token selections
   const [originAsset, setOriginAsset] = useState('');
   const [destinationAsset, setDestinationAsset] = useState('');
-  
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [refundTo, setRefundTo] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Map ChainType to chain id used in SUPPORTED_CHAINS
   const getChainIdFromType = (chainType: string | null): string => {
     switch (chainType) {
       case 'near': return 'near';
-      case 'evm': return 'ethereum'; // Default EVM to Ethereum
+      case 'evm': return 'ethereum';
       case 'solana': return 'solana';
       case 'sui': return 'sui';
       default: return 'near';
     }
   };
 
-  // Auto-detect and set fromChain based on connected wallet
   useEffect(() => {
     if (walletState.isConnected && walletState.chain) {
       const chainId = getChainIdFromType(walletState.chain);
@@ -72,15 +72,12 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   }, []);
 
   const fetchTokens = async () => {
+    setTokensLoading(true);
     try {
       const response = await fetch('/api/tokens');
-      if (!response.ok) {
-        throw new Error(`API responded with status ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`API responded with status ${response.status}`);
       const data = await response.json();
       setTokens(data);
-      
-      // Set default tokens
       if (data.length > 0) {
         const wnear = data.find((t: Token) => t.symbol === 'wNEAR');
         const usdc = data.find((t: Token) => t.symbol === 'USDC' && t.assetId.includes('17208628'));
@@ -89,33 +86,22 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       }
     } catch (error) {
       console.error('Failed to fetch tokens:', error);
+      toast('Failed to load tokens. Please refresh.', 'error');
+    } finally {
+      setTokensLoading(false);
     }
   };
 
-  // TODO: Re-enable when EVM signing is implemented (Phase 4)
-  // const getChainType = (blockchain?: string): 'evm' | 'solana' | 'sui' | 'near' | null => {
-  //   if (!blockchain) return 'near';
-  //   const chain = blockchain.toLowerCase();
-  //   if (['ethereum', 'polygon', 'optimism', 'arbitrum', 'base', 'bsc', 'berachain', 'monad'].includes(chain)) return 'evm';
-  //   if (chain === 'solana') return 'solana';
-  //   if (chain === 'sui') return 'sui';
-  //   if (chain === 'near') return 'near';
-  //   return null;
-  // };
-
-  // Get connected address for the from chain
   const fromAddress = useCallback(() => {
     const chain = SUPPORTED_CHAINS.find(c => c.id === fromChain);
     return chain ? getAddressForChain(chain.type) : null;
   }, [fromChain, getAddressForChain]);
 
-  // Get connected address for the to chain
   const toAddress = useCallback(() => {
     const chain = SUPPORTED_CHAINS.find(c => c.id === toChain);
     return chain ? getAddressForChain(chain.type) : null;
   }, [toChain, getAddressForChain]);
 
-  // Filter tokens by selected chain (memoized to prevent infinite re-renders)
   const fromTokens = useMemo(() => {
     return tokens.filter(token => {
       const tokenChain = (token.blockchain || 'near').toLowerCase();
@@ -130,63 +116,39 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     });
   }, [tokens, toChain]);
 
-  // Auto-populate refund address based on from chain
   useEffect(() => {
     const addr = fromAddress();
-    if (addr) {
-      setRefundTo(addr);
-    } else {
-      setRefundTo('');
-    }
+    if (addr) setRefundTo(addr);
+    else setRefundTo('');
   }, [fromChain, fromAddress]);
 
-  // Auto-populate recipient address based on to chain (if wallet connected)
   useEffect(() => {
     const addr = toAddress();
     if (addr) {
       setRecipient(addr);
     } else {
-      // Don't clear recipient if user manually entered an address
-      // Only clear if it matches a previous auto-populated address
       const prevAddr = recipient;
       const isAutoPopulated = getConnectedChains().some(c => c.address === prevAddr);
-      if (isAutoPopulated) {
-        setRecipient('');
-      }
+      if (isAutoPopulated) setRecipient('');
     }
   }, [toChain, toAddress]);
 
-  // Reset token selection when chain changes
   useEffect(() => {
-    // If currently selected origin token is not in the new chain's token list, reset it
     const isOriginTokenValid = fromTokens.some(t => t.assetId === originAsset);
-    if (!isOriginTokenValid && fromTokens.length > 0) {
-      setOriginAsset(fromTokens[0].assetId);
-    }
+    if (!isOriginTokenValid && fromTokens.length > 0) setOriginAsset(fromTokens[0].assetId);
   }, [fromChain, fromTokens]);
 
   useEffect(() => {
-    // If currently selected destination token is not in the new chain's token list, reset it
     const isDestTokenValid = toTokens.some(t => t.assetId === destinationAsset);
-    if (!isDestTokenValid && toTokens.length > 0) {
-      setDestinationAsset(toTokens[0].assetId);
-    }
+    if (!isDestTokenValid && toTokens.length > 0) setDestinationAsset(toTokens[0].assetId);
   }, [toChain, toTokens]);
 
-  // Fetch balances for from tokens when address or tokens change
   useEffect(() => {
     const fetchBalances = async () => {
       const address = fromAddress();
-      if (!address || fromTokens.length === 0) {
-        // Clear balances when no address or no tokens
-        setBalances({});
-        return;
-      }
-
+      if (!address || fromTokens.length === 0) { setBalances({}); return; }
       setLoadingBalances(true);
       const newBalances: Record<string, string> = {};
-
-      // Fetch balances for all tokens on the from chain
       await Promise.all(
         fromTokens.map(async (token) => {
           try {
@@ -197,38 +159,25 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
               symbol: token.symbol,
             });
             newBalances[token.assetId] = balance;
-          } catch (error) {
-            console.error(`Failed to fetch balance for ${token.symbol}:`, error);
+          } catch {
             newBalances[token.assetId] = '0.00';
           }
         })
       );
-
       setBalances(newBalances);
       setLoadingBalances(false);
     };
-
-    // Reset balances immediately when chain or wallet changes to prevent stale data
     setBalances({});
     fetchBalances();
   }, [fromAddress(), fromTokens, fromChain]);
 
-  // Convert amount to smallest unit without scientific notation
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
-    // Remove any whitespace
     amount = amount.trim();
-    
-    // Split on decimal point
     const parts = amount.split('.');
     const wholePart = parts[0] || '0';
     const decimalPart = parts[1] || '';
-    
-    // Pad or truncate decimal part to match decimals
     const paddedDecimal = decimalPart.padEnd(decimals, '0').slice(0, decimals);
-    
-    // Combine and remove leading zeros (but keep at least one digit)
     const result = (wholePart + paddedDecimal).replace(/^0+/, '') || '0';
-    
     return result;
   };
 
@@ -238,18 +187,14 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       setFormError('Please fill in all fields');
       return;
     }
-
     setLoading(true);
     try {
       const originToken = tokens.find(t => t.assetId === originAsset);
       const destinationToken = tokens.find(t => t.assetId === destinationAsset);
-      
       if (!originToken) throw new Error('Origin token not found');
       if (!destinationToken) throw new Error('Destination token not found');
 
-      // Convert to smallest unit without scientific notation
       const amountInSmallestUnit = convertToSmallestUnit(amount, originToken.decimals);
-
       const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -262,15 +207,11 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           dry: true,
         }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || errorData.error || 'Failed to get quote');
       }
-
       const data = await response.json();
-      
-      // Attach token metadata to the quote for proper decimal handling
       const enrichedData = {
         ...data,
         fromChain,
@@ -290,10 +231,9 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           contractAddress: destinationToken.contractAddress,
         },
       };
-      
+      toast('Quote ready — review and confirm below', 'success');
       onQuoteReceived(enrichedData);
     } catch (error: any) {
-      console.error('Quote error:', error);
       const errorMessage = error.message || 'Failed to get quote. Please try again.';
       setFormError(errorMessage);
     } finally {
@@ -302,38 +242,54 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   };
 
   const swapTokens = () => {
-    // Swap chains
     const tempChain = fromChain;
     setFromChain(toChain);
     setToChain(tempChain);
-    
-    // Swap tokens
     const tempAsset = originAsset;
     setOriginAsset(destinationAsset);
     setDestinationAsset(tempAsset);
   };
 
-  // Format address for display (truncate middle)
   const formatAddress = (address: string | null) => {
     if (!address) return 'Not connected';
     if (address.length < 20) return address;
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
-  // TODO: Use in token display UI (Phase 6 UX polish)
-  // const getTokenDisplayName = (symbol: string) => {
-  //   if (symbol === 'wNEAR') return 'NEAR';
-  //   return symbol;
-  // };
+  // Loading skeleton
+  if (tokensLoading) {
+    return (
+      <div className="card p-6">
+        <h2 className="text-2xl font-bold mb-6">Transfer</h2>
+        <div className="space-y-4">
+          <div>
+            <SkeletonPulse className="h-4 w-16 mb-2" />
+            <SkeletonPulse className="h-10 w-full mb-2" />
+            <SkeletonPulse className="h-12 w-full mb-2" />
+            <SkeletonPulse className="h-10 w-full" />
+          </div>
+          <div className="flex justify-center"><SkeletonPulse className="h-9 w-9 rounded-full" /></div>
+          <div>
+            <SkeletonPulse className="h-4 w-16 mb-2" />
+            <SkeletonPulse className="h-10 w-full mb-2" />
+            <SkeletonPulse className="h-12 w-full" />
+          </div>
+          <SkeletonPulse className="h-10 w-full" />
+          <SkeletonPulse className="h-10 w-full" />
+          <SkeletonPulse className="h-12 w-full rounded-md" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card p-6">
-      <h2 className="text-2xl font-bold mb-6">Swap Tokens</h2>
+      <h2 className="text-2xl font-bold mb-6">Transfer</h2>
 
       {/* From Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">From</label>
+          <label className="block text-sm font-medium text-gray-700">You send</label>
           <div className="text-xs text-gray-500">
             {fromAddress() ? (
               <span className="flex items-center gap-1">
@@ -354,9 +310,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
             className="input w-full text-sm font-semibold"
           >
             {SUPPORTED_CHAINS.map((chain) => (
-              <option key={chain.id} value={chain.id}>
-                {chain.name}
-              </option>
+              <option key={chain.id} value={chain.id}>{chain.name}</option>
             ))}
           </select>
         </div>
@@ -384,7 +338,6 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
             />
           </div>
           
-          {/* Percentage Buttons */}
           {originAsset && balances[originAsset] && parseFloat(balances[originAsset]) > 0 && (
             <div className="flex space-x-1">
               {[25, 50, 75, 100].map((percentage) => (
@@ -394,37 +347,30 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                   onClick={() => {
                     const selectedToken = fromTokens.find(t => t.assetId === originAsset);
                     if (!selectedToken) return;
-                    
                     const balance = parseFloat(balances[originAsset] || '0');
                     let amountToSet = balance * (percentage / 100);
-                    
-                    // For 100%, reserve gas for native tokens
                     if (percentage === 100) {
                       const isNativeToken =
                         (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ||
                         selectedToken.symbol === 'SUI' ||
                         selectedToken.symbol === 'SOL' ||
                         ['ETH', 'BNB', 'MATIC', 'BERA', 'MON'].includes(selectedToken.symbol);
-                    
-                    if (isNativeToken) {
-                      // Reserve gas based on chain
-                      const gasReserve =
-                        (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
-                        selectedToken.symbol === 'SUI' ? 0.01 :
-                        selectedToken.symbol === 'SOL' ? 0.001 :
-                        selectedToken.symbol === 'ETH' ? 0.01 :
-                        selectedToken.symbol === 'BNB' ? 0.002 :
-                        selectedToken.symbol === 'MATIC' ? 0.1 :
-                        selectedToken.symbol === 'BERA' ? 0.01 :
-                        selectedToken.symbol === 'MON' ? 0.01 : 0;
-                        
+                      if (isNativeToken) {
+                        const gasReserve =
+                          (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
+                          selectedToken.symbol === 'SUI' ? 0.01 :
+                          selectedToken.symbol === 'SOL' ? 0.001 :
+                          selectedToken.symbol === 'ETH' ? 0.01 :
+                          selectedToken.symbol === 'BNB' ? 0.002 :
+                          selectedToken.symbol === 'MATIC' ? 0.1 :
+                          selectedToken.symbol === 'BERA' ? 0.01 :
+                          selectedToken.symbol === 'MON' ? 0.01 : 0;
                         amountToSet = Math.max(0, balance - gasReserve);
                       }
                     }
-                    
                     setAmount(amountToSet.toFixed(6).replace(/\.?0+$/, ''));
                   }}
-                  className="flex-1 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                  className="flex-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors active:scale-95"
                 >
                   {percentage}%
                 </button>
@@ -438,7 +384,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       <div className="flex justify-center my-2">
         <button 
           onClick={swapTokens} 
-          className="rounded-full bg-gray-100 p-2 hover:bg-gray-200 transition-colors"
+          className="rounded-full bg-gray-100 p-2 hover:bg-gray-200 transition-colors active:scale-95"
         >
           <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -449,7 +395,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       {/* To Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">To</label>
+          <label className="block text-sm font-medium text-gray-700">You receive</label>
           <div className="text-xs text-gray-500">
             {toAddress() ? (
               <span className="flex items-center gap-1">
@@ -462,7 +408,6 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           </div>
         </div>
 
-        {/* Chain Selector */}
         <div className="mb-2">
           <select
             value={toChain}
@@ -470,14 +415,11 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
             className="input w-full text-sm font-semibold"
           >
             {SUPPORTED_CHAINS.map((chain) => (
-              <option key={chain.id} value={chain.id}>
-                {chain.name}
-              </option>
+              <option key={chain.id} value={chain.id}>{chain.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Token Selector */}
         <TokenSelector
           tokens={toTokens}
           selectedToken={destinationAsset}
@@ -489,19 +431,19 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         />
       </div>
 
-      {/* Recipient Address */}
+      {/* Receiving Address */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Recipient Address
+          Receiving Address
           {!toAddress() && (
-            <span className="text-xs text-amber-600 ml-2">(Manual entry required)</span>
+            <span className="text-xs text-amber-600 ml-2">(Enter manually)</span>
           )}
         </label>
         <input
           type="text"
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
-          placeholder={toAddress() ? "Auto-populated from connected wallet" : "Enter recipient address"}
+          placeholder={toAddress() ? "Auto-filled from your wallet" : "Enter receiving address"}
           className="input w-full"
         />
         {toAddress() && recipient === toAddress() && (
@@ -511,44 +453,44 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         )}
       </div>
 
-      {/* Refund Address */}
+      {/* Return Address */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Refund Address
-          <span className="text-xs text-gray-500 ml-2">(Auto-populated)</span>
+          Return Address
+          <span className="text-xs text-gray-500 ml-2">(Auto-filled)</span>
         </label>
         <input
           type="text"
           value={refundTo}
           readOnly
-          placeholder="Connect wallet on the From chain"
+          placeholder="Connect wallet on the sending chain"
           className="input w-full bg-gray-50 cursor-not-allowed"
         />
         <p className="text-xs text-gray-500 mt-1">
-          This ensures failed transactions are refunded to your originating wallet
+          If the transfer can&apos;t complete, funds are returned here
         </p>
       </div>
 
       {/* Error Banner */}
       {formError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {formError}
         </div>
       )}
 
-      {/* Get Quote Button */}
+      {/* Preview Button */}
       <button
         onClick={handleGetQuote}
         disabled={loading || !originAsset || !destinationAsset || !amount || !recipient || !refundTo}
         className="btn btn-primary w-full py-3"
       >
-        {loading ? 'Getting Quote...' : 'Get Quote'}
+        {loading ? 'Getting Preview...' : 'Preview Transfer'}
       </button>
 
-      {/* Info Section */}
+      {/* Tip */}
       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
         <p className="text-sm text-blue-900">
-          <strong>Tip:</strong> Connect wallets for both chains to auto-fill addresses, or manually enter a recipient address to send to someone else.
+          <strong>Tip:</strong> Connect wallets for both chains to auto-fill addresses, or manually enter a receiving address to send to someone else.
         </p>
       </div>
     </div>

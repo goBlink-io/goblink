@@ -379,7 +379,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   return (
     <div className="card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">Quote Preview</h3>
+        <h3 className="text-xl font-semibold">Transfer Preview</h3>
         <button
           onClick={onReset}
           className="text-sm text-gray-500 hover:text-gray-700"
@@ -446,7 +446,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
 
           {/* Slippage */}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Max slippage</span>
+            <span className="text-gray-600">Price protection</span>
             <span className="font-medium">{(quoteRequest.slippageTolerance / 100)}%</span>
           </div>
         </div>
@@ -455,9 +455,9 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       {/* Deposit Address Info (shown after getting deposit address for non-NEAR or on error) */}
       {showDepositInfo && depositAddress && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">Deposit Address</h4>
+          <h4 className="font-semibold text-blue-900 mb-2">Transfer Address</h4>
           <p className="text-sm text-blue-800 mb-3">
-            Send {quoteData.amountInFormatted} to the address below to complete the swap:
+            Send {quoteData.amountInFormatted} to the address below to complete the transfer:
           </p>
           <div className="flex items-center space-x-2">
             <code className="flex-1 px-3 py-2 bg-white rounded border border-blue-300 text-sm break-all">
@@ -474,7 +474,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             onClick={handleManualDeposit}
             className="btn btn-primary w-full mt-4"
           >
-            I've Sent the Funds - Track Status
+            I&apos;ve Sent the Funds — Track Status
           </button>
         </div>
       )}
@@ -495,7 +495,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
               {confirmationStep || 'Processing...'}
             </span>
           ) : (
-            'Confirm Swap'
+            'Confirm Transfer'
           )}
         </button>
       )}
@@ -519,10 +519,10 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             <strong>Next steps:</strong>
           </p>
           <ol className="mt-2 text-sm text-blue-800 list-decimal list-inside space-y-1">
-            <li>Review the quote details carefully</li>
-            <li>Click "Confirm Swap" to initiate</li>
-            <li>Sign the transaction in your wallet (NEAR auto-triggers)</li>
-            <li>Track the swap status in real-time</li>
+            <li>Review the transfer details above</li>
+            <li>Click &quot;Confirm Transfer&quot; to proceed</li>
+            <li>Approve the transaction in your wallet</li>
+            <li>Track the transfer status in real-time</li>
           </ol>
         </div>
       )}
