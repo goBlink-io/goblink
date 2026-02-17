@@ -12,141 +12,94 @@ import { SolanaAdapter } from '@reown/appkit-adapter-solana';
 import { solana, solanaTestnet, solanaDevnet } from '@reown/appkit/networks';
 import type { Chain } from 'viem';
 
-// Sui Imports
+// Sui
 import { SuiClientProvider, WalletProvider as SuiWalletProvider } from '@mysten/dapp-kit';
 import '@mysten/dapp-kit/dist/index.css';
+
+// Aptos
+import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
+
+// Starknet
+import { StarknetConfig, publicProvider, InjectedConnector } from '@starknet-react/core';
+import { mainnet as starknetMainnet } from '@starknet-react/chains';
+
+// TON
+import { TonConnectUIProvider } from '@tonconnect/ui-react';
+
+// Tron
+import { WalletProvider as TronWalletProvider } from '@tronweb3/tronwallet-adapter-react-hooks';
+import { TronLinkAdapter } from '@tronweb3/tronwallet-adapters';
 
 // Unified Wallet Context
 import { WalletProvider as UnifiedWalletProvider } from '@/contexts/WalletContext';
 import ConnectWalletModal from './ConnectWalletModal';
 
-// Query client (shared for all providers)
 const queryClient = new QueryClient();
 
-// 1. Get projectId from https://cloud.reown.com (formerly WalletConnect)
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || '';
 
 if (!projectId) {
-  console.error('⚠️ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Get your project ID from https://cloud.reown.com');
+  console.error('⚠️ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set');
 }
 
-// 2. Create wagmiConfig
 const metadata = {
-  name: 'Sapphire',
-  description: 'Cross-Chain Swap Platform powered by NEAR Intents',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://sapphire.example.com',
-  icons: ['https://sapphire.example.com/icon.png']
+  name: 'Blink',
+  description: 'Cross-Chain Transfers powered by NEAR Intents',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://goblink.io',
+  icons: ['https://goblink.io/icon.png']
 };
 
-// Custom chain definitions for chains not yet in wagmi
+// Custom EVM chain definitions
 const berachain = {
-  id: 80094,
-  name: 'Berachain',
+  id: 80094, name: 'Berachain',
   nativeCurrency: { name: 'BERA', symbol: 'BERA', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.berachain.com'] },
-    public: { http: ['https://rpc.berachain.com'] },
-  },
-  blockExplorers: {
-    default: { name: 'Berascan', url: 'https://berascan.com' },
-  },
+  rpcUrls: { default: { http: ['https://rpc.berachain.com'] }, public: { http: ['https://rpc.berachain.com'] } },
+  blockExplorers: { default: { name: 'Berascan', url: 'https://berascan.com' } },
 } as const satisfies Chain;
 
 const monad = {
-  id: 143,
-  name: 'Monad',
+  id: 143, name: 'Monad',
   nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-  rpcUrls: {
-    default: { http: [process.env.NEXT_PUBLIC_MONAD_RPC_URL || 'https://rpc.monad.xyz'] },
-    public: { http: ['https://rpc.monad.xyz'] },
-  },
-  blockExplorers: {
-    default: { name: 'Monad Explorer', url: 'https://explorer.monad.xyz' },
-  },
+  rpcUrls: { default: { http: [process.env.NEXT_PUBLIC_MONAD_RPC_URL || 'https://rpc.monad.xyz'] }, public: { http: ['https://rpc.monad.xyz'] } },
+  blockExplorers: { default: { name: 'Monad Explorer', url: 'https://explorer.monad.xyz' } },
 } as const satisfies Chain;
 
 const aurora = {
-  id: 1313161554,
-  name: 'Aurora',
+  id: 1313161554, name: 'Aurora',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://mainnet.aurora.dev'] },
-    public: { http: ['https://mainnet.aurora.dev'] },
-  },
-  blockExplorers: {
-    default: { name: 'Aurora Explorer', url: 'https://explorer.aurora.dev' },
-  },
+  rpcUrls: { default: { http: ['https://mainnet.aurora.dev'] }, public: { http: ['https://mainnet.aurora.dev'] } },
+  blockExplorers: { default: { name: 'Aurora Explorer', url: 'https://explorer.aurora.dev' } },
 } as const satisfies Chain;
 
 const plasma = {
-  id: 9745,
-  name: 'Plasma',
+  id: 9745, name: 'Plasma',
   nativeCurrency: { name: 'XPL', symbol: 'XPL', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.plasma.cash'] },
-    public: { http: ['https://rpc.plasma.cash'] },
-  },
-  blockExplorers: {
-    default: { name: 'Plasma Explorer', url: 'https://explorer.plasma.cash' },
-  },
+  rpcUrls: { default: { http: ['https://rpc.plasma.cash'] }, public: { http: ['https://rpc.plasma.cash'] } },
+  blockExplorers: { default: { name: 'Plasma Explorer', url: 'https://explorer.plasma.cash' } },
 } as const satisfies Chain;
 
 const xlayer = {
-  id: 196,
-  name: 'X Layer',
+  id: 196, name: 'X Layer',
   nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.xlayer.tech'] },
-    public: { http: ['https://rpc.xlayer.tech'] },
-  },
-  blockExplorers: {
-    default: { name: 'OKLink', url: 'https://www.oklink.com/xlayer' },
-  },
+  rpcUrls: { default: { http: ['https://rpc.xlayer.tech'] }, public: { http: ['https://rpc.xlayer.tech'] } },
+  blockExplorers: { default: { name: 'OKLink', url: 'https://www.oklink.com/xlayer' } },
 } as const satisfies Chain;
 
 const adiChain = {
-  id: 36900,
-  name: 'ADI Chain',
+  id: 36900, name: 'ADI Chain',
   nativeCurrency: { name: 'ADI', symbol: 'ADI', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.adichain.io'] },
-    public: { http: ['https://rpc.adichain.io'] },
-  },
-  blockExplorers: {
-    default: { name: 'ADI Explorer', url: 'https://explorer.adichain.io' },
-  },
+  rpcUrls: { default: { http: ['https://rpc.adichain.io'] }, public: { http: ['https://rpc.adichain.io'] } },
+  blockExplorers: { default: { name: 'ADI Explorer', url: 'https://explorer.adichain.io' } },
 } as const satisfies Chain;
 
-// 3. Set up Wagmi Adapter for EVM chains
 const evmChains = [
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
-  bsc,
-  avalanche,
-  gnosis,
-  berachain,
-  monad,
-  aurora,
-  plasma,
-  xlayer,
-  adiChain,
-  sepolia, // Keep for testing
+  mainnet, polygon, optimism, arbitrum, base, bsc, avalanche, gnosis,
+  berachain, monad, aurora, plasma, xlayer, adiChain, sepolia,
 ];
 
-const wagmiAdapter = new WagmiAdapter({
-  networks: evmChains,
-  projectId,
-});
+const wagmiAdapter = new WagmiAdapter({ networks: evmChains, projectId });
+const solanaWeb3JsAdapter = new SolanaAdapter({ wallets: [] });
 
-// 4. Set up Solana Adapter
-const solanaWeb3JsAdapter = new SolanaAdapter({
-  wallets: []
-});
-
-// 5. Create AppKit with multiple adapters
 createAppKit({
   adapters: [wagmiAdapter, solanaWeb3JsAdapter],
   networks: [
@@ -155,17 +108,29 @@ createAppKit({
   ] as any,
   projectId,
   metadata,
-  features: {
-    analytics: false,
-  },
+  features: { analytics: false },
   themeMode: 'light',
 });
 
-// Sui network configuration
+// Sui
 const suiNetworks = {
   mainnet: { url: 'https://fullnode.mainnet.sui.io:443', network: 'mainnet' as const },
   testnet: { url: 'https://fullnode.testnet.sui.io:443', network: 'testnet' as const },
 };
+
+// Starknet connectors
+const starknetConnectors = [
+  new InjectedConnector({ options: { id: 'argentX' } }),
+  new InjectedConnector({ options: { id: 'braavos' } }),
+];
+
+// Tron adapters
+const tronAdapters = [new TronLinkAdapter()];
+
+// TON Connect manifest URL (required by TON Connect)
+const tonManifestUrl = typeof window !== 'undefined'
+  ? `${window.location.origin}/tonconnect-manifest.json`
+  : 'https://goblink.io/tonconnect-manifest.json';
 
 export function Web3Provider({ children }: { children: ReactNode }) {
   return (
@@ -173,10 +138,22 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <SuiClientProvider networks={suiNetworks} defaultNetwork="mainnet">
           <SuiWalletProvider>
-            <UnifiedWalletProvider>
-              {children}
-              <ConnectWalletModal />
-            </UnifiedWalletProvider>
+            <AptosWalletAdapterProvider autoConnect={false}>
+              <StarknetConfig
+                chains={[starknetMainnet]}
+                provider={publicProvider()}
+                connectors={starknetConnectors as any}
+              >
+                <TonConnectUIProvider manifestUrl={tonManifestUrl}>
+                  <TronWalletProvider adapters={tronAdapters} autoConnect={false}>
+                    <UnifiedWalletProvider>
+                      {children}
+                      <ConnectWalletModal />
+                    </UnifiedWalletProvider>
+                  </TronWalletProvider>
+                </TonConnectUIProvider>
+              </StarknetConfig>
+            </AptosWalletAdapterProvider>
           </SuiWalletProvider>
         </SuiClientProvider>
       </QueryClientProvider>

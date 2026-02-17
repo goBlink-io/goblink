@@ -25,6 +25,10 @@ const SUPPORTED_CHAINS = [
   { id: 'monad', name: 'Monad', type: 'evm' as const },
   { id: 'solana', name: 'Solana', type: 'solana' as const },
   { id: 'sui', name: 'Sui', type: 'sui' as const },
+  { id: 'aptos', name: 'Aptos', type: 'aptos' as const },
+  { id: 'starknet', name: 'Starknet', type: 'starknet' as const },
+  { id: 'ton', name: 'TON', type: 'ton' as const },
+  { id: 'tron', name: 'Tron', type: 'tron' as const },
 ] as const;
 
 function SkeletonPulse({ className }: { className?: string }) {
@@ -56,6 +60,10 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       case 'evm': return 'ethereum';
       case 'solana': return 'solana';
       case 'sui': return 'sui';
+      case 'aptos': return 'aptos';
+      case 'starknet': return 'starknet';
+      case 'ton': return 'ton';
+      case 'tron': return 'tron';
       default: return 'near';
     }
   };
@@ -354,7 +362,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                         (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ||
                         selectedToken.symbol === 'SUI' ||
                         selectedToken.symbol === 'SOL' ||
-                        ['ETH', 'BNB', 'MATIC', 'BERA', 'MON'].includes(selectedToken.symbol);
+                        ['ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'].includes(selectedToken.symbol);
                       if (isNativeToken) {
                         const gasReserve =
                           (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
@@ -364,7 +372,11 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                           selectedToken.symbol === 'BNB' ? 0.002 :
                           selectedToken.symbol === 'MATIC' ? 0.1 :
                           selectedToken.symbol === 'BERA' ? 0.01 :
-                          selectedToken.symbol === 'MON' ? 0.01 : 0;
+                          selectedToken.symbol === 'MON' ? 0.01 :
+                          selectedToken.symbol === 'APT' ? 0.01 :
+                          selectedToken.symbol === 'STRK' ? 0.01 :
+                          selectedToken.symbol === 'TON' ? 0.05 :
+                          selectedToken.symbol === 'TRX' ? 5 : 0;
                         amountToSet = Math.max(0, balance - gasReserve);
                       }
                     }
