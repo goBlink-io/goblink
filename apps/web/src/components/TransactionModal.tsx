@@ -37,7 +37,7 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
       if (!depositAddress) return;
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/status/${depositAddress}`);
+        const response = await fetch(`/api/status/${depositAddress}`);
         
         if (!response.ok) {
           // Handle 404 and 429 silently - don't stress users with error messages

@@ -23,16 +23,16 @@ export default function Home() {
     
     // If we have a transaction hash, submit it to the API
     if (txHash) {
-      submitDepositTransaction(txHash);
+      submitDepositTransaction(txHash, address);
     }
   };
 
-  const submitDepositTransaction = async (txHash: string) => {
+  const submitDepositTransaction = async (txHash: string, depAddr: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/deposit/submit', {
+      const response = await fetch('/api/deposit/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash }),
+        body: JSON.stringify({ txHash, depositAddress: depAddr }),
       });
 
       if (!response.ok) {

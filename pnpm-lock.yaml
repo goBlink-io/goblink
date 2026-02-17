@@ -75,6 +75,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@defuse-protocol/one-click-sdk-typescript':
+        specifier: ^0.1.16
+        version: 0.1.16
       '@hot-labs/near-connect':
         specifier: ^0.9.0
         version: 0.9.0
@@ -111,6 +114,9 @@ importers:
       '@wagmi/core':
         specifier: ^3.3.3
         version: 3.3.4(@tanstack/query-core@5.90.20)(@types/react@18.3.28)(ox@0.12.1(typescript@5.9.3)(zod@3.25.76))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.46.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))
+      axios:
+        specifier: ^1.13.5
+        version: 1.13.5
       clsx:
         specifier: ^2.1.0
         version: 2.1.1

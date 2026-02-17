@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@defuse-protocol/one-click-sdk-typescript": "^0.1.16",
     "@hot-labs/near-connect": "^0.9.0",
     "@mysten/dapp-kit": "^1.0.3",
     "@mysten/sui": "^2.4.0",
@@ -21,6 +22,7 @@
     "@tanstack/react-query": "^5.90.21",
     "@wagmi/connectors": "^7.1.7",
     "@wagmi/core": "^3.3.3",
+    "axios": "^1.13.5",
     "clsx": "^2.1.0",
     "ethers": "^6.16.0",
     "lucide-react": "^0.300.0",

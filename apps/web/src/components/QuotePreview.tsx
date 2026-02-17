@@ -59,7 +59,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
     
     try {
       // Step 1: Get actual quote with deposit address (dry: false)
-      const response = await fetch('http://localhost:3001/api/quote', {
+      const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,7 +178,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           
           // Step 1: Fetch blockhash via backend proxy
           console.log('[SOL] Fetching blockhash...');
-          const blockhashRes = await fetch('http://localhost:3001/api/balances/solana-blockhash');
+          const blockhashRes = await fetch('/api/balances/solana-blockhash');
           if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
           const { blockhash } = await blockhashRes.json();
           console.log('[SOL] Blockhash:', blockhash);
@@ -220,7 +220,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           const base64Tx = btoa(String.fromCharCode(...bytes));
           console.log('[SOL] Broadcasting transaction, size:', bytes.length);
           
-          const sendRes = await fetch('http://localhost:3001/api/balances/solana-rpc', {
+          const sendRes = await fetch('/api/balances/solana-rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

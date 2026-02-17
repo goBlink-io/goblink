@@ -2,8 +2,8 @@
 
 import { isEvmChain, isNativeToken } from './chains';
 
-// Get API URL from environment
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// All API calls go through our Next.js API routes (same origin)
+const API_URL = '';
 
 /**
  * Fetch NEAR account balance using backend API

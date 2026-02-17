@@ -72,7 +72,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
   const fetchTokens = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/tokens');
+      const response = await fetch('/api/tokens');
       if (!response.ok) {
         throw new Error(`API responded with status ${response.status}`);
       }
@@ -248,7 +248,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       // Convert to smallest unit without scientific notation
       const amountInSmallestUnit = convertToSmallestUnit(amount, originToken.decimals);
 
-      const response = await fetch('http://localhost:3001/api/quote', {
+      const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
