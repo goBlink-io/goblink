@@ -11,9 +11,7 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "dev:web": "turbo run dev --filter=@sapphire/web",
-    "dev:api": "turbo run dev --filter=@sapphire/api",
-    "build:web": "turbo run build --filter=@sapphire/web",
-    "build:api": "turbo run build --filter=@sapphire/api"
+    "build:web": "turbo run build --filter=@sapphire/web"
   },
   "devDependencies": {
     "eslint": "^9.18.0",

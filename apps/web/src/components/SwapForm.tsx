@@ -46,6 +46,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [refundTo, setRefundTo] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Map ChainType to chain id used in SUPPORTED_CHAINS
   const getChainIdFromType = (chainType: string | null): string => {
@@ -232,8 +233,9 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   };
 
   const handleGetQuote = async () => {
+    setFormError(null);
     if (!originAsset || !destinationAsset || !amount || !recipient || !refundTo) {
-      alert('Please fill in all fields');
+      setFormError('Please fill in all fields');
       return;
     }
 
@@ -293,7 +295,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     } catch (error: any) {
       console.error('Quote error:', error);
       const errorMessage = error.message || 'Failed to get quote. Please try again.';
-      alert(errorMessage);
+      setFormError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -526,6 +528,13 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           This ensures failed transactions are refunded to your originating wallet
         </p>
       </div>
+
+      {/* Error Banner */}
+      {formError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {formError}
+        </div>
+      )}
 
       {/* Get Quote Button */}
       <button

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getExplorerTxUrl, EVM_CHAINS } from '@/lib/chains';
+import { getExplorerTxUrl, EVM_CHAINS } from '@sapphire/shared';
 
 interface TransactionData {
   depositAddress: string;

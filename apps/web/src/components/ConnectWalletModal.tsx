@@ -72,7 +72,7 @@ export default function ConnectWalletModal() {
       closeModal();
     } catch (error) {
       console.error('Failed to connect NEAR wallet:', error);
-      alert('Failed to connect NEAR wallet. Please try again.');
+      // Error handled silently — user sees wallet popup failure
     }
   };
   

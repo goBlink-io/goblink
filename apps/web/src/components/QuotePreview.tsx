@@ -18,6 +18,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
   const [error, setError] = useState<string | null>(null);
   const [depositAddress, setDepositAddress] = useState<string | null>(null);
   const [showDepositInfo, setShowDepositInfo] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Sui wallet hooks
   const suiClient = useSuiClient();
@@ -274,7 +275,8 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Helper to extract chain from asset ID
@@ -405,7 +407,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
               onClick={() => copyToClipboard(depositAddress)}
               className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
             >
-              Copy
+              {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
           <button
