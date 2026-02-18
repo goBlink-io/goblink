@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ExternalLink, ChevronRight, Check, Shield, ArrowLeft } from 'lucide-react';
-import { type ChainWalletConfig, type WalletGuide, detectWallet } from '@/lib/wallet-guides';
+import { X, ExternalLink, ChevronRight, Check, Shield, ArrowLeft, Smartphone, Monitor, Download } from 'lucide-react';
+import {
+  type ChainWalletConfig, type WalletGuide,
+  detectWallet, isMobileDevice, isIOS, getInstallUrl, getSetupSteps, getPlatformWallets,
+} from '@/lib/wallet-guides';
 
 interface WalletSetupGuideProps {
   chainConfig: ChainWalletConfig;
@@ -23,11 +26,14 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
   const [currentStep, setCurrentStep] = useState<Step>('choose');
   const [selectedWallet, setSelectedWallet] = useState<WalletGuide | null>(null);
   const [walletDetected, setWalletDetected] = useState(false);
+  const [mobile] = useState(() => isMobileDevice());
+  const [ios] = useState(() => isIOS());
 
   const stepIndex = STEPS.indexOf(currentStep);
 
-  // Poll for wallet extension detection
+  // Poll for wallet extension detection (desktop only)
   useEffect(() => {
+    if (mobile) return; // No extension detection on mobile
     if (currentStep !== 'install' || !selectedWallet) return;
 
     const checkInstalled = () => {
@@ -39,22 +45,32 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
     checkInstalled();
     const interval = setInterval(checkInstalled, 1500);
     return () => clearInterval(interval);
-  }, [currentStep, selectedWallet]);
+  }, [currentStep, selectedWallet, mobile]);
 
   const handleSelectWallet = useCallback((wallet: WalletGuide) => {
     setSelectedWallet(wallet);
-    setWalletDetected(detectWallet(wallet));
 
-    // If already installed, skip install step
-    if (detectWallet(wallet)) {
-      setCurrentStep('create');
-    } else if (!wallet.chromeUrl) {
-      // Web-based wallet (e.g., MyNearWallet) — skip install, go to create
-      setCurrentStep('create');
+    if (mobile) {
+      // On mobile: check if they have an app to install
+      const installUrl = getInstallUrl(wallet);
+      if (!installUrl || installUrl === wallet.url) {
+        // Web-based wallet or no app store link — skip install
+        setCurrentStep('create');
+      } else {
+        setCurrentStep('install');
+      }
     } else {
-      setCurrentStep('install');
+      // Desktop: check if already installed
+      setWalletDetected(detectWallet(wallet));
+      if (detectWallet(wallet)) {
+        setCurrentStep('create');
+      } else if (!wallet.chromeUrl) {
+        setCurrentStep('create');
+      } else {
+        setCurrentStep('install');
+      }
     }
-  }, []);
+  }, [mobile]);
 
   const goBack = () => {
     const idx = STEPS.indexOf(currentStep);
@@ -63,9 +79,18 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
     }
   };
 
-  const primary = chainConfig.wallets.find(w => w.primary);
-  const others = chainConfig.wallets.filter(w => !w.primary);
-  const steps = selectedWallet?.setupSteps || chainConfig.defaultSteps;
+  // Get platform-filtered wallets
+  const platformWallets = getPlatformWallets(chainConfig);
+  const primary = platformWallets.find(w => w.primary);
+  const others = platformWallets.filter(w => !w.primary);
+  const steps = selectedWallet ? getSetupSteps(selectedWallet, chainConfig) : [];
+  const installUrl = selectedWallet ? getInstallUrl(selectedWallet) : null;
+
+  // Platform-aware labels
+  const installLabel = mobile
+    ? (ios ? 'Install from App Store' : 'Install from Google Play')
+    : 'Install from Chrome Web Store';
+  const installIcon = mobile ? <Download className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />;
 
   return (
     <div className="fixed inset-0 z-50">
@@ -89,10 +114,16 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                 Set up a {chainConfig.chainName} wallet
               </h3>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg transition-colors hover:opacity-80"
-              style={{ color: 'var(--text-muted)' }}>
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Platform indicator */}
+              <span className="p-1" style={{ color: 'var(--text-faint)' }}>
+                {mobile ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+              </span>
+              <button onClick={onClose} className="p-1.5 rounded-lg transition-colors hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Progress bar */}
@@ -118,6 +149,22 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
             {/* ── Step 1: Choose Wallet ── */}
             {currentStep === 'choose' && (
               <div className="mt-3 space-y-3">
+                {/* No wallets available for this platform */}
+                {platformWallets.length === 0 && (
+                  <div className="py-8 text-center">
+                    <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+                      No {mobile ? 'mobile' : 'desktop'} wallets available for {chainConfig.chainName} yet.
+                    </p>
+                    <p className="text-tiny mt-2" style={{ color: 'var(--text-faint)' }}>
+                      You can still enter a receiving address manually.
+                    </p>
+                    <button onClick={onClose}
+                      className="btn btn-primary mt-4 h-11 px-6 text-body-sm">
+                      Enter address manually
+                    </button>
+                  </div>
+                )}
+
                 {primary && (
                   <div>
                     <p className="text-tiny font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -129,7 +176,7 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{primary.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-body" style={{ color: 'var(--text-primary)' }}>
                               {primary.name}
                             </span>
@@ -137,6 +184,12 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                               <span className="text-tiny px-2 py-0.5 rounded-full"
                                 style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
                                 {primary.users} users
+                              </span>
+                            )}
+                            {mobile && primary.mobile && (
+                              <span className="text-tiny px-2 py-0.5 rounded-full"
+                                style={{ background: 'var(--success-bg)', color: 'var(--success-text)' }}>
+                                📱 Mobile app
                               </span>
                             )}
                           </div>
@@ -180,7 +233,7 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
               </div>
             )}
 
-            {/* ── Step 2: Install Extension ── */}
+            {/* ── Step 2: Install ── */}
             {currentStep === 'install' && selectedWallet && (
               <div className="mt-3 space-y-4">
                 <div className="text-center py-2">
@@ -188,53 +241,73 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                   <h4 className="text-h5 mt-2" style={{ color: 'var(--text-primary)' }}>
                     Install {selectedWallet.name}
                   </h4>
-                </div>
-
-                {selectedWallet.chromeUrl && (
-                  <a href={selectedWallet.chromeUrl} target="_blank" rel="noopener noreferrer"
-                    className="btn btn-primary w-full h-12 text-body-sm flex items-center justify-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Install from Chrome Web Store
-                  </a>
-                )}
-
-                <div className="p-4 rounded-xl text-center"
-                  style={{ background: 'var(--elevated)' }}>
-                  {walletDetected ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ background: 'var(--success-bg)' }}>
-                        <Check className="h-5 w-5" style={{ color: 'var(--success)' }} />
-                      </div>
-                      <p className="font-semibold text-body-sm" style={{ color: 'var(--success-text)' }}>
-                        {selectedWallet.name} detected!
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex justify-center mb-2">
-                        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                          style={{ borderColor: 'var(--text-muted)', borderTopColor: 'transparent' }} />
-                      </div>
-                      <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
-                        Waiting for {selectedWallet.name}...
-                      </p>
-                      <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
-                        Install the extension, then this will update automatically
-                      </p>
-                    </div>
+                  {mobile && (
+                    <p className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>
+                      You&apos;ll be taken to the {ios ? 'App Store' : 'Google Play Store'}
+                    </p>
                   )}
                 </div>
 
+                {installUrl && (
+                  <a href={installUrl} target="_blank" rel="noopener noreferrer"
+                    className="btn btn-primary w-full h-12 text-body-sm flex items-center justify-center gap-2">
+                    {installIcon}
+                    {installLabel}
+                  </a>
+                )}
+
+                {/* Desktop: auto-detection */}
+                {!mobile && (
+                  <div className="p-4 rounded-xl text-center" style={{ background: 'var(--elevated)' }}>
+                    {walletDetected ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ background: 'var(--success-bg)' }}>
+                          <Check className="h-5 w-5" style={{ color: 'var(--success)' }} />
+                        </div>
+                        <p className="font-semibold text-body-sm" style={{ color: 'var(--success-text)' }}>
+                          {selectedWallet.name} detected!
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex justify-center mb-2">
+                          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                            style={{ borderColor: 'var(--text-muted)', borderTopColor: 'transparent' }} />
+                        </div>
+                        <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+                          Waiting for {selectedWallet.name}...
+                        </p>
+                        <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
+                          Install the extension, then this will update automatically
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Mobile: manual confirmation (can't auto-detect apps) */}
+                {mobile && (
+                  <div className="p-4 rounded-xl text-center" style={{ background: 'var(--elevated)' }}>
+                    <Smartphone className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
+                    <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+                      After installing, come back here and tap Continue
+                    </p>
+                    <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
+                      Tip: Long-press the install link to open in a new tab so you don&apos;t lose this page
+                    </p>
+                  </div>
+                )}
+
                 <button onClick={() => setCurrentStep('create')}
-                  disabled={!walletDetected}
+                  disabled={!mobile && !walletDetected}
                   className="btn btn-primary w-full h-11 text-body-sm"
-                  style={{ opacity: walletDetected ? 1 : 0.4 }}>
-                  Continue
+                  style={{ opacity: (mobile || walletDetected) ? 1 : 0.4 }}>
+                  {mobile ? "I've installed the app — continue" : 'Continue'}
                 </button>
 
-                {/* Manual override for web-based wallets or if detection fails */}
-                {!walletDetected && (
+                {/* Desktop fallback */}
+                {!mobile && !walletDetected && (
                   <button onClick={() => setCurrentStep('create')}
                     className="w-full text-center text-tiny py-2 transition-colors hover:opacity-80"
                     style={{ color: 'var(--text-faint)' }}>
@@ -254,7 +327,7 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                   </h4>
                 </div>
 
-                {/* Step-by-step guidance */}
+                {/* Step-by-step guidance (platform-aware) */}
                 <div className="space-y-2">
                   {steps.map((step, i) => (
                     <div key={i} className="flex gap-3 p-3 rounded-xl"
@@ -280,7 +353,7 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                     </p>
                     <p className="text-tiny mt-1" style={{ color: 'var(--warning-text)' }}>
                       Your recovery phrase is the <strong>only</strong> way to recover your wallet.
-                      Write it on paper. Never share it. Never screenshot it.
+                      Write it on paper. Never share it. {mobile ? 'Never screenshot it.' : 'Never copy-paste it online.'}
                     </p>
                     <p className="text-tiny mt-2 font-semibold" style={{ color: 'var(--warning-text)' }}>
                       goBlink will NEVER ask for your recovery phrase.
@@ -288,8 +361,23 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                   </div>
                 </div>
 
-                {/* Open wallet to create */}
-                {selectedWallet.url && (
+                {/* Open wallet — platform-aware */}
+                {mobile ? (
+                  // On mobile: try deep link first, fall back to app store
+                  selectedWallet.deepLink ? (
+                    <a href={selectedWallet.deepLink}
+                      className="btn btn-primary w-full h-12 text-body-sm flex items-center justify-center gap-2">
+                      Open {selectedWallet.name}
+                    </a>
+                  ) : (
+                    <a href={installUrl || selectedWallet.url} target="_blank" rel="noopener noreferrer"
+                      className="btn btn-primary w-full h-12 text-body-sm flex items-center justify-center gap-2">
+                      Open {selectedWallet.name}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )
+                ) : (
+                  // Desktop: open extension or website
                   <a href={selectedWallet.chromeUrl || selectedWallet.url} target="_blank" rel="noopener noreferrer"
                     className="btn btn-primary w-full h-12 text-body-sm flex items-center justify-center gap-2">
                     Open {selectedWallet.name} to create wallet
@@ -317,7 +405,10 @@ export default function WalletSetupGuide({ chainConfig, onComplete, onClose }: W
                     Wallet created!
                   </h4>
                   <p className="text-body-sm mt-2" style={{ color: 'var(--text-muted)' }}>
-                    Now let&apos;s connect {selectedWallet.name} to goBlink so we can auto-fill your receiving address.
+                    {mobile
+                      ? `Now let\u2019s connect ${selectedWallet.name} to goBlink. You may be asked to approve the connection in the app.`
+                      : `Now let\u2019s connect ${selectedWallet.name} to goBlink so we can auto-fill your receiving address.`
+                    }
                   </p>
                 </div>
 

@@ -1,0 +1,97 @@
+'use client';
+
+import { type Nudge } from '@/hooks/useSmartFirstTransaction';
+
+interface SmartTransactionNudgeProps {
+  nudge: Nudge;
+  onDismiss: () => void;
+  onUseSuggestion?: (amount: string) => void;
+}
+
+const ICONS: Record<string, string> = {
+  'first-ever': '👋',
+  'first-chain': '🗺️',
+  'first-large': '⚡',
+  'welcome-back': '👋',
+};
+
+const COLORS: Record<string, { bg: string; border: string; text: string; accent: string }> = {
+  'first-ever': {
+    bg: 'var(--info-bg)',
+    border: 'var(--brand)',
+    text: 'var(--text-primary)',
+    accent: 'var(--brand)',
+  },
+  'first-chain': {
+    bg: 'var(--info-bg)',
+    border: 'var(--brand)',
+    text: 'var(--text-primary)',
+    accent: 'var(--brand)',
+  },
+  'first-large': {
+    bg: 'var(--warning-bg, rgba(234, 179, 8, 0.08))',
+    border: 'var(--warning, #eab308)',
+    text: 'var(--text-primary)',
+    accent: 'var(--warning, #eab308)',
+  },
+  'welcome-back': {
+    bg: 'var(--info-bg)',
+    border: 'var(--brand)',
+    text: 'var(--text-primary)',
+    accent: 'var(--brand)',
+  },
+};
+
+export default function SmartTransactionNudge({ nudge, onDismiss, onUseSuggestion }: SmartTransactionNudgeProps) {
+  const type = nudge.type || 'first-ever';
+  const icon = ICONS[type] || '💡';
+  const colors = COLORS[type] || COLORS['first-ever'];
+
+  return (
+    <div
+      className="rounded-xl p-3.5 mb-4 animate-fade-up"
+      style={{
+        background: colors.bg,
+        borderLeft: `3px solid ${colors.border}`,
+      }}
+    >
+      <div className="flex items-start gap-2.5">
+        <span className="text-lg flex-shrink-0 mt-0.5">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-body-sm font-medium" style={{ color: colors.text }}>
+            {nudge.message}
+          </p>
+
+          {nudge.suggestion && onUseSuggestion && (
+            <button
+              onClick={() => onUseSuggestion(nudge.suggestion!)}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption font-semibold transition-all active:scale-95"
+              style={{
+                background: colors.accent,
+                color: 'white',
+              }}
+            >
+              Try {nudge.suggestion} {/* amount shown without token symbol — context makes it clear */}
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {nudge.dismissable && (
+          <button
+            onClick={onDismiss}
+            className="flex-shrink-0 p-1 rounded-md transition-colors opacity-50 hover:opacity-100"
+            style={{ color: colors.text }}
+            title="Dismiss"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

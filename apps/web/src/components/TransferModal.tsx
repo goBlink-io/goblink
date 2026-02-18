@@ -8,7 +8,9 @@ import { useSwitchChain, useConfig as useWagmiConfig } from 'wagmi';
 import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
-import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, ExternalLink, ArrowRight } from 'lucide-react';
+import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy } from 'lucide-react';
+import TransactionStoryline from './TransactionStoryline';
+import ConfidenceScore from './ConfidenceScore';
 
 type ModalStep = 'preview' | 'confirming' | 'tracking';
 
@@ -38,6 +40,12 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
   const [transaction, setTransaction] = useState<TransactionData | null>(null);
   const [copied, setCopied] = useState(false);
   const [showManualDeposit, setShowManualDeposit] = useState(false);
+  const [trackingStartedAt, setTrackingStartedAt] = useState(0);
+  
+  const enterTracking = () => {
+    setTrackingStartedAt(Date.now());
+    enterTracking();
+  };
   
   // Wallet hooks
   const suiClient = useSuiClient();
@@ -141,7 +149,7 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 18,
         });
         onComplete(depAddr, txHash);
-        setStep('tracking');
+        enterTracking();
       }
       // Sui
       else if (originChain === 'sui') {
@@ -152,7 +160,7 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
         }, suiClient, currentAccount, signAndExecuteTransaction);
         onComplete(depAddr, txHash);
-        setStep('tracking');
+        enterTracking();
       }
       // Solana
       else if (originChain === 'solana') {
@@ -190,7 +198,7 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
         if (sendData.error) throw new Error(sendData.error.message || 'Failed to broadcast');
         
         onComplete(depAddr, sendData.result);
-        setStep('tracking');
+        enterTracking();
       }
       // EVM
       else if (isEvmChain(originChain!)) {
@@ -225,7 +233,7 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
         }
         
         onComplete(depAddr, txHash);
-        setStep('tracking');
+        enterTracking();
       }
       // Other chains — manual deposit
       else {
@@ -250,7 +258,7 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
   const handleManualDeposit = () => {
     if (depositAddress) {
       onComplete(depositAddress);
-      setStep('tracking');
+      enterTracking();
     }
   };
 
@@ -260,14 +268,6 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
     if (chain === 'near') return `https://nearblocks.io/txns/${txHash}`;
     if (chain === 'sui') return `https://suiscan.xyz/mainnet/tx/${txHash}`;
     return `https://explorer.near-intents.org/`;
-  };
-
-  const getStatusDisplay = (status: string) => {
-    const s = status?.toUpperCase();
-    if (s === 'SUCCESS' || s === 'COMPLETED') return { icon: <Check className="h-6 w-6" />, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Complete!' };
-    if (s === 'FAILED' || s === 'REFUNDED') return { icon: <AlertTriangle className="h-6 w-6" />, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: s === 'REFUNDED' ? 'Refunded' : 'Failed' };
-    if (s === 'PROCESSING' || s === 'DEPOSIT_RECEIVED') return { icon: <Loader2 className="h-6 w-6 animate-spin" />, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30', label: 'Processing...' };
-    return { icon: <Loader2 className="h-6 w-6 animate-spin" />, color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-900/30', label: 'Waiting for deposit...' };
   };
 
   return (
@@ -401,6 +401,17 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
                   </div>
                 )}
 
+                {/* Confidence Score */}
+                <ConfidenceScore
+                  timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
+                  fromChain={fromChain}
+                  toChain={toChain}
+                  fromToken={originTokenMetadata?.symbol || ''}
+                  toToken={destinationTokenMetadata?.symbol || ''}
+                  amountUsd={feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : null}
+                  quoteAvailable={true}
+                />
+
                 {/* Confirm button */}
                 {!showManualDeposit && (
                   <button onClick={handleConfirm}
@@ -430,75 +441,25 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
               </div>
             )}
 
-            {/* ── STEP: TRACKING ── */}
+            {/* ── STEP: TRACKING (Live Transaction Storytelling) ── */}
             {step === 'tracking' && (
               <div className="space-y-5">
-                {/* Status badge */}
-                {transaction ? (
-                  <>
-                    {(() => {
-                      const s = getStatusDisplay(transaction.status);
-                      return (
-                        <div className={`flex flex-col items-center py-6 rounded-xl ${s.bg}`}>
-                          <div className={`mb-3 ${s.color}`}>{s.icon}</div>
-                          <div className={`text-lg font-bold ${s.color}`}>{s.label}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider">{transaction.status}</div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Transfer summary */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <div className="flex items-center gap-2">
-                        {fromLogo && <img src={fromLogo.icon} alt="" className="w-6 h-6 rounded-full" />}
-                        <span className="font-medium text-gray-900 dark:text-white text-sm">{quoteData.amountInFormatted}</span>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-green-600 dark:text-green-400 text-sm">
-                          {transaction.amountOut || quoteData.amountOutFormatted}
-                        </span>
-                        {toLogo && <img src={toLogo.icon} alt="" className="w-6 h-6 rounded-full" />}
-                      </div>
-                    </div>
-
-                    {/* Transaction hashes */}
-                    {(transaction.depositTxHash || transaction.fulfillmentTxHash) && (
-                      <div className="space-y-2">
-                        {transaction.depositTxHash && (
-                          <a href={getExplorerLink(transaction.depositTxHash, fromChain)} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Deposit tx</div>
-                              <code className="text-xs font-mono text-gray-700 dark:text-gray-300">
-                                {transaction.depositTxHash.slice(0, 10)}...{transaction.depositTxHash.slice(-8)}
-                              </code>
-                            </div>
-                            <ExternalLink className="h-4 w-4 text-gray-400" />
-                          </a>
-                        )}
-                        {transaction.fulfillmentTxHash && (
-                          <a href={getExplorerLink(transaction.fulfillmentTxHash, toChain)} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-                            <div>
-                              <div className="text-xs text-green-600 dark:text-green-400">Fulfillment tx</div>
-                              <code className="text-xs font-mono text-green-700 dark:text-green-300">
-                                {transaction.fulfillmentTxHash.slice(0, 10)}...{transaction.fulfillmentTxHash.slice(-8)}
-                              </code>
-                            </div>
-                            <ExternalLink className="h-4 w-4 text-green-400" />
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center py-12">
-                    <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Waiting for confirmation...</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">This may take a few moments</p>
-                  </div>
-                )}
+                <TransactionStoryline
+                  status={transaction?.status || null}
+                  fromChain={fromChain}
+                  toChain={toChain}
+                  fromToken={originTokenMetadata?.symbol || '?'}
+                  toToken={destinationTokenMetadata?.symbol || '?'}
+                  amountIn={quoteData.amountInFormatted}
+                  amountOut={transaction?.amountOut || quoteData.amountOutFormatted}
+                  timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
+                  depositTxHash={transaction?.depositTxHash || null}
+                  fulfillmentTxHash={transaction?.fulfillmentTxHash || null}
+                  fromLogo={fromLogo}
+                  toLogo={toLogo}
+                  getExplorerLink={getExplorerLink}
+                  startedAt={trackingStartedAt}
+                />
 
                 {/* Action button */}
                 <button onClick={onClose}

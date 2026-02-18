@@ -5,6 +5,7 @@ import SwapForm from '@/components/SwapForm';
 import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
+import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { getChainsByType } from '@/lib/chain-logos';
 import { Zap, Shield, DollarSign, ArrowRight, ChevronDown } from 'lucide-react';
 
@@ -13,6 +14,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [, setTrackingAddress] = useState<string>('');
   const { history, addEntry } = useTransactionHistory();
+  const { recordTransfer } = useSmartFirstTransaction('', '', '', 0);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   const handleQuoteReceived = (quote: any) => {
@@ -33,6 +35,19 @@ export default function Home() {
         status: 'PENDING_DEPOSIT',
       });
     }
+    // Record for smart first-transaction nudge system
+    if (quoteData) {
+      recordTransfer({
+        fromChain: quoteData.fromChain || '?',
+        toChain: quoteData.toChain || '?',
+        fromToken: quoteData.originTokenMetadata?.symbol || '?',
+        toToken: quoteData.destinationTokenMetadata?.symbol || '?',
+        amount: quoteData.quote?.amountInFormatted || '',
+        amountUsd: parseFloat(quoteData.quote?.amountInUsd || '0') || 0,
+        success: true, // Optimistic — refined when status polling confirms
+      });
+    }
+
     if (txHash) {
       fetch('/api/deposit/submit', {
         method: 'POST',

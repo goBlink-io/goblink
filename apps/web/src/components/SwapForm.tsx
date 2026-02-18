@@ -7,6 +7,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
 import NoWalletCard from './NoWalletCard';
+import SmartTransactionNudge from './SmartTransactionNudge';
+import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -135,6 +137,16 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       return tokenChain === toChain;
     });
   }, [tokens, toChain]);
+
+  // Smart First Transaction — contextual nudges for new/returning users
+  const selectedFromToken = useMemo(() => fromTokens.find(t => t.assetId === originAsset), [fromTokens, originAsset]);
+  const estimatedUsd = 0; // TODO: wire up USD estimate from quote/price data
+  const { nudge, dismiss: dismissNudge } = useSmartFirstTransaction(
+    fromChain,
+    toChain,
+    selectedFromToken?.symbol || '',
+    estimatedUsd,
+  );
 
   useEffect(() => {
     const addr = fromAddress();
@@ -433,6 +445,15 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           Funds returned here if transfer can&apos;t complete
         </p>
       </div>
+
+      {/* Smart Transaction Nudge */}
+      {nudge && (
+        <SmartTransactionNudge
+          nudge={nudge}
+          onDismiss={dismissNudge}
+          onUseSuggestion={(suggestedAmount) => setAmount(suggestedAmount)}
+        />
+      )}
 
       {/* Error */}
       {formError && (
