@@ -487,6 +487,10 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                     toChain={toChain}
                     elapsedSeconds={elapsedSeconds}
                     feeUsd={feeUsdNum}
+                    fromChain={fromChain}
+                    fromToken={originTokenMetadata?.symbol}
+                    amountIn={quoteData.amountInFormatted}
+                    amountInUsd={quoteData.amountInUsd}
                   />
                 )}
 

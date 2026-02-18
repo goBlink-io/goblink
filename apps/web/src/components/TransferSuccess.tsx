@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, Share2, Check } from 'lucide-react';
+import { Trophy, Share2, Check, Link as LinkIcon } from 'lucide-react';
+import { generateTransferUrl } from '@/lib/transfer-links';
 
 interface TransferSuccessProps {
   amountOut: string;
@@ -9,6 +10,11 @@ interface TransferSuccessProps {
   toChain: string;
   elapsedSeconds: number;
   feeUsd?: number | null;
+  // Optional extra data for generating a transfer link
+  fromChain?: string;
+  fromToken?: string;
+  amountIn?: string;
+  amountInUsd?: string;
 }
 
 export default function TransferSuccess({
@@ -17,8 +23,13 @@ export default function TransferSuccess({
   toChain,
   elapsedSeconds,
   feeUsd,
+  fromChain,
+  fromToken,
+  amountIn,
+  amountInUsd,
 }: TransferSuccessProps) {
   const [shared, setShared] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [particles, setParticles] = useState<
     Array<{ id: number; x: number; color: string; delay: number; size: number }>
   >([]);
@@ -38,6 +49,26 @@ export default function TransferSuccess({
 
   const estimatedSavings = feeUsd ? (feeUsd * 3).toFixed(2) : null;
   const chainName = toChain.charAt(0).toUpperCase() + toChain.slice(1);
+
+  const handleCopyLink = () => {
+    if (!fromChain || !fromToken || !amountIn) return;
+    const url = generateTransferUrl({
+      fromChain,
+      toChain,
+      fromToken,
+      toToken,
+      amountIn,
+      amountOut,
+      amountInUsd,
+      elapsedSeconds,
+      feeUsd,
+      timestamp: Date.now(),
+    });
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    });
+  };
 
   const handleShare = () => {
     const text = [
@@ -108,22 +139,43 @@ export default function TransferSuccess({
         </div>
       )}
 
-      <button
-        onClick={handleShare}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
-        style={{
-          background: 'var(--elevated)',
-          color: 'var(--text-secondary)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        {shared ? (
-          <Check className="h-4 w-4" style={{ color: 'var(--success)' }} />
-        ) : (
-          <Share2 className="h-4 w-4" />
+      <div className="flex flex-col sm:flex-row gap-2 justify-center">
+        <button
+          onClick={handleShare}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+          style={{
+            background: 'var(--elevated)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          {shared ? (
+            <Check className="h-4 w-4" style={{ color: 'var(--success)' }} />
+          ) : (
+            <Share2 className="h-4 w-4" />
+          )}
+          {shared ? 'Copied to clipboard!' : 'Share'}
+        </button>
+
+        {fromChain && fromToken && amountIn && (
+          <button
+            onClick={handleCopyLink}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+            style={{
+              background: linkCopied ? 'rgba(34,197,94,0.1)' : 'var(--elevated)',
+              color: linkCopied ? 'var(--success)' : 'var(--text-secondary)',
+              border: `1px solid ${linkCopied ? 'rgba(34,197,94,0.3)' : 'var(--border)'}`,
+            }}
+          >
+            {linkCopied ? (
+              <Check className="h-4 w-4" style={{ color: 'var(--success)' }} />
+            ) : (
+              <LinkIcon className="h-4 w-4" />
+            )}
+            {linkCopied ? 'Link copied!' : 'Copy receipt link'}
+          </button>
         )}
-        {shared ? 'Copied to clipboard!' : 'Share this transfer →'}
-      </button>
+      </div>
     </div>
   );
 }

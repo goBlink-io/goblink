@@ -90,6 +90,14 @@ export default function RootLayout({
                     </div>
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
                   </div>
+                  <div className="flex items-center gap-4">
+                    <a href="/pay" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Request Payment
+                    </a>
+                    <a href="/widget" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Embed Widget
+                    </a>
+                  </div>
                   <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
                     Move value anywhere, instantly. Powered by NEAR Intents.
                   </p>
