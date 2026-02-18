@@ -32,7 +32,7 @@ const SUPPORTED_CHAINS = [
 ] as const;
 
 function SkeletonPulse({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
+  return <div className={`animate-pulse rounded ${className || ''}`} style={{ background: 'var(--elevated)' }} />;
 }
 
 export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
@@ -266,127 +266,77 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
-  // Loading skeleton
   if (tokensLoading) {
     return (
-      <div className="card p-6">
-        <h2 className="text-2xl font-bold mb-6">Transfer</h2>
+      <div className="card p-5 sm:p-6">
+        <h2 className="text-h3 mb-5">Transfer</h2>
         <div className="space-y-4">
-          <div>
-            <SkeletonPulse className="h-4 w-16 mb-2" />
-            <SkeletonPulse className="h-10 w-full mb-2" />
-            <SkeletonPulse className="h-12 w-full mb-2" />
-            <SkeletonPulse className="h-10 w-full" />
-          </div>
-          <div className="flex justify-center"><SkeletonPulse className="h-9 w-9 rounded-full" /></div>
-          <div>
-            <SkeletonPulse className="h-4 w-16 mb-2" />
-            <SkeletonPulse className="h-10 w-full mb-2" />
-            <SkeletonPulse className="h-12 w-full" />
-          </div>
-          <SkeletonPulse className="h-10 w-full" />
-          <SkeletonPulse className="h-10 w-full" />
-          <SkeletonPulse className="h-12 w-full rounded-md" />
+          <div><SkeletonPulse className="h-4 w-16 mb-2" /><SkeletonPulse className="h-11 w-full mb-2" /><SkeletonPulse className="h-12 w-full mb-2" /><SkeletonPulse className="h-11 w-full" /></div>
+          <div className="flex justify-center"><SkeletonPulse className="h-10 w-10 rounded-full" /></div>
+          <div><SkeletonPulse className="h-4 w-16 mb-2" /><SkeletonPulse className="h-11 w-full mb-2" /><SkeletonPulse className="h-12 w-full" /></div>
+          <SkeletonPulse className="h-11 w-full" /><SkeletonPulse className="h-11 w-full" /><SkeletonPulse className="h-12 w-full rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card p-6">
-      <h2 className="text-2xl font-bold mb-6">Transfer</h2>
+    <div className="card p-5 sm:p-6">
+      <h2 className="text-h3 mb-5">Transfer</h2>
 
       {/* From Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">You send</label>
-          <div className="text-xs text-gray-500">
+          <label className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You send</label>
+          <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
             {fromAddress() ? (
               <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                {formatAddress(fromAddress())}
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--success)' }} />
+                <span className="font-mono">{formatAddress(fromAddress())}</span>
               </span>
             ) : (
-              <span className="text-amber-600">Connect wallet</span>
+              <span style={{ color: 'var(--warning)' }}>Connect wallet</span>
             )}
           </div>
         </div>
 
-        {/* Chain Selector */}
         <div className="mb-2">
-          <select
-            value={fromChain}
-            onChange={(e) => setFromChain(e.target.value)}
-            className="input w-full text-sm font-semibold"
-          >
+          <select value={fromChain} onChange={(e) => setFromChain(e.target.value)}
+            className="input w-full h-11 text-body-sm font-semibold">
             {SUPPORTED_CHAINS.map((chain) => (
               <option key={chain.id} value={chain.id}>{chain.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Token Selector */}
-        <TokenSelector
-          tokens={fromTokens}
-          selectedToken={originAsset}
-          onSelect={setOriginAsset}
-          balances={balances}
-          loadingBalances={loadingBalances}
-          label="Select Token"
-          placeholder="Select a token..."
-        />
+        <TokenSelector tokens={fromTokens} selectedToken={originAsset} onSelect={setOriginAsset}
+          balances={balances} loadingBalances={loadingBalances} label="Token" placeholder="Select a token..." />
 
-        {/* Amount Input with Percentage Buttons */}
         <div>
-          <div className="flex items-center space-x-2 mb-2">
-            <input
-              type="text"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.0"
-              className="input flex-1"
-            />
-          </div>
+          <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.0" className="input w-full h-12 text-h4 mb-2" />
           
           {originAsset && balances[originAsset] && parseFloat(balances[originAsset]) > 0 && (
-            <div className="flex space-x-1">
-              {[25, 50, 75, 100].map((percentage) => (
-                <button
-                  key={percentage}
-                  type="button"
+            <div className="flex gap-1.5">
+              {[25, 50, 75, 100].map((pct) => (
+                <button key={pct} type="button"
                   onClick={() => {
-                    const selectedToken = fromTokens.find(t => t.assetId === originAsset);
-                    if (!selectedToken) return;
-                    const balance = parseFloat(balances[originAsset] || '0');
-                    let amountToSet = balance * (percentage / 100);
-                    if (percentage === 100) {
-                      const isNativeToken =
-                        (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ||
-                        selectedToken.symbol === 'SUI' ||
-                        selectedToken.symbol === 'SOL' ||
-                        ['ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'].includes(selectedToken.symbol);
-                      if (isNativeToken) {
-                        const gasReserve =
-                          (selectedToken.symbol === 'NEAR' || selectedToken.symbol === 'wNEAR') ? 0.1 :
-                          selectedToken.symbol === 'SUI' ? 0.01 :
-                          selectedToken.symbol === 'SOL' ? 0.001 :
-                          selectedToken.symbol === 'ETH' ? 0.01 :
-                          selectedToken.symbol === 'BNB' ? 0.002 :
-                          selectedToken.symbol === 'MATIC' ? 0.1 :
-                          selectedToken.symbol === 'BERA' ? 0.01 :
-                          selectedToken.symbol === 'MON' ? 0.01 :
-                          selectedToken.symbol === 'APT' ? 0.01 :
-                          selectedToken.symbol === 'STRK' ? 0.01 :
-                          selectedToken.symbol === 'TON' ? 0.05 :
-                          selectedToken.symbol === 'TRX' ? 5 : 0;
-                        amountToSet = Math.max(0, balance - gasReserve);
+                    const sel = fromTokens.find(t => t.assetId === originAsset);
+                    if (!sel) return;
+                    const bal = parseFloat(balances[originAsset] || '0');
+                    let amt = bal * (pct / 100);
+                    if (pct === 100) {
+                      const natives = ['NEAR', 'wNEAR', 'SUI', 'SOL', 'ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'];
+                      if (natives.includes(sel.symbol)) {
+                        const reserves: Record<string, number> = { NEAR: 0.1, wNEAR: 0.1, SUI: 0.01, SOL: 0.001, ETH: 0.01, BNB: 0.002, MATIC: 0.1, BERA: 0.01, MON: 0.01, APT: 0.01, STRK: 0.01, TON: 0.05, TRX: 5 };
+                        amt = Math.max(0, bal - (reserves[sel.symbol] || 0));
                       }
                     }
-                    setAmount(amountToSet.toFixed(6).replace(/\.?0+$/, ''));
+                    setAmount(amt.toFixed(6).replace(/\.?0+$/, ''));
                   }}
-                  className="flex-1 px-2 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors active:scale-95"
-                >
-                  {percentage}%
+                  className="flex-1 py-2 text-tiny font-semibold rounded-lg transition-all active:scale-95"
+                  style={{ background: 'var(--elevated)', color: 'var(--text-secondary)' }}>
+                  {pct}%
                 </button>
               ))}
             </div>
@@ -394,13 +344,12 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
         </div>
       </div>
 
-      {/* Swap Button */}
-      <div className="flex justify-center my-2">
-        <button 
-          onClick={swapTokens} 
-          className="rounded-full bg-gray-100 dark:bg-gray-800 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors active:scale-95"
-        >
-          <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      {/* Flip */}
+      <div className="flex justify-center -my-1 relative z-10">
+        <button onClick={swapTokens}
+          className="w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all active:scale-90 active:rotate-180"
+          style={{ background: 'var(--surface)', borderColor: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
           </svg>
         </button>
@@ -409,103 +358,75 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       {/* To Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">You receive</label>
-          <div className="text-xs text-gray-500">
+          <label className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You receive</label>
+          <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
             {toAddress() ? (
               <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                {formatAddress(toAddress())}
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--success)' }} />
+                <span className="font-mono">{formatAddress(toAddress())}</span>
               </span>
             ) : (
-              <span className="text-gray-400">No wallet connected</span>
+              <span style={{ color: 'var(--text-faint)' }}>No wallet</span>
             )}
           </div>
         </div>
 
         <div className="mb-2">
-          <select
-            value={toChain}
-            onChange={(e) => setToChain(e.target.value)}
-            className="input w-full text-sm font-semibold"
-          >
+          <select value={toChain} onChange={(e) => setToChain(e.target.value)}
+            className="input w-full h-11 text-body-sm font-semibold">
             {SUPPORTED_CHAINS.map((chain) => (
               <option key={chain.id} value={chain.id}>{chain.name}</option>
             ))}
           </select>
         </div>
 
-        <TokenSelector
-          tokens={toTokens}
-          selectedToken={destinationAsset}
-          onSelect={setDestinationAsset}
-          balances={{}}
-          loadingBalances={false}
-          label="Select Token"
-          placeholder="Select a token..."
-        />
+        <TokenSelector tokens={toTokens} selectedToken={destinationAsset} onSelect={setDestinationAsset}
+          balances={{}} loadingBalances={false} label="Token" placeholder="Select a token..." />
       </div>
 
       {/* Receiving Address */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="flex items-baseline gap-2 text-caption font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
           Receiving Address
-          {!toAddress() && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(Enter manually)</span>
-          )}
+          {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
         </label>
-        <input
-          type="text"
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
-          placeholder={toAddress() ? "Auto-filled from your wallet" : "Enter receiving address"}
-          className="input w-full"
-        />
+        <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
+          placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
+          className="input w-full h-11 font-mono text-body-sm" />
         {toAddress() && recipient === toAddress() && (
-          <p className="text-xs text-gray-500 mt-1">
-            Sending to your own wallet on {toChain}
-          </p>
+          <p className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>Sending to your wallet on {toChain}</p>
         )}
       </div>
 
       {/* Return Address */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Return Address
-          <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">(Auto-filled)</span>
+      <div className="mb-5">
+        <label className="flex items-baseline gap-2 text-caption font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+          Return Address <span className="text-tiny" style={{ color: 'var(--text-faint)' }}>(auto)</span>
         </label>
-        <input
-          type="text"
-          value={refundTo}
-          readOnly
-          placeholder="Connect wallet on the sending chain"
-          className="input w-full bg-gray-50 dark:bg-gray-900 cursor-not-allowed"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          If the transfer can&apos;t complete, funds are returned here
+        <input type="text" value={refundTo} readOnly placeholder="Connect wallet on sending chain"
+          className="input w-full h-11 font-mono text-body-sm opacity-60 cursor-not-allowed" />
+        <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
+          Funds returned here if transfer can&apos;t complete
         </p>
       </div>
 
-      {/* Error Banner */}
+      {/* Error */}
       {formError && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+        <div className="mb-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--error-bg)', color: 'var(--error-text)', border: '1px solid var(--error)' }}>
           {formError}
         </div>
       )}
 
-      {/* Preview Button */}
-      <button
-        onClick={handleGetQuote}
+      {/* CTA */}
+      <button onClick={handleGetQuote}
         disabled={loading || !originAsset || !destinationAsset || !amount || !recipient || !refundTo}
-        className="btn btn-primary w-full py-3"
-      >
+        className="btn btn-primary w-full h-12 text-body-sm">
         {loading ? 'Getting Preview...' : 'Preview Transfer'}
       </button>
 
       {/* Tip */}
-      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-        <p className="text-sm text-blue-900 dark:text-blue-200">
-          <strong>Tip:</strong> Connect wallets for both chains to auto-fill addresses, or manually enter a receiving address to send to someone else.
-        </p>
+      <div className="mt-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
+        <strong>Tip:</strong> Connect wallets on both chains to auto-fill addresses.
       </div>
     </div>
   );

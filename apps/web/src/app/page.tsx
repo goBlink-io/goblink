@@ -194,18 +194,18 @@ export default function Home() {
       </section>
 
       {/* ═══ Trust Bar ═══ */}
-      <section className="mb-20 text-center">
-        <div className="inline-flex items-center gap-6 px-6 py-3 rounded-full" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
+      <section className="mb-20">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
             <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Non-custodial</span>
           </div>
-          <div className="w-px h-4" style={{ background: 'var(--border)' }} />
+          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
             <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Powered by NEAR Intents</span>
           </div>
-          <div className="w-px h-4" style={{ background: 'var(--border)' }} />
+          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
           <div className="flex items-center gap-2">
             <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No account needed</span>
           </div>
