@@ -8,9 +8,10 @@ import { useSwitchChain, useConfig as useWagmiConfig } from 'wagmi';
 import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
-import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy } from 'lucide-react';
+import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
+import TransferSuccess from './TransferSuccess';
 
 type ModalStep = 'preview' | 'confirming' | 'tracking';
 
@@ -33,7 +34,7 @@ interface TransactionData {
 
 export default function TransferModal({ quote, onClose, onComplete, onOutcome }: TransferModalProps) {
   const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo } = quote;
-  
+
   const [step, setStep] = useState<ModalStep>('preview');
   const [confirmationStep, setConfirmationStep] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +43,12 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
   const [copied, setCopied] = useState(false);
   const [showManualDeposit, setShowManualDeposit] = useState(false);
   const [trackingStartedAt, setTrackingStartedAt] = useState(0);
-  
-  const enterTracking = () => {
+
+  const startTracking = () => {
     setTrackingStartedAt(Date.now());
-    enterTracking();
+    setStep('tracking');
   };
-  
+
   // Wallet hooks
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
@@ -89,19 +90,16 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     return address;
   };
 
-  // Track whether we've already logged this swap's outcome
   const [outcomeLogged, setOutcomeLogged] = useState(false);
 
-  // Poll for transaction status
   const pollStatus = useCallback(async (depAddr: string) => {
     try {
       const response = await fetch(`/api/status/${depAddr}`);
       if (!response.ok) return;
       const data = await response.json();
       setTransaction(data);
-      
+
       if (['COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'].includes(data.status)) {
-        // Log route stats for Confidence Score Phase 2
         if (!outcomeLogged) {
           setOutcomeLogged(true);
           const isSuccess = data.status === 'COMPLETED' || data.status === 'SUCCESS';
@@ -123,9 +121,9 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000)
                 : null,
             }),
-          }).catch(() => {}); // Best-effort, don't fail UX
+          }).catch(() => {});
         }
-        return true; // Stop polling
+        return true;
       }
     } catch { /* retry */ }
     return false;
@@ -133,23 +131,22 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
   useEffect(() => {
     if (step !== 'tracking' || !depositAddress) return;
-    
+
     pollStatus(depositAddress);
     const interval = setInterval(async () => {
       const done = await pollStatus(depositAddress);
       if (done) clearInterval(interval);
     }, 6000);
-    
+
     return () => clearInterval(interval);
   }, [step, depositAddress, pollStatus]);
 
   const handleConfirm = async () => {
     setStep('confirming');
     setError(null);
-    setConfirmationStep('Getting transfer address...');
-    
+    setConfirmationStep('Preparing your transfer...');
+
     try {
-      // Get actual deposit address
       const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,12 +160,11 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
       const actualQuote = await response.json();
       const depAddr = actualQuote.depositAddress || actualQuote.quote?.depositAddress || actualQuote.address;
-      if (!depAddr) throw new Error('No deposit address in response');
-      
+      if (!depAddr) throw new Error('No transfer address in response');
+
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
 
-      // NEAR
       if (originChain === 'near') {
         setConfirmationStep('Approve in your NEAR wallet...');
         const tokenAddress = getTokenAddressFromAssetId(quoteRequest.originAsset);
@@ -177,10 +173,8 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 18,
         });
         onComplete(depAddr, txHash);
-        enterTracking();
-      }
-      // Sui
-      else if (originChain === 'sui') {
+        startTracking();
+      } else if (originChain === 'sui') {
         if (!currentAccount) throw new Error('Connect your Sui wallet first');
         setConfirmationStep('Approve in your Sui wallet...');
         const txHash = await sendSuiTransaction({
@@ -188,31 +182,29 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
         }, suiClient, currentAccount, signAndExecuteTransaction);
         onComplete(depAddr, txHash);
-        enterTracking();
-      }
-      // Solana
-      else if (originChain === 'solana') {
+        startTracking();
+      } else if (originChain === 'solana') {
         if (!solanaProvider || !isAppKitConnected || !caipAddress?.startsWith('solana:'))
           throw new Error('Connect your Solana wallet first');
-        
+
         setConfirmationStep('Preparing Solana transaction...');
         const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
         const fromPubkey = new PublicKey(solanaProvider.publicKey);
         const toPubkey = new PublicKey(depAddr);
         const lamports = Number(BigInt(quoteRequest.amount));
-        
+
         const blockhashRes = await fetch('/api/balances/solana-blockhash');
-        if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
+        if (!blockhashRes.ok) throw new Error('Failed to fetch Solana network data');
         const { blockhash } = await blockhashRes.json();
-        
+
         const transaction = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey })
           .add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports }));
-        
-        setConfirmationStep('Approve in your Solana wallet...');
+
+        setConfirmationStep('Approve in your wallet (takes a few seconds)');
         const signed = typeof solanaProvider.signTransaction === 'function'
           ? await solanaProvider.signTransaction(transaction)
           : (await solanaProvider.signAllTransactions([transaction]))[0];
-        
+
         setConfirmationStep('Broadcasting...');
         const base64Tx = btoa(String.fromCharCode(...new Uint8Array(signed.serialize())));
         const sendRes = await fetch('/api/balances/solana-rpc', {
@@ -224,15 +216,13 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         });
         const sendData = await sendRes.json();
         if (sendData.error) throw new Error(sendData.error.message || 'Failed to broadcast');
-        
+
         onComplete(depAddr, sendData.result);
-        enterTracking();
-      }
-      // EVM
-      else if (isEvmChain(originChain!)) {
+        startTracking();
+      } else if (isEvmChain(originChain!)) {
         let wc = await getWalletClient(wagmiConfig);
         if (!wc) throw new Error('Connect your EVM wallet first');
-        
+
         const requiredChainId = EVM_CHAINS[originChain!]?.id;
         if (requiredChainId && wc.chain.id !== requiredChainId) {
           setConfirmationStep('Switching network...');
@@ -240,11 +230,11 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           wc = await getWalletClient(wagmiConfig);
           if (!wc) throw new Error('Wallet disconnected during switch');
         }
-        
-        setConfirmationStep('Approve in your wallet...');
+
+        setConfirmationStep('Approve in your wallet (takes a few seconds)');
         const isNative = isNativeToken(originTokenMetadata?.symbol || '');
         let txHash: string;
-        
+
         if (isNative) {
           txHash = await wc.sendTransaction({
             to: depAddr as `0x${string}`, value: BigInt(quoteRequest.amount),
@@ -259,12 +249,10 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
             args: [depAddr as `0x${string}`, BigInt(quoteRequest.amount)],
           });
         }
-        
+
         onComplete(depAddr, txHash);
-        enterTracking();
-      }
-      // Other chains — manual deposit
-      else {
+        startTracking();
+      } else {
         setShowManualDeposit(true);
         setStep('preview');
         setConfirmationStep('');
@@ -272,7 +260,6 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     } catch (err: any) {
       console.error('Transfer error:', err);
       if (depositAddress) {
-        // Wallet rejected but we have deposit address — show manual option
         setShowManualDeposit(true);
         setStep('preview');
       } else {
@@ -286,7 +273,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
   const handleManualDeposit = () => {
     if (depositAddress) {
       onComplete(depositAddress);
-      enterTracking();
+      startTracking();
     }
   };
 
@@ -298,11 +285,19 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     return `https://explorer.near-intents.org/`;
   };
 
+  const isComplete = transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS';
+  const elapsedSeconds = trackingStartedAt ? Math.floor((Date.now() - trackingStartedAt) / 1000) : 0;
+  const feeUsdNum = feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) : null;
+
+  // Human-readable fee percentage
+  const feePercent = feeInfo?.percent ? `${feeInfo.percent}%` : null;
+  const timeEstimateSecs = quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : 25;
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-end sm:items-center justify-center sm:p-4">
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={step !== 'confirming' ? onClose : undefined} />
-        
+
         <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-lg w-full transform transition-all max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
@@ -322,14 +317,17 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
             {/* ── STEP: PREVIEW ── */}
             {step === 'preview' && (
               <div className="space-y-5">
-                {/* From → To visual */}
-                <div className="space-y-3">
-                  {/* You Send */}
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">You send</div>
+                {/* ── Human-readable summary card (Win #4) ── */}
+                <div className="rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                  {/* You're sending */}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">You&apos;re sending</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {fromLogo && <img src={fromLogo.icon} alt={fromLogo.name} className="w-8 h-8 rounded-full" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                        {fromLogo && (
+                          <img src={fromLogo.icon} alt={fromLogo.name} className="w-8 h-8 rounded-full"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        )}
                         <div>
                           <div className="font-semibold text-gray-900 dark:text-white">{originTokenMetadata?.symbol}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">on {fromLogo?.name || fromChain}</div>
@@ -343,62 +341,71 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   </div>
 
                   {/* Arrow */}
-                  <div className="flex justify-center -my-1">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-4 border-white dark:border-gray-900">
-                      <ArrowDown className="h-4 w-4 text-gray-500" />
+                  <div className="flex justify-center -my-1 relative z-10">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center border-4 border-gray-50 dark:border-gray-800/50">
+                      <ArrowDown className="h-4 w-4 text-gray-400" />
                     </div>
                   </div>
 
-                  {/* You Receive */}
-                  <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                    <div className="text-xs text-green-600 dark:text-green-400 mb-2">You receive</div>
+                  {/* You'll receive */}
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border-t border-green-100 dark:border-green-800/40">
+                    <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-2">You&apos;ll receive</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {toLogo && <img src={toLogo.icon} alt={toLogo.name} className="w-8 h-8 rounded-full" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                        {toLogo && (
+                          <img src={toLogo.icon} alt={toLogo.name} className="w-8 h-8 rounded-full"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        )}
                         <div>
                           <div className="font-semibold text-gray-900 dark:text-white">{destinationTokenMetadata?.symbol}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">on {toLogo?.name || toChain}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600 dark:text-green-400">{quoteData.amountOutFormatted}</div>
+                        <div className="text-lg font-bold text-green-600 dark:text-green-400">~{quoteData.amountOutFormatted}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">${quoteData.amountOutUsd}</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Details */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1.5">
-                    <span className="text-gray-500 dark:text-gray-400">Minimum received</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
+                {/* Quick stats row */}
+                <div className="grid grid-cols-3 gap-3 text-center text-sm">
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--elevated)' }}>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {feeInfo?.estimatedUsd ? `$${feeInfo.estimatedUsd}` : feePercent || '—'}
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      Fee{feeInfo?.tier && feeInfo.tier !== 'Standard' ? ` · ${feeInfo.tier}` : ''}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--elevated)' }}>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>~{timeEstimateSecs}s</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Time</div>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--elevated)' }}>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>
                       {destinationTokenMetadata
                         ? formatAtomicAmount(quoteData.minAmountOut, destinationTokenMetadata.decimals)
-                        : quoteData.minAmountOut} {destinationTokenMetadata?.symbol}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5">
-                    <span className="text-gray-500 dark:text-gray-400">Estimated time</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{quoteData.timeEstimate}s</span>
-                  </div>
-                  {feeInfo && (
-                    <div className="flex justify-between py-1.5">
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Fee {feeInfo.tier && feeInfo.tier !== 'Standard' && <span className="text-green-500 text-xs">({feeInfo.tier})</span>}
-                      </span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {feeInfo.estimatedUsd ? `$${feeInfo.estimatedUsd}` : `${feeInfo.percent}%`}
-                      </span>
+                        : quoteData.minAmountOut}
                     </div>
-                  )}
-                  <div className="flex justify-between py-1.5">
-                    <span className="text-gray-500 dark:text-gray-400">Price protection</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{(quoteRequest.slippageTolerance / 100)}%</span>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Min. received</div>
                   </div>
                 </div>
 
-                {/* Manual deposit (shown when wallet signing failed or unsupported chain) */}
+                {/* Auto-refund guarantee (Win #4) */}
+                <div
+                  className="flex items-start gap-3 p-3.5 rounded-xl"
+                  style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}
+                >
+                  <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: '#7C3AED' }} />
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Safety guarantee: </span>
+                    If anything goes wrong, your {originTokenMetadata?.symbol || 'tokens'} are automatically returned to you.
+                  </p>
+                </div>
+
+                {/* Manual deposit */}
                 {showManualDeposit && depositAddress && (
                   <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                     <div className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Transfer Address</div>
@@ -469,9 +476,33 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
               </div>
             )}
 
-            {/* ── STEP: TRACKING (Live Transaction Storytelling) ── */}
+            {/* ── STEP: TRACKING ── */}
             {step === 'tracking' && (
               <div className="space-y-5">
+                {/* Celebration on completion (Win #5) */}
+                {isComplete && (
+                  <TransferSuccess
+                    amountOut={transaction?.amountOut || quoteData.amountOutFormatted}
+                    toToken={destinationTokenMetadata?.symbol || '?'}
+                    toChain={toChain}
+                    elapsedSeconds={elapsedSeconds}
+                    feeUsd={feeUsdNum}
+                  />
+                )}
+
+                {/* "Best Rate" badge on completion (Win #3) */}
+                {isComplete && (
+                  <div
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl"
+                    style={{ background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.15)' }}
+                  >
+                    <Trophy className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand, #2563eb)' }} />
+                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Solvers competed for your transfer — you got the best available rate.
+                    </p>
+                  </div>
+                )}
+
                 <TransactionStoryline
                   status={transaction?.status || null}
                   fromChain={fromChain}
@@ -489,14 +520,13 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   startedAt={trackingStartedAt}
                 />
 
-                {/* Action button */}
                 <button onClick={onClose}
                   className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-                    transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS'
+                    isComplete
                       ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}>
-                  {transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS' ? 'Done' : 'Close'}
+                  {isComplete ? 'Done' : 'Close'}
                 </button>
               </div>
             )}
