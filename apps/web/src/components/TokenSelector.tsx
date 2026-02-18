@@ -58,7 +58,7 @@ export default function TokenSelector({
       {/* Trigger */}
       <button type="button" onClick={() => setIsOpen(true)}
         className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors"
-        style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+        style={{ background: 'var(--elevated)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
         {selected ? (
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             {selected.icon ? (
