@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Token } from '@goblink/shared';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
+import NoWalletCard from './NoWalletCard';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -36,8 +37,9 @@ function SkeletonPulse({ className }: { className?: string }) {
 }
 
 export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
-  const { getAddressForChain, connectedWallets } = useWalletContext();
+  const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
   const { toast } = useToast();
+  const recipientRef = useRef<HTMLInputElement>(null);
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [tokensLoading, setTokensLoading] = useState(true);
@@ -111,6 +113,14 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     const chain = SUPPORTED_CHAINS.find(c => c.id === toChain);
     return chain ? getAddressForChain(chain.type) : null;
   }, [toChain, getAddressForChain]);
+
+  // Chains where user has a wallet connected (for NoWalletCard "switch chain" option)
+  const connectedChainOptions = useMemo(() => {
+    return SUPPORTED_CHAINS.filter(c => {
+      if (c.id === toChain) return false; // Don't suggest current chain
+      return isChainConnected(c.type);
+    }).map(c => ({ id: c.id, name: c.name }));
+  }, [toChain, isChainConnected]);
 
   const fromTokens = useMemo(() => {
     return tokens.filter(token => {
@@ -382,6 +392,20 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
         <TokenSelector tokens={toTokens} selectedToken={destinationAsset} onSelect={setDestinationAsset}
           balances={{}} loadingBalances={false} label="Token" placeholder="Select a token..." />
+
+        {/* No wallet on destination chain — three-path card */}
+        {!toAddress() && (
+          <NoWalletCard
+            chainId={toChain}
+            chainName={SUPPORTED_CHAINS.find(c => c.id === toChain)?.name || toChain}
+            connectedChains={connectedChainOptions}
+            onEnterManually={() => {
+              setTimeout(() => recipientRef.current?.focus(), 100);
+            }}
+            onSwitchChain={(chainId) => setToChain(chainId)}
+            onConnectWallet={() => openModal()}
+          />
+        )}
       </div>
 
       {/* Receiving Address */}
@@ -390,7 +414,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           Receiving Address
           {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
         </label>
-        <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
+        <input ref={recipientRef} type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
           placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
           className="input w-full h-11 font-mono text-body-sm" />
         {toAddress() && recipient === toAddress() && (
