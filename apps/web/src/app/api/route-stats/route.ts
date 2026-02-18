@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/route-stats?from_chain=X&to_chain=Y&from_token=A&to_token=B
  * Returns aggregated confidence data for a specific route.

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/route-stats/log
  * Log a completed swap for route confidence aggregation.
