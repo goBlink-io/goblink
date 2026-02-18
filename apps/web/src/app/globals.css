@@ -8,6 +8,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Surfaces */
     --bg-primary: #FAFAFA;
     --surface: #FFFFFF;
@@ -48,6 +49,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --bg-primary: #09090B;
     --surface: #18181B;
     --elevated: #27272A;
@@ -126,6 +128,12 @@
   .input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Native select option styling */
+  select.input option {
+    background: var(--surface);
+    color: var(--text-primary);
   }
 
   /* Buttons */
