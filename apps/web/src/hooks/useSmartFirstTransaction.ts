@@ -165,6 +165,17 @@ export function useSmartFirstTransaction(
     });
   }, []);
 
+  /** Update the most recent record's success status (call when terminal status confirmed) */
+  const updateLastRecordSuccess = useCallback((success: boolean) => {
+    setRecords(prev => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      updated[0] = { ...updated[0], success };
+      saveRecords(updated);
+      return updated;
+    });
+  }, []);
+
   const dismiss = useCallback(() => setDismissed(true), []);
 
   const stats = useMemo(() => {
@@ -176,5 +187,5 @@ export function useSmartFirstTransaction(
     };
   }, [records]);
 
-  return { nudge, dismiss, recordTransfer, stats };
+  return { nudge, dismiss, recordTransfer, updateLastRecordSuccess, stats };
 }

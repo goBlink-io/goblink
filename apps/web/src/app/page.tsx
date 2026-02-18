@@ -14,7 +14,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [, setTrackingAddress] = useState<string>('');
   const { history, addEntry } = useTransactionHistory();
-  const { recordTransfer } = useSmartFirstTransaction('', '', '', 0);
+  const { recordTransfer, updateLastRecordSuccess } = useSmartFirstTransaction('', '', '', 0);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   const handleQuoteReceived = (quote: any) => {
@@ -275,6 +275,7 @@ export default function Home() {
           quote={quoteData}
           onClose={handleCloseModal}
           onComplete={handleTransferComplete}
+          onOutcome={(success: boolean) => updateLastRecordSuccess(success)}
         />
       )}
     </div>

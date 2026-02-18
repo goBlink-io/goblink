@@ -140,7 +140,12 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
   // Smart First Transaction — contextual nudges for new/returning users
   const selectedFromToken = useMemo(() => fromTokens.find(t => t.assetId === originAsset), [fromTokens, originAsset]);
-  const estimatedUsd = 0; // TODO: wire up USD estimate from quote/price data
+  const estimatedUsd = useMemo(() => {
+    if (!amount || !selectedFromToken) return 0;
+    const price = parseFloat(selectedFromToken.priceUsd || '') || selectedFromToken.price || 0;
+    if (price <= 0) return 0;
+    return parseFloat(amount) * price;
+  }, [amount, selectedFromToken]);
   const { nudge, dismiss: dismissNudge } = useSmartFirstTransaction(
     fromChain,
     toChain,
