@@ -9,6 +9,7 @@ import TokenSelector from './TokenSelector';
 import NoWalletCard from './NoWalletCard';
 import SmartTransactionNudge from './SmartTransactionNudge';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
+import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
@@ -51,6 +52,9 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   
   const [fromChain, setFromChain] = useState<string>('near');
   const [toChain, setToChain] = useState<string>('near');
+
+  // Smart defaults — pre-fill from user's most common route
+  const { getSuggestedRoute, isHydrated: defaultsHydrated } = useSmartDefaults();
   const [originAsset, setOriginAsset] = useState('');
   const [destinationAsset, setDestinationAsset] = useState('');
   const [amount, setAmount] = useState('');
@@ -84,6 +88,19 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
   useEffect(() => {
     fetchTokens();
   }, []);
+
+  // Apply smart defaults on mount — but only if no URL params override
+  useEffect(() => {
+    if (!defaultsHydrated) return;
+    // Don't override if URL params present (payment request links)
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    if (params.has('from') || params.has('to') || params.has('fromChain') || params.has('toChain')) return;
+
+    const suggested = getSuggestedRoute();
+    if (!suggested) return;
+    setFromChain(suggested.fromChain);
+    setToChain(suggested.toChain);
+  }, [defaultsHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTokens = async () => {
     setTokensLoading(true);
@@ -146,6 +163,13 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     if (price <= 0) return 0;
     return parseFloat(amount) * price;
   }, [amount, selectedFromToken]);
+  // Detect if user is on their usual route
+  const isUsualRoute = useMemo(() => {
+    const suggested = getSuggestedRoute();
+    if (!suggested) return false;
+    return suggested.fromChain === fromChain && suggested.toChain === toChain;
+  }, [fromChain, toChain, getSuggestedRoute]);
+
   const { nudge, dismiss: dismissNudge } = useSmartFirstTransaction(
     fromChain,
     toChain,
@@ -309,7 +333,17 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
 
   return (
     <div className="card p-5 sm:p-6">
-      <h2 className="text-h3 mb-5">Transfer</h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-h3">Transfer</h2>
+        {isUsualRoute && (
+          <span
+            className="text-tiny font-medium px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}
+          >
+            ★ Your usual route
+          </span>
+        )}
+      </div>
 
       {/* From Section */}
       <div className="mb-4">

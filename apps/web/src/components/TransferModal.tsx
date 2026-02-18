@@ -491,6 +491,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                     fromToken={originTokenMetadata?.symbol}
                     amountIn={quoteData.amountInFormatted}
                     amountInUsd={quoteData.amountInUsd}
+                    recipientAddress={quoteRequest?.recipient}
                   />
                 )}
 

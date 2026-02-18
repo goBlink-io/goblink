@@ -6,6 +6,7 @@ import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
+import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 import { getChainsByType } from '@/lib/chain-logos';
 import { Zap, Shield, DollarSign, ArrowRight, ChevronDown } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [, setTrackingAddress] = useState<string>('');
   const { history, addEntry } = useTransactionHistory();
   const { recordTransfer, updateLastRecordSuccess } = useSmartFirstTransaction('', '', '', 0);
+  const { recordRoute } = useSmartDefaults();
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   // Social proof counter (Win #6) — simulated live activity
   const [lastTransferSecs, setLastTransferSecs] = useState(22);
@@ -45,6 +47,16 @@ export default function Home() {
         status: 'PENDING_DEPOSIT',
       });
     }
+    // Record route for smart defaults pattern learning
+    if (quoteData) {
+      recordRoute(
+        quoteData.fromChain || '?',
+        quoteData.toChain || '?',
+        quoteData.originTokenMetadata?.symbol || '?',
+        quoteData.destinationTokenMetadata?.symbol || '?'
+      );
+    }
+
     // Record for smart first-transaction nudge system
     if (quoteData) {
       recordTransfer({
@@ -84,9 +96,14 @@ export default function Home() {
 
   return (
     <div className="animate-fade-up">
-      {/* ═══ Hero ═══ */}
-      <section className="text-center mb-10 sm:mb-16">
-        <h1 className="text-hero mb-4" style={{ color: 'var(--text-primary)' }}>
+      {/* ═══════════════════════════════════════════════
+           ABOVE THE FOLD: tagline + swap card + trust bar
+           Everything else is below this boundary.
+           ═══════════════════════════════════════════════ */}
+
+      {/* ═══ Hero ═══ — compact so swap card is visible on load */}
+      <section className="text-center mb-6 sm:mb-8 pt-2">
+        <h1 className="text-hero mb-3" style={{ color: 'var(--text-primary)' }}>
           Move Value Anywhere,{' '}
           <span className="text-gradient">Instantly</span>
         </h1>
@@ -96,21 +113,39 @@ export default function Home() {
         </p>
       </section>
 
-      {/* ═══ Swap Card ═══ */}
-      <section className="max-w-[480px] mx-auto mb-10">
+      {/* ═══ Swap Card — the unmistakable focal point ═══ */}
+      <section className="max-w-[480px] mx-auto mb-5">
         <SwapForm
           onQuoteReceived={handleQuoteReceived}
           onSwapInitiated={() => {}}
         />
       </section>
 
-      {/* ═══ Recent Transfers ═══ */}
-      <section className="max-w-[480px] mx-auto mb-16">
-        <RecentTransfers history={history} onSelect={() => {}} />
+      {/* ═══ Trust Bar — right below swap card, still above fold ═══ */}
+      <section className="mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
+            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You keep control — we never touch your tokens</span>
+          </div>
+          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
+            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
+          </div>
+          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
+          <div className="flex items-center gap-2">
+            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Just connect &amp; go</span>
+          </div>
+        </div>
       </section>
 
-      {/* ═══ Social Proof Counter (Win #6) ═══ */}
-      <section className="flex justify-center mb-6 -mt-6">
+      {/* ══════════════════════════════════════
+           BELOW THE FOLD
+           ══════════════════════════════════════ */}
+
+      {/* ═══ Social Proof Counter ═══ */}
+      <section className="flex justify-center mb-8">
         <div
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
           style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
@@ -122,7 +157,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ Stats Bar (Win #1) ═══ */}
+      {/* ═══ Stats Bar ═══ */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 mb-20 max-w-3xl mx-auto">
         {[
           { value: '29', label: 'Chains' },
@@ -135,6 +170,11 @@ export default function Home() {
             <div className="text-caption" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
           </div>
         ))}
+      </section>
+
+      {/* ═══ Recent Transfers ═══ */}
+      <section className="max-w-[480px] mx-auto mb-16">
+        <RecentTransfers history={history} onSelect={() => {}} />
       </section>
 
       {/* ═══ How It Works ═══ */}
@@ -229,25 +269,6 @@ export default function Home() {
               <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{feature.desc}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ═══ Trust Bar (Win #1) ═══ */}
-      <section className="mb-20">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You keep control — we never touch your tokens</span>
-          </div>
-          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
-          </div>
-          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-          <div className="flex items-center gap-2">
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Just connect &amp; go</span>
-          </div>
         </div>
       </section>
 

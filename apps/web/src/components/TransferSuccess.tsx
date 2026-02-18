@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, Share2, Check, Link as LinkIcon } from 'lucide-react';
+import { Trophy, Share2, Check, Link as LinkIcon, Bookmark } from 'lucide-react';
 import { generateTransferUrl } from '@/lib/transfer-links';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface TransferSuccessProps {
   amountOut: string;
@@ -15,6 +16,8 @@ interface TransferSuccessProps {
   fromToken?: string;
   amountIn?: string;
   amountInUsd?: string;
+  // Optional recipient address for address book
+  recipientAddress?: string;
 }
 
 export default function TransferSuccess({
@@ -27,9 +30,16 @@ export default function TransferSuccess({
   fromToken,
   amountIn,
   amountInUsd,
+  recipientAddress,
 }: TransferSuccessProps) {
   const [shared, setShared] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [addressSaved, setAddressSaved] = useState(false);
+  const { saveAddress, profile } = useUserProfile();
+
+  const isAlreadySaved = recipientAddress
+    ? profile.savedAddresses.some(a => a.address === recipientAddress)
+    : false;
   const [particles, setParticles] = useState<
     Array<{ id: number; x: number; color: string; delay: number; size: number }>
   >([]);
@@ -139,7 +149,29 @@ export default function TransferSuccess({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-2 justify-center">
+      <div className="flex flex-col sm:flex-row gap-2 justify-center flex-wrap">
+        {recipientAddress && !isAlreadySaved && (
+          <button
+            onClick={() => {
+              const shortChain = toChain.charAt(0).toUpperCase() + toChain.slice(1);
+              saveAddress(`My ${shortChain} wallet`, recipientAddress, toChain);
+              setAddressSaved(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+            style={{
+              background: addressSaved ? 'rgba(34,197,94,0.1)' : 'var(--elevated)',
+              color: addressSaved ? 'var(--success)' : 'var(--text-secondary)',
+              border: `1px solid ${addressSaved ? 'rgba(34,197,94,0.3)' : 'var(--border)'}`,
+            }}
+          >
+            {addressSaved ? (
+              <Check className="h-4 w-4" style={{ color: 'var(--success)' }} />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
+            {addressSaved ? 'Address saved!' : 'Save address'}
+          </button>
+        )}
         <button
           onClick={handleShare}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
