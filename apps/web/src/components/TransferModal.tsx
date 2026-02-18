@@ -10,6 +10,7 @@ import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblin
 import { getChainLogo } from '@/lib/chain-logos';
 import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
+import ConfidenceScore from './ConfidenceScore';
 
 type ModalStep = 'preview' | 'confirming' | 'tracking';
 
@@ -399,6 +400,17 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
                     <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                   </div>
                 )}
+
+                {/* Confidence Score */}
+                <ConfidenceScore
+                  timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
+                  fromChain={fromChain}
+                  toChain={toChain}
+                  fromToken={originTokenMetadata?.symbol || ''}
+                  toToken={destinationTokenMetadata?.symbol || ''}
+                  amountUsd={feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : null}
+                  quoteAvailable={true}
+                />
 
                 {/* Confirm button */}
                 {!showManualDeposit && (
