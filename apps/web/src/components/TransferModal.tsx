@@ -18,6 +18,7 @@ interface TransferModalProps {
   quote: any;
   onClose: () => void;
   onComplete: (depositAddress: string, txHash?: string) => void;
+  onOutcome?: (success: boolean) => void;
 }
 
 interface TransactionData {
@@ -30,7 +31,7 @@ interface TransactionData {
   createdAt: string;
 }
 
-export default function TransferModal({ quote, onClose, onComplete }: TransferModalProps) {
+export default function TransferModal({ quote, onClose, onComplete, onOutcome }: TransferModalProps) {
   const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo } = quote;
   
   const [step, setStep] = useState<ModalStep>('preview');
@@ -88,6 +89,9 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
     return address;
   };
 
+  // Track whether we've already logged this swap's outcome
+  const [outcomeLogged, setOutcomeLogged] = useState(false);
+
   // Poll for transaction status
   const pollStatus = useCallback(async (depAddr: string) => {
     try {
@@ -97,11 +101,35 @@ export default function TransferModal({ quote, onClose, onComplete }: TransferMo
       setTransaction(data);
       
       if (['COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'].includes(data.status)) {
+        // Log route stats for Confidence Score Phase 2
+        if (!outcomeLogged) {
+          setOutcomeLogged(true);
+          const isSuccess = data.status === 'COMPLETED' || data.status === 'SUCCESS';
+          onOutcome?.(isSuccess);
+          const durationSecs = data.createdAt && data.updatedAt
+            ? Math.round((new Date(data.updatedAt).getTime() - new Date(data.createdAt).getTime()) / 1000)
+            : null;
+          fetch('/api/route-stats/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fromChain,
+              toChain,
+              fromToken: originTokenMetadata?.symbol || '',
+              toToken: destinationTokenMetadata?.symbol || '',
+              success: isSuccess,
+              durationSecs,
+              amountUsd: feeInfo?.estimatedUsd
+                ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000)
+                : null,
+            }),
+          }).catch(() => {}); // Best-effort, don't fail UX
+        }
         return true; // Stop polling
       }
     } catch { /* retry */ }
     return false;
-  }, []);
+  }, [outcomeLogged, fromChain, toChain, originTokenMetadata, destinationTokenMetadata, feeInfo]);
 
   useEffect(() => {
     if (step !== 'tracking' || !depositAddress) return;

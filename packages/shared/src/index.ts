@@ -14,6 +14,7 @@ export interface Token {
   defuseAssetId?: string;
   address?: string;
   price?: number;
+  priceUsd?: string;
   priceUpdatedAt?: string;
 }
 

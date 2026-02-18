@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Shield, Clock, Zap, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Shield, Clock, Zap, TrendingUp, BarChart3 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -13,6 +13,14 @@ interface ConfidenceScoreProps {
   toToken: string;
   amountUsd?: number | null;
   quoteAvailable: boolean;         // Did we get a valid quote?
+}
+
+interface RouteStats {
+  totalSwaps: number;
+  successRate: number;
+  avgDurationSecs: number | null;
+  avgAmountUsd: number | null;
+  lastSwapAt: string;
 }
 
 interface ScoreResult {
@@ -47,76 +55,124 @@ const HIGH_LIQUIDITY_PAIRS = new Set([
 // Stablecoins are the most reliable routes
 const STABLECOINS = new Set(['USDC', 'USDT', 'DAI', 'USDC.e', 'BUSD']);
 
-function calculateScore(props: ConfidenceScoreProps): ScoreResult | null {
+function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | null): ScoreResult | null {
   if (!props.quoteAvailable) return null;
 
   let score = 0;
   const signals: Signal[] = [];
 
-  // 1. Quote availability (base score)
-  score += 40;
-  signals.push({
-    icon: <Zap className="h-3.5 w-3.5" />,
-    text: 'Route is active and available',
-    positive: true,
-  });
+  // ── Phase 2: Real data takes priority when available ──
+  if (routeStats && routeStats.totalSwaps >= 3) {
+    // Success rate (up to 40 points)
+    const srPoints = Math.round(routeStats.successRate * 0.4);
+    score += srPoints;
+    signals.push({
+      icon: <BarChart3 className="h-3.5 w-3.5" />,
+      text: `${routeStats.successRate}% success rate across ${routeStats.totalSwaps} transfers`,
+      positive: routeStats.successRate >= 95,
+    });
 
-  // 2. Time estimate quality
-  if (props.timeEstimate !== null) {
-    if (props.timeEstimate <= 30) {
-      score += 25;
+    // Real avg duration (up to 25 points)
+    if (routeStats.avgDurationSecs !== null) {
+      const durPoints = routeStats.avgDurationSecs <= 30 ? 25 : routeStats.avgDurationSecs <= 60 ? 20 : routeStats.avgDurationSecs <= 180 ? 15 : 10;
+      score += durPoints;
       signals.push({
         icon: <Clock className="h-3.5 w-3.5" />,
-        text: `Estimated ${props.timeEstimate}s — lightning fast`,
-        positive: true,
+        text: `Avg. completion: ${routeStats.avgDurationSecs}s`,
+        positive: routeStats.avgDurationSecs <= 60,
       });
-    } else if (props.timeEstimate <= 60) {
+    }
+
+    // Route activity bonus (up to 20 points)
+    const hoursSinceLastSwap = (Date.now() - new Date(routeStats.lastSwapAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSinceLastSwap < 24) {
       score += 20;
       signals.push({
-        icon: <Clock className="h-3.5 w-3.5" />,
-        text: `Estimated ${props.timeEstimate}s — normal speed`,
+        icon: <Zap className="h-3.5 w-3.5" />,
+        text: 'Route active in the last 24h',
         positive: true,
       });
-    } else if (props.timeEstimate <= 180) {
+    } else if (hoursSinceLastSwap < 72) {
       score += 10;
+    }
+
+    // Stablecoin bonus (up to 15 points)
+    if (STABLECOINS.has(props.fromToken) || STABLECOINS.has(props.toToken)) {
+      score += 15;
       signals.push({
-        icon: <Clock className="h-3.5 w-3.5" />,
-        text: `Estimated ${Math.round(props.timeEstimate / 60)}min — may take a moment`,
+        icon: <Shield className="h-3.5 w-3.5" />,
+        text: 'Stablecoin pair — minimal price movement',
+        positive: true,
+      });
+    }
+  } else {
+    // ── Phase 1: Heuristic scoring (no real data yet) ──
+
+    // 1. Quote availability (base score)
+    score += 40;
+    signals.push({
+      icon: <Zap className="h-3.5 w-3.5" />,
+      text: 'Route is active and available',
+      positive: true,
+    });
+
+    // 2. Time estimate quality
+    if (props.timeEstimate !== null) {
+      if (props.timeEstimate <= 30) {
+        score += 25;
+        signals.push({
+          icon: <Clock className="h-3.5 w-3.5" />,
+          text: `Estimated ${props.timeEstimate}s — lightning fast`,
+          positive: true,
+        });
+      } else if (props.timeEstimate <= 60) {
+        score += 20;
+        signals.push({
+          icon: <Clock className="h-3.5 w-3.5" />,
+          text: `Estimated ${props.timeEstimate}s — normal speed`,
+          positive: true,
+        });
+      } else if (props.timeEstimate <= 180) {
+        score += 10;
+        signals.push({
+          icon: <Clock className="h-3.5 w-3.5" />,
+          text: `Estimated ${Math.round(props.timeEstimate / 60)}min — may take a moment`,
+          positive: true,
+        });
+      } else {
+        score += 5;
+        signals.push({
+          icon: <Clock className="h-3.5 w-3.5" />,
+          text: `Estimated ${Math.round(props.timeEstimate / 60)}min — longer route`,
+          positive: false,
+        });
+      }
+    }
+
+    // 3. Route liquidity (known high-volume pairs)
+    const pairKey = `${props.fromChain}-${props.toChain}`;
+    if (HIGH_LIQUIDITY_PAIRS.has(pairKey)) {
+      score += 20;
+      signals.push({
+        icon: <TrendingUp className="h-3.5 w-3.5" />,
+        text: 'High-volume route',
+        positive: true,
+      });
+    } else {
+      score += 10;
+    }
+
+    // 4. Stablecoin bonus
+    if (STABLECOINS.has(props.fromToken) || STABLECOINS.has(props.toToken)) {
+      score += 15;
+      signals.push({
+        icon: <Shield className="h-3.5 w-3.5" />,
+        text: 'Stablecoin pair — minimal price movement',
         positive: true,
       });
     } else {
       score += 5;
-      signals.push({
-        icon: <Clock className="h-3.5 w-3.5" />,
-        text: `Estimated ${Math.round(props.timeEstimate / 60)}min — longer route`,
-        positive: false,
-      });
     }
-  }
-
-  // 3. Route liquidity (known high-volume pairs)
-  const pairKey = `${props.fromChain}-${props.toChain}`;
-  if (HIGH_LIQUIDITY_PAIRS.has(pairKey)) {
-    score += 20;
-    signals.push({
-      icon: <TrendingUp className="h-3.5 w-3.5" />,
-      text: 'High-volume route',
-      positive: true,
-    });
-  } else {
-    score += 10;
-  }
-
-  // 4. Stablecoin bonus
-  if (STABLECOINS.has(props.fromToken) || STABLECOINS.has(props.toToken)) {
-    score += 15;
-    signals.push({
-      icon: <Shield className="h-3.5 w-3.5" />,
-      text: 'Stablecoin pair — minimal price movement',
-      positive: true,
-    });
-  } else {
-    score += 5;
   }
 
   // Cap at 100
@@ -147,13 +203,31 @@ function calculateScore(props: ConfidenceScoreProps): ScoreResult | null {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function ConfidenceScore(props: ConfidenceScoreProps) {
-  const result = useMemo(() => calculateScore(props), [
+  const [routeStats, setRouteStats] = useState<RouteStats | null>(null);
+
+  // Fetch real route stats (Phase 2) — fails gracefully
+  useEffect(() => {
+    if (!props.quoteAvailable || !props.fromChain || !props.toChain || !props.fromToken || !props.toToken) return;
+    const params = new URLSearchParams({
+      from_chain: props.fromChain,
+      to_chain: props.toChain,
+      from_token: props.fromToken,
+      to_token: props.toToken,
+    });
+    fetch(`/api/route-stats?${params}`)
+      .then(r => r.json())
+      .then(data => setRouteStats(data.stats || null))
+      .catch(() => setRouteStats(null));
+  }, [props.fromChain, props.toChain, props.fromToken, props.toToken, props.quoteAvailable]);
+
+  const result = useMemo(() => calculateScore(props, routeStats), [
     props.timeEstimate,
     props.fromChain,
     props.toChain,
     props.fromToken,
     props.toToken,
     props.quoteAvailable,
+    routeStats,
   ]);
 
   if (!result) return null;
