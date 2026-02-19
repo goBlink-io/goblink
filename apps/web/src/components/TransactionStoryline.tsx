@@ -38,20 +38,20 @@ function getPhases(fromChain: string, toChain: string, fromToken: string, toToke
   return [
     {
       id: 'signed',
-      label: 'Transaction signed',
+      label: 'Transfer approved',
       detail: `Sending ${fromToken} from your ${fromName} wallet`,
       icon: <Check className="h-4 w-4" />,
     },
     {
       id: 'confirmed',
-      label: `Confirmed on ${fromName}`,
-      detail: 'Your funds have left the source chain',
+      label: `Sent from ${fromName}`,
+      detail: 'Your tokens are on the way',
       icon: <Check className="h-4 w-4" />,
     },
     {
       id: 'routing',
-      label: 'Routing through NEAR Intents',
-      detail: 'Finding the optimal path for your transfer',
+      label: 'Finding the best route',
+      detail: 'Smart routing is matching you with the best available rate',
       icon: <Loader2 className="h-4 w-4 animate-spin" />,
     },
     {

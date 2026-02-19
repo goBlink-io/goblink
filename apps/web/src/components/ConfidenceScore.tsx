@@ -68,7 +68,7 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
     score += srPoints;
     signals.push({
       icon: <BarChart3 className="h-3.5 w-3.5" />,
-      text: `${routeStats.successRate}% success rate across ${routeStats.totalSwaps} transfers`,
+      text: `${routeStats.successRate}% of transfers on this route succeed`,
       positive: routeStats.successRate >= 95,
     });
 
@@ -101,7 +101,7 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
       score += 15;
       signals.push({
         icon: <Shield className="h-3.5 w-3.5" />,
-        text: 'Stablecoin pair — minimal price movement',
+        text: 'Stablecoin — price stays steady during transfer',
         positive: true,
       });
     }
@@ -112,7 +112,7 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
     score += 40;
     signals.push({
       icon: <Zap className="h-3.5 w-3.5" />,
-      text: 'Route is active and available',
+      text: 'This route is live and ready to go',
       positive: true,
     });
 
@@ -122,28 +122,28 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
         score += 25;
         signals.push({
           icon: <Clock className="h-3.5 w-3.5" />,
-          text: `Estimated ${props.timeEstimate}s — lightning fast`,
+          text: `Should arrive in ~${props.timeEstimate}s — very fast`,
           positive: true,
         });
       } else if (props.timeEstimate <= 60) {
         score += 20;
         signals.push({
           icon: <Clock className="h-3.5 w-3.5" />,
-          text: `Estimated ${props.timeEstimate}s — normal speed`,
+          text: `Should arrive in ~${props.timeEstimate}s`,
           positive: true,
         });
       } else if (props.timeEstimate <= 180) {
         score += 10;
         signals.push({
           icon: <Clock className="h-3.5 w-3.5" />,
-          text: `Estimated ${Math.round(props.timeEstimate / 60)}min — may take a moment`,
+          text: `May take ~${Math.round(props.timeEstimate / 60)} minutes`,
           positive: true,
         });
       } else {
         score += 5;
         signals.push({
           icon: <Clock className="h-3.5 w-3.5" />,
-          text: `Estimated ${Math.round(props.timeEstimate / 60)}min — longer route`,
+          text: `Longer route — allow ~${Math.round(props.timeEstimate / 60)} minutes`,
           positive: false,
         });
       }
@@ -155,7 +155,7 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
       score += 20;
       signals.push({
         icon: <TrendingUp className="h-3.5 w-3.5" />,
-        text: 'High-volume route',
+        text: 'Popular route — lots of transfers use this path',
         positive: true,
       });
     } else {
@@ -167,7 +167,7 @@ function calculateScore(props: ConfidenceScoreProps, routeStats: RouteStats | nu
       score += 15;
       signals.push({
         icon: <Shield className="h-3.5 w-3.5" />,
-        text: 'Stablecoin pair — minimal price movement',
+        text: 'Stablecoin — price stays steady during transfer',
         positive: true,
       });
     } else {
@@ -239,17 +239,12 @@ export default function ConfidenceScore(props: ConfidenceScoreProps) {
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4" style={{ color: result.color }} />
           <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Route Confidence
+            Transfer looks {result.label.toLowerCase()}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-body-sm font-bold" style={{ color: result.color }}>
-            {result.score}
-          </span>
-          <span className="text-caption font-medium" style={{ color: result.color }}>
-            {result.label}
-          </span>
-        </div>
+        <span className="text-caption font-semibold px-2 py-0.5 rounded-full" style={{ background: result.bgColor, color: result.color }}>
+          {result.label}
+        </span>
       </div>
 
       {/* Score bar */}
