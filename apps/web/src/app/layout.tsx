@@ -12,6 +12,15 @@ export const metadata: Metadata = {
   title: 'goBlink — Move Value Anywhere, Instantly',
   description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -57,12 +66,11 @@ export default function RootLayout({
                 <div className="flex h-16 items-center justify-between">
                   {/* Logo */}
                   <a href="/" className="flex items-center gap-2.5 group">
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient)' }}>
-                      <span className="text-white font-bold text-sm font-mono">gB</span>
-                    </div>
-                    <span className="text-h5">
+                    <img src="/icon-192.png" alt="goBlink" className="h-8 w-8 rounded-lg" />
+                    <span className="text-h5 flex items-center">
                       <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
                       <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
+                      <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-pulse" style={{ background: 'var(--gradient)' }} />
                     </span>
                   </a>
 
@@ -85,9 +93,7 @@ export default function RootLayout({
               <div className="mx-auto max-w-5xl px-4 sm:px-6 py-12">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-md flex items-center justify-center" style={{ background: 'var(--gradient)' }}>
-                      <span className="text-white font-bold text-[10px] font-mono">gB</span>
-                    </div>
+                    <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
                   </div>
                   <div className="flex items-center gap-4">

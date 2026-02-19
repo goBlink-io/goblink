@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" fill="none">
+  <!-- "go" — regular weight -->
+  <text x="20" y="58" font-family="Geist, Inter, -apple-system, sans-serif" font-size="52" font-weight="400" fill="#000000">go</text>
+  <!-- "Blink" — bold weight -->
+  <text x="84" y="58" font-family="Geist, Inter, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#000000">Blink</text>
+  <!-- Cursor bar -->
+  <rect x="290" y="12" width="4" height="52" rx="2" fill="#000000"/>
+</svg>
