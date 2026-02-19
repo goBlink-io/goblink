@@ -152,19 +152,15 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.35 }}
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 px-4 py-3 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
-              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You keep control — we never touch your tokens</span>
+              <Shield className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
+              <span className="text-xs sm:text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Non-custodial — your keys, your tokens</span>
             </div>
             <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
-              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
-            </div>
-            <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-            <div className="flex items-center gap-2">
-              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Just connect &amp; go</span>
+              <Zap className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
+              <span className="text-xs sm:text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
             </div>
           </div>
         </motion.section>
@@ -320,7 +316,7 @@ export default function Home() {
                 <div key={i} className="card overflow-hidden">
                   <button
                     onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                    className="w-full flex items-center justify-between p-4 text-left"
+                    className="w-full flex items-center justify-between p-4 sm:p-4 text-left"
                   >
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{faq.q}</span>
                     <motion.div

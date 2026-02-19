@@ -8,22 +8,25 @@ export default function ChainTicker() {
 
   return (
     <div
-      className="relative overflow-hidden py-6"
-      style={{ maskImage: 'linear-gradient(90deg, transparent, black 10%, black 90%, transparent)' }}
+      className="relative overflow-hidden py-4 sm:py-6 -mx-4 sm:mx-0"
+      style={{
+        maskImage: 'linear-gradient(90deg, transparent, black 5%, black 95%, transparent)',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent, black 5%, black 95%, transparent)',
+      }}
     >
-      <div className="flex gap-8 animate-ticker">
+      <div className="flex gap-5 sm:gap-8 animate-ticker" style={{ willChange: 'transform' }}>
         {doubled.map((chain, i) => (
           <div
             key={`${chain.id}-${i}`}
-            className="flex items-center gap-2 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+            className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
           >
             <img
               src={chain.icon}
               alt={chain.name}
-              className="w-6 h-6 rounded-full"
+              className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-            <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
               {chain.name}
             </span>
           </div>
