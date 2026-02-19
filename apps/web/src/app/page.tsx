@@ -1,14 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import SwapForm from '@/components/SwapForm';
 import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { useSmartDefaults } from '@/hooks/useSmartDefaults';
-import { getChainsByType } from '@/lib/chain-logos';
 import { Zap, Shield, DollarSign, ArrowRight, ChevronDown } from 'lucide-react';
+import GradientMesh from '@/components/ui/GradientMesh';
+import ScrollReveal from '@/components/ui/ScrollReveal';
+import StaggerContainer, { StaggerItem } from '@/components/ui/StaggerContainer';
+import AnimatedCounter from '@/components/ui/AnimatedCounter';
+import ChainTicker from '@/components/ui/ChainTicker';
+import ComparisonTable from '@/components/ui/ComparisonTable';
 
 export default function Home() {
   const [quoteData, setQuoteData] = useState<any>(null);
@@ -84,8 +90,6 @@ export default function Home() {
     setTimeout(() => { setQuoteData(null); setTrackingAddress(''); }, 300);
   };
 
-  const chainGroups = getChainsByType();
-
   const faqs = [
     { q: 'How does goBlink work?', a: 'Select your tokens, enter an amount, and confirm. goBlink uses smart routing technology to find the fastest path across chains. Your tokens arrive in seconds — no bridges, no wrapping, no complexity.' },
     { q: 'Is it safe?', a: 'We never hold your tokens. You stay in control the entire time. Transfers use automatic price guarantees — and if a transfer can\'t complete for any reason, your tokens are automatically returned to you.' },
@@ -95,224 +99,281 @@ export default function Home() {
   ];
 
   return (
-    <div className="animate-fade-up">
-      {/* ═══════════════════════════════════════════════
-           ABOVE THE FOLD: tagline + swap card + trust bar
-           Everything else is below this boundary.
-           ═══════════════════════════════════════════════ */}
+    <div className="relative">
+      {/* ═══ Gradient Mesh Background ═══ */}
+      <GradientMesh />
 
-      {/* ═══ Hero ═══ — compact so swap card is visible on load */}
-      <section className="text-center mb-6 sm:mb-8 pt-2">
-        <h1 className="text-hero mb-3" style={{ color: 'var(--text-primary)' }}>
-          Move Value Anywhere,{' '}
-          <span className="text-gradient">Instantly</span>
-        </h1>
-        <p className="text-body-lg max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-          Transfer tokens across 29 blockchains in seconds.
-          One click, any chain, no bridges.
-        </p>
-      </section>
+      <div className="relative z-10 animate-fade-up">
+        {/* ═══════════════════════════════════════════════
+             ABOVE THE FOLD: tagline + swap card + trust bar
+             ═══════════════════════════════════════════════ */}
 
-      {/* ═══ Swap Card — the unmistakable focal point ═══ */}
-      <section className="max-w-[480px] mx-auto mb-5">
-        <SwapForm
-          onQuoteReceived={handleQuoteReceived}
-          onSwapInitiated={() => {}}
-        />
-      </section>
+        {/* ═══ Hero ═══ — compact so swap card is visible on load */}
+        <section className="text-center mb-6 sm:mb-8 pt-2">
+          <motion.h1
+            className="text-hero mb-3"
+            style={{ color: 'var(--text-primary)' }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+          >
+            Move Value Anywhere,{' '}
+            <span className="text-gradient">Instantly</span>
+          </motion.h1>
+          <motion.p
+            className="text-body-lg max-w-xl mx-auto"
+            style={{ color: 'var(--text-secondary)' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
+          >
+            Transfer tokens across 29 blockchains in seconds.
+            One click, any chain, no bridges.
+          </motion.p>
+        </section>
 
-      {/* ═══ Trust Bar — right below swap card, still above fold ═══ */}
-      <section className="mb-16">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You keep control — we never touch your tokens</span>
-          </div>
-          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
-          </div>
-          <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-          <div className="flex items-center gap-2">
-            <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Just connect &amp; go</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-           BELOW THE FOLD
-           ══════════════════════════════════════ */}
-
-      {/* ═══ Social Proof Counter ═══ */}
-      <section className="flex justify-center mb-8">
-        <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-          style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+        {/* ═══ Swap Card — the unmistakable focal point ═══ */}
+        <motion.section
+          className="max-w-[480px] mx-auto mb-5 glow-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
         >
-          <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span>Active now</span>
-          <span style={{ color: 'var(--border)' }}>·</span>
-          <span>Last transfer: {lastTransferSecs}s ago</span>
-        </div>
-      </section>
+          <SwapForm
+            onQuoteReceived={handleQuoteReceived}
+            onSwapInitiated={() => {}}
+          />
+        </motion.section>
 
-      {/* ═══ Stats Bar ═══ */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 mb-20 max-w-3xl mx-auto">
-        {[
-          { value: '29', label: 'Chains' },
-          { value: '120+', label: 'Tokens' },
-          { value: '<30s', label: 'Avg. Transfer' },
-          { value: '✓', label: 'Auto-Refund on Failure' },
-        ].map((stat) => (
-          <div key={stat.label} className="text-center">
-            <div className="text-h2 text-gradient">{stat.value}</div>
-            <div className="text-caption" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
+        {/* ═══ Trust Bar — right below swap card, still above fold ═══ */}
+        <motion.section
+          className="mb-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 py-4 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4" style={{ color: 'var(--success)' }} />
+              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You keep control — we never touch your tokens</span>
+            </div>
+            <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4" style={{ color: 'var(--brand)' }} />
+              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
+            </div>
+            <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
+            <div className="flex items-center gap-2">
+              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Just connect &amp; go</span>
+            </div>
           </div>
-        ))}
-      </section>
+        </motion.section>
 
-      {/* ═══ Recent Transfers ═══ */}
-      <section className="max-w-[480px] mx-auto mb-16">
-        <RecentTransfers history={history} onSelect={() => {}} />
-      </section>
+        {/* ══════════════════════════════════════
+             BELOW THE FOLD
+             ══════════════════════════════════════ */}
 
-      {/* ═══ How It Works ═══ */}
-      <section className="mb-20 max-w-3xl mx-auto">
-        <h2 className="text-h2 text-center mb-10" style={{ color: 'var(--text-primary)' }}>
-          Three steps. That&apos;s it.
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { step: '1', title: 'Pick your tokens', desc: 'Choose what you\'re sending and what you want to receive. Any chain, any token.' },
-            { step: '2', title: 'Confirm', desc: 'Review the quote with transparent fees. Approve in your wallet.' },
-            { step: '3', title: 'Done', desc: 'Tokens arrive in seconds. Track the transfer in real-time.' },
-          ].map((item) => (
-            <div key={item.step} className="relative card p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
-              <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--gradient)', color: 'white' }}>
-                {item.step}
-              </div>
-              <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
-              <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        {/* ═══ Social Proof Counter ═══ */}
+        <motion.section
+          className="flex justify-center mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          >
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span>Active now</span>
+            <span style={{ color: 'var(--border)' }}>·</span>
+            <span>Last transfer: {lastTransferSecs}s ago</span>
+          </div>
+        </motion.section>
 
-      {/* ═══ Supported Chains ═══ */}
-      <section className="mb-20">
-        <h2 className="text-h2 text-center mb-3" style={{ color: 'var(--text-primary)' }}>
-          29 Chains. One Interface.
-        </h2>
-        <p className="text-body-sm text-center mb-8" style={{ color: 'var(--text-muted)' }}>
-          Send from any connected chain. Receive on all of them.
-        </p>
-
-        {/* Wallet-connected chains */}
-        <div className="flex flex-wrap justify-center gap-2 mb-4 max-w-3xl mx-auto">
-          {chainGroups.wallet.map(chain => (
-            <div key={chain.id} className="flex items-center gap-1.5 px-3 py-2 rounded-lg card text-body-sm hover:glow-blue transition-all cursor-default"
-              title={chain.name}>
-              <img src={chain.icon} alt={chain.name} className="w-5 h-5 rounded-full"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{chain.name}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Destination-only */}
-        <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
-          <span className="text-tiny self-center mr-1" style={{ color: 'var(--text-faint)' }}>+ receive on</span>
-          {chainGroups.destinationOnly.map(chain => (
-            <div key={chain.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg opacity-60" style={{ background: 'var(--elevated)' }}
-              title={`${chain.name} (receive only)`}>
-              <img src={chain.icon} alt={chain.name} className="w-4 h-4 rounded-full"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              <span className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>{chain.name}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ Features ═══ */}
-      <section className="mb-20 max-w-3xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: <Zap className="h-6 w-6" />,
-              title: 'Lightning Fast',
-              desc: 'Transfers complete in seconds, not minutes. Real-time tracking from send to receive.',
-              color: 'var(--brand)',
-              bg: 'var(--info-bg)',
-            },
-            {
-              icon: <Shield className="h-6 w-6" />,
-              title: 'You Stay in Control',
-              desc: 'Non-custodial and transparent. Your keys, your tokens. Failed transfers auto-refund.',
-              color: '#7C3AED',
-              bg: 'rgba(124, 58, 237, 0.08)',
-            },
-            {
-              icon: <DollarSign className="h-6 w-6" />,
-              title: 'Transparent Fees',
-              desc: 'Flat dollar-amount fees shown upfront. No hidden costs. Volume discounts built in.',
-              color: 'var(--success)',
-              bg: 'var(--success-bg)',
-            },
-          ].map((feature) => (
-            <div key={feature.title} className="card p-6 hover:glow-blue transition-all">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
-                style={{ background: feature.bg, color: feature.color }}>
-                {feature.icon}
-              </div>
-              <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{feature.title}</h3>
-              <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ FAQ ═══ */}
-      <section className="mb-20 max-w-2xl mx-auto">
-        <h2 className="text-h2 text-center mb-8" style={{ color: 'var(--text-primary)' }}>
-          Questions? Answers.
-        </h2>
-        <div className="space-y-2">
-          {faqs.map((faq, i) => (
-            <div key={i} className="card overflow-hidden">
-              <button
-                onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                className="w-full flex items-center justify-between p-4 text-left"
-              >
-                <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{faq.q}</span>
-                <ChevronDown
-                  className="h-4 w-4 flex-shrink-0 ml-4 transition-transform"
-                  style={{ color: 'var(--text-muted)', transform: faqOpen === i ? 'rotate(180deg)' : 'none' }}
-                />
-              </button>
-              {faqOpen === i && (
-                <div className="px-4 pb-4">
-                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{faq.a}</p>
+        {/* ═══ Stats Bar ═══ */}
+        <section className="mb-20 max-w-3xl mx-auto">
+          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
+            {[
+              { value: '29', label: 'Chains' },
+              { value: '120', label: 'Tokens' },
+              { value: '30', label: 'Avg. Transfer (s)' },
+              { value: '100', label: '% Auto-Refund on Failure' },
+            ].map((stat) => (
+              <StaggerItem key={stat.label}>
+                <div className="text-center">
+                  <div className="stat-value text-gradient">
+                    <AnimatedCounter value={stat.value} />
+                    {stat.value === '120' ? '+' : stat.value === '30' ? 's' : stat.value === '100' ? '%' : ''}
+                  </div>
+                  <div className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </section>
 
-      {/* ═══ CTA ═══ */}
-      <section className="text-center mb-20">
-        <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-          Ready to move?
-        </h2>
-        <p className="text-body-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-          Connect your wallet and make your first transfer in under a minute.
-        </p>
-        <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          className="btn btn-primary inline-flex items-center gap-2">
-          Start Transferring <ArrowRight className="h-4 w-4" />
-        </a>
-      </section>
+        {/* ═══ Recent Transfers ═══ */}
+        <section className="max-w-[480px] mx-auto mb-16">
+          <RecentTransfers history={history} onSelect={() => {}} />
+        </section>
+
+        {/* ═══ Supported Chains — auto-scrolling ticker ═══ */}
+        <ScrollReveal>
+          <section className="mb-20">
+            <h2 className="text-h2 text-center mb-3" style={{ color: 'var(--text-primary)' }}>
+              29 Chains. One Interface.
+            </h2>
+            <p className="text-body-sm text-center mb-6" style={{ color: 'var(--text-muted)' }}>
+              Send from any connected chain. Receive on all of them.
+            </p>
+            <ChainTicker />
+          </section>
+        </ScrollReveal>
+
+        {/* ═══ How It Works ═══ */}
+        <section className="mb-20 max-w-3xl mx-auto">
+          <ScrollReveal>
+            <h2 className="text-h2 text-center mb-10" style={{ color: 'var(--text-primary)' }}>
+              Three steps. That&apos;s it.
+            </h2>
+          </ScrollReveal>
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { step: '1', title: 'Pick your tokens', desc: 'Choose what you\'re sending and what you want to receive. Any chain, any token.' },
+              { step: '2', title: 'Confirm', desc: 'Review the quote with transparent fees. Approve in your wallet.' },
+              { step: '3', title: 'Done', desc: 'Tokens arrive in seconds. Track the transfer in real-time.' },
+            ].map((item) => (
+              <StaggerItem key={item.step}>
+                <div className="relative card card-lift p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
+                  <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--gradient)', color: 'white' }}>
+                    {item.step}
+                  </div>
+                  <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
+                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </section>
+
+        {/* ═══ Comparison Table ═══ */}
+        <section className="mb-20 max-w-2xl mx-auto">
+          <ScrollReveal>
+            <h2 className="text-h2 text-center mb-8" style={{ color: 'var(--text-primary)' }}>
+              Why not just use a bridge?
+            </h2>
+          </ScrollReveal>
+          <ComparisonTable />
+        </section>
+
+        {/* ═══ Features ═══ */}
+        <section className="mb-20 max-w-3xl mx-auto">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Zap className="h-6 w-6" />,
+                title: 'Lightning Fast',
+                desc: 'Transfers complete in seconds, not minutes. Real-time tracking from send to receive.',
+                color: 'var(--brand)',
+                bg: 'var(--info-bg)',
+              },
+              {
+                icon: <Shield className="h-6 w-6" />,
+                title: 'You Stay in Control',
+                desc: 'Non-custodial and transparent. Your keys, your tokens. Failed transfers auto-refund.',
+                color: '#7C3AED',
+                bg: 'rgba(124, 58, 237, 0.08)',
+              },
+              {
+                icon: <DollarSign className="h-6 w-6" />,
+                title: 'Transparent Fees',
+                desc: 'Flat dollar-amount fees shown upfront. No hidden costs. Volume discounts built in.',
+                color: 'var(--success)',
+                bg: 'var(--success-bg)',
+              },
+            ].map((feature) => (
+              <StaggerItem key={feature.title}>
+                <div className="card card-lift glow-card p-6 hover:glow-blue transition-all h-full">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{ background: feature.bg, color: feature.color }}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{feature.title}</h3>
+                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{feature.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </section>
+
+        {/* ═══ FAQ ═══ */}
+        <section className="mb-20 max-w-2xl mx-auto">
+          <ScrollReveal>
+            <h2 className="text-h2 text-center mb-8" style={{ color: 'var(--text-primary)' }}>
+              Questions? Answers.
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.1}>
+            <div className="space-y-2">
+              {faqs.map((faq, i) => (
+                <div key={i} className="card overflow-hidden">
+                  <button
+                    onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                    className="w-full flex items-center justify-between p-4 text-left"
+                  >
+                    <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{faq.q}</span>
+                    <motion.div
+                      animate={{ rotate: faqOpen === i ? 180 : 0 }}
+                      transition={{ duration: 0.25, ease: [0.21, 0.47, 0.32, 0.98] }}
+                    >
+                      <ChevronDown
+                        className="h-4 w-4 flex-shrink-0 ml-4"
+                        style={{ color: 'var(--text-muted)' }}
+                      />
+                    </motion.div>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {faqOpen === i && (
+                      <motion.div
+                        key="answer"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div className="px-4 pb-4">
+                          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{faq.a}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+        </section>
+
+        {/* ═══ CTA ═══ */}
+        <ScrollReveal>
+          <section className="text-center mb-20">
+            <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
+              Ready to move?
+            </h2>
+            <p className="text-body-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+              Connect your wallet and make your first transfer in under a minute.
+            </p>
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="btn btn-primary inline-flex items-center gap-2"
+            >
+              Start Transferring <ArrowRight className="h-4 w-4" />
+            </a>
+          </section>
+        </ScrollReveal>
+      </div>
 
       {/* ═══ Transfer Modal ═══ */}
       {showModal && quoteData && (

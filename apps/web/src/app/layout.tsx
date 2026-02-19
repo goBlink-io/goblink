@@ -26,6 +26,20 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'goBlink',
   },
+  openGraph: {
+    title: 'goBlink — Move Value Anywhere, Instantly',
+    description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
+    siteName: 'goBlink',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'goBlink — Move value anywhere, instantly' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'goBlink — Move Value Anywhere, Instantly',
+    description: 'Transfer tokens across 29 blockchains in seconds.',
+    images: ['/og-image.png'],
+    creator: '@goBlink_io',
+  },
 };
 
 export const viewport: Viewport = {
@@ -55,7 +69,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="font-sans">
+      <body className="font-sans noise-overlay">
         <ThemeProvider>
         <Web3Provider>
         <ToastProvider>
@@ -70,7 +84,7 @@ export default function RootLayout({
                     <span className="text-h5 flex items-center">
                       <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
                       <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
-                      <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-pulse" style={{ background: 'var(--gradient)' }} />
+                      <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--gradient)' }} />
                     </span>
                   </a>
 

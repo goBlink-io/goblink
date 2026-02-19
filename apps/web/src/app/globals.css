@@ -71,8 +71,10 @@
     --info-bg: rgba(30, 58, 138, 0.15);
     --info-text: #93C5FD;
 
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
-    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --surface-raised: #1C1C1F;
+    --surface-overlay: #222225;
   }
 
   * {
@@ -236,6 +238,96 @@
   /* Glow effects */
   .glow-blue { box-shadow: 0 0 20px rgba(37, 99, 235, 0.15); }
   .glow-purple { box-shadow: 0 0 20px rgba(124, 58, 237, 0.15); }
+
+  /* Gradient glow behind swap card */
+  .glow-card {
+    position: relative;
+  }
+  .glow-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(124, 58, 237, 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .glow-card:hover::before,
+  .glow-card:focus-within::before {
+    opacity: 1;
+  }
+  .glow-card::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08));
+    filter: blur(30px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Premium button glow */
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .btn-primary:hover::before {
+    opacity: 1;
+  }
+
+  /* Smooth focus rings */
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--brand);
+    border-radius: inherit;
+  }
+
+  /* Hero text enhancements */
+  .text-hero {
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  /* Stat numbers — make them feel massive */
+  .stat-value {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  @media (min-width: 640px) {
+    .stat-value {
+      font-size: 3.5rem;
+    }
+  }
+
+  /* Smooth card hover lift */
+  .card-lift {
+    transition: transform 0.3s cubic-bezier(0.21, 0.47, 0.32, 0.98), box-shadow 0.3s;
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* Button press scale */
+  .btn:active {
+    transform: scale(0.97);
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -257,4 +349,48 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
   }
+}
+
+/* ═══════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════ */
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-cursor-blink {
+  animation: cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* ═══════════════════════════════════════════
+   Noise texture overlay
+   ═══════════════════════════════════════════ */
+
+/* Subtle noise grain — adds texture to flat surfaces */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+.dark .noise-overlay::before {
+  opacity: 0.03;
 }
