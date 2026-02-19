@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
@@ -11,6 +11,19 @@ import ThemeToggle from '@/components/ThemeToggle';
 export const metadata: Metadata = {
   title: 'goBlink — Move Value Anywhere, Instantly',
   description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'goBlink',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#2563EB',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 const themeScript = `
@@ -76,6 +89,14 @@ export default function RootLayout({
                       <span className="text-white font-bold text-[10px] font-mono">gB</span>
                     </div>
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <a href="/pay" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Request Payment
+                    </a>
+                    <a href="/widget" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Embed Widget
+                    </a>
                   </div>
                   <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
                     Move value anywhere, instantly. Powered by NEAR Intents.
