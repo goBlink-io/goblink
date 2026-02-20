@@ -3,7 +3,7 @@ import { Check, X } from 'lucide-react';
 import ScrollReveal from './ScrollReveal';
 
 const rows = [
-  { feature: 'Transfer time', goblink: '<30 seconds', bridges: '10-45 minutes' },
+  { feature: 'Transfer time', goblink: '<60 seconds', bridges: '10-45 minutes' },
   { feature: 'Chains supported', goblink: '29', bridges: '5-12' },
   { feature: 'Failed transfer', goblink: 'Auto-refund', bridges: 'Funds stuck' },
   { feature: 'Setup required', goblink: 'None', bridges: 'Bridge approval + gas' },
