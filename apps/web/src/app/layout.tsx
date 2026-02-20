@@ -12,10 +12,33 @@ export const metadata: Metadata = {
   title: 'goBlink — Move Value Anywhere, Instantly',
   description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'goBlink',
+  },
+  openGraph: {
+    title: 'goBlink — Move Value Anywhere, Instantly',
+    description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
+    siteName: 'goBlink',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'goBlink — Move value anywhere, instantly' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'goBlink — Move Value Anywhere, Instantly',
+    description: 'Transfer tokens across 29 blockchains in seconds.',
+    images: ['/og-image.png'],
+    creator: '@goBlink_io',
   },
 };
 
@@ -46,7 +69,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="font-sans">
+      <body className="font-sans noise-overlay">
         <ThemeProvider>
         <Web3Provider>
         <ToastProvider>
@@ -57,12 +80,11 @@ export default function RootLayout({
                 <div className="flex h-16 items-center justify-between">
                   {/* Logo */}
                   <a href="/" className="flex items-center gap-2.5 group">
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient)' }}>
-                      <span className="text-white font-bold text-sm font-mono">gB</span>
-                    </div>
-                    <span className="text-h5">
+                    <img src="/icon-192.png" alt="goBlink" className="h-8 w-8 rounded-lg" />
+                    <span className="text-h5 flex items-center">
                       <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
                       <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
+                      <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--gradient)' }} />
                     </span>
                   </a>
 
@@ -81,29 +103,29 @@ export default function RootLayout({
             </main>
 
             {/* ── Footer ── */}
-            <footer className="border-t mt-24" style={{ borderColor: 'var(--border)' }}>
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-12">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <footer className="border-t mt-16 sm:mt-24" style={{ borderColor: 'var(--border)' }}>
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+                <div className="flex flex-col items-center gap-4 text-center sm:text-left sm:flex-row sm:justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-md flex items-center justify-center" style={{ background: 'var(--gradient)' }}>
-                      <span className="text-white font-bold text-[10px] font-mono">gB</span>
-                    </div>
+                    <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <a href="/pay" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                  <div className="flex items-center gap-6">
+                    <a href="/pay" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
                       Request Payment
                     </a>
-                    <a href="/widget" className="text-caption hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                    <a href="/widget" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
                       Embed Widget
                     </a>
                   </div>
-                  <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                    Move value anywhere, instantly. Powered by NEAR Intents.
-                  </p>
-                  <p className="text-tiny" style={{ color: 'var(--text-faint)' }}>
-                    &copy; 2026 goBlink
-                  </p>
+                  <div>
+                    <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
+                      Powered by NEAR Intents
+                    </p>
+                    <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
+                      &copy; 2026 goBlink
+                    </p>
+                  </div>
                 </div>
               </div>
             </footer>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" fill="none">
+  <defs>
+    <linearGradient id="cursor-gradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- "go" — regular weight, white -->
+  <text x="20" y="58" font-family="Geist, Inter, -apple-system, sans-serif" font-size="52" font-weight="400" fill="#FFFFFF">go</text>
+  <!-- "Blink" — bold weight, white -->
+  <text x="84" y="58" font-family="Geist, Inter, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF">Blink</text>
+  <!-- Cursor bar -->
+  <rect x="290" y="12" width="4" height="52" rx="2" fill="url(#cursor-gradient)"/>
+</svg>
