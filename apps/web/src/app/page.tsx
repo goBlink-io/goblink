@@ -30,7 +30,7 @@ export default function Home() {
 
   useEffect(() => {
     const tick = () => {
-      setLastTransferSecs(Math.floor(Math.random() * 31) + 15); // 15–45s
+      setLastTransferSecs(60); // Conservative estimate
     };
     const id = setInterval(tick, 8000);
     return () => clearInterval(id);
