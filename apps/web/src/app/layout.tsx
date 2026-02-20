@@ -87,15 +87,20 @@ export default function RootLayout({
             <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--surface) 80%, transparent)', borderColor: 'var(--border)' }}>
               <div className="mx-auto max-w-5xl px-4 sm:px-6">
                 <div className="flex h-16 items-center justify-between">
-                  {/* Logo */}
-                  <a href="/" className="flex items-center gap-2.5 group">
-                    <img src="/icon-192.png" alt="goBlink" className="h-8 w-8 rounded-lg" />
-                    <span className="text-h5 flex items-center">
-                      <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
-                      <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
-                      <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--gradient)' }} />
-                    </span>
-                  </a>
+                  {/* Logo & Nav */}
+                  <div className="flex items-center gap-6">
+                    <a href="/" className="flex items-center gap-2.5 group">
+                      <img src="/icon-192.png" alt="goBlink" className="h-8 w-8 rounded-lg" />
+                      <span className="text-h5 flex items-center">
+                        <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
+                        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
+                        <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--gradient)' }} />
+                      </span>
+                    </a>
+                    <a href="/history" className="text-body-sm font-medium hover:opacity-70 transition-opacity hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
+                      History
+                    </a>
+                  </div>
 
                   {/* Right side */}
                   <div className="flex items-center gap-2">
@@ -114,17 +119,23 @@ export default function RootLayout({
             {/* ── Footer ── */}
             <footer className="border-t mt-16 sm:mt-24" style={{ borderColor: 'var(--border)' }}>
               <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
-                <div className="flex flex-col items-center gap-4 text-center sm:text-left sm:flex-row sm:justify-between">
+                <div className="flex flex-col items-center gap-6 text-center sm:text-left sm:flex-row sm:justify-between">
                   <div className="flex items-center gap-2">
                     <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
                   </div>
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                     <a href="/pay" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
                       Request Payment
                     </a>
                     <a href="/widget" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
                       Embed Widget
+                    </a>
+                    <a href="/terms" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Terms of Service
+                    </a>
+                    <a href="/privacy" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                      Privacy Policy
                     </a>
                   </div>
                   <div>
