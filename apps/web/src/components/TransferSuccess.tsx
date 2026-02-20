@@ -62,7 +62,7 @@ export default function TransferSuccess({
     );
   }, []);
 
-  const estimatedSavings = feeUsd ? (feeUsd * 3).toFixed(2) : null;
+  const estimatedSavings = null; // Removed — no reliable comparison data
   const chainName = toChain.charAt(0).toUpperCase() + toChain.slice(1);
 
   const handleCopyLink = () => {
