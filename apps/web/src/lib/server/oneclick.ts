@@ -3,7 +3,7 @@ import { OpenAPI, OneClickService, QuoteRequest } from '@defuse-protocol/one-cli
 // Initialize the API client
 OpenAPI.BASE = process.env.ONE_CLICK_BASE_URL || 'https://1click.chaindefuser.com';
 if (process.env.ONE_CLICK_JWT) {
-  OpenAPI.TOKEN = process.env.ONE_CLICK_JWT;
+  OpenAPI.TOKEN = process.env.ONE_CLICK_JWT.trim();
 }
 
 export const getTokens = async () => {
