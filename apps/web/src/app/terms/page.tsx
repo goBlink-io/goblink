@@ -76,7 +76,7 @@ export default function TermsPage() {
           </h2>
           <div className="space-y-3 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
             <p>
-              goBlink is a <strong>non-custodial</strong> cross-chain token transfer facilitation platform. We provide a user interface that enables users to access and interact with the NEAR Intents (1Click) infrastructure for executing cross-chain cryptocurrency transfers.
+              goBlink is a <strong>non-custodial</strong> cross-chain token transfer facilitation platform. We provide a user interface that enables users to execute cross-chain cryptocurrency transfers across 20+ blockchain networks.
             </p>
             <p>
               <strong>Important clarifications:</strong>
@@ -84,7 +84,7 @@ export default function TermsPage() {
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li><strong>Non-Custodial:</strong> goBlink does not hold, store, or have access to user funds at any time. All transactions are executed on-chain via smart contracts and third-party infrastructure.</li>
               <li><strong>Facilitation Only:</strong> We provide the interface and tools to facilitate transfers, but we do not execute, guarantee, or control the underlying blockchain transactions or transfers.</li>
-              <li><strong>Infrastructure Provider:</strong> The actual cross-chain transfer execution is performed by NEAR Intents and associated blockchain networks. goBlink is not responsible for the operation or reliability of these systems.</li>
+              <li><strong>Third-Party Infrastructure:</strong> Cross-chain transfer execution is performed by goBlink&apos;s transfer network and associated blockchain networks. goBlink is not responsible for the operation or reliability of underlying third-party systems.</li>
               <li><strong>Auto-Refund:</strong> Failed transfers may trigger automatic refunds through the underlying infrastructure, though network fees may still apply and are non-refundable.</li>
             </ul>
           </div>
@@ -242,7 +242,7 @@ export default function TermsPage() {
               The Service integrates with and relies on third-party services and infrastructure, including but not limited to:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>NEAR Intents (1Click):</strong> Cross-chain transfer execution infrastructure</li>
+              <li><strong>Cross-Chain Infrastructure:</strong> Third-party transfer execution and routing services</li>
               <li><strong>Reown AppKit (WalletConnect):</strong> Wallet connection and authentication</li>
               <li><strong>Blockchain Networks:</strong> Ethereum, Solana, NEAR, Sui, and other supported blockchains</li>
               <li><strong>Social Login Providers:</strong> Google, GitHub, and other OAuth providers</li>
