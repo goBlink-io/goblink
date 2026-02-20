@@ -96,7 +96,7 @@ export async function createTransaction(
     };
 
     const { data: inserted, error } = await supabase
-      .from('transactions')
+      .from('transaction_history')
       .insert(record)
       .select()
       .single();
@@ -133,7 +133,7 @@ export async function updateTransactionStatus(
     if (updates.errorMessage) updateData.error_message = updates.errorMessage;
 
     const { data: updated, error } = await supabase
-      .from('transactions')
+      .from('transaction_history')
       .update(updateData)
       .eq('deposit_address', depositAddress)
       .select()
@@ -166,7 +166,7 @@ export async function getTransactionsByWallet(
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('transactions')
+      .from('transaction_history')
       .select('*', { count: 'exact' })
       .eq('wallet_address', walletAddress.toLowerCase())
       .order('created_at', { ascending: false })
@@ -206,7 +206,7 @@ export async function searchTransactions(
 
     // Try multiple search strategies
     const { data, error } = await supabase
-      .from('transactions')
+      .from('transaction_history')
       .select('*')
       .or(
         `wallet_address.ilike.%${searchTerm}%,` +
@@ -239,7 +239,7 @@ export async function getTransaction(
 ): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
   try {
     const { data, error } = await supabase
-      .from('transactions')
+      .from('transaction_history')
       .select('*')
       .eq('id', id)
       .single();
