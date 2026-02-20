@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Search, Check, ChevronDown, X } from 'lucide-react';
+import { Skeleton } from './ui/Skeleton';
 
 /** Format balance for display — full precision kept internally, truncated visually */
 function formatBal(raw: string): string {
@@ -126,7 +127,19 @@ export default function TokenSelector({
 
               {/* Token list */}
               <div className="overflow-y-auto flex-1 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {filtered.length === 0 ? (
+                {tokens.length === 0 ? (
+                  <div className="px-4 py-3 space-y-3">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-20 mb-1.5" />
+                          <Skeleton className="h-3 w-32" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
                   <div className="px-4 py-12 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>No tokens found</div>
                 ) : (
                   filtered.map((token) => {

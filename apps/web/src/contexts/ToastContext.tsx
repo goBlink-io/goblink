@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { CheckCircle, AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface Toast { id: number; message: string; type: ToastType; }
 interface ToastContextValue { toast: (message: string, type?: ToastType) => void; }
@@ -19,7 +19,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useCallback((message: string, type: ToastType = 'info') => {
     const id = nextId++;
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   }, []);
 
   const dismiss = useCallback((id: number) => {
@@ -29,12 +29,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const iconMap = {
     success: <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--success)' }} />,
     error: <AlertTriangle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--error)' }} />,
+    warning: <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--warning)' }} />,
     info: <Info className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--brand)' }} />,
   };
 
   const bgMap = {
     success: 'var(--success-bg)',
     error: 'var(--error-bg)',
+    warning: 'var(--warning-bg)',
     info: 'var(--info-bg)',
   };
 

@@ -21,14 +21,10 @@ const SYMBOL_OVERRIDES: Record<string, string> = {
   'wNEAR': 'NEAR',
 };
 
-/** Carry over the `price` field from 1Click API as `priceUsd` */
-function applyPricing(token: Record<string, unknown>): void {
-  const price = token.price as number | undefined;
-  if (price != null && price > 0) {
-    token.priceUsd = String(price);
-  }
-  // Remove raw field so clients get a consistent shape
+/** Remove pricing fields — clients should fetch from /api/tokens/prices separately */
+function removePricing(token: Record<string, unknown>): void {
   delete token.price;
+  delete token.priceUsd;
   delete token.priceUpdatedAt;
 }
 
@@ -162,9 +158,9 @@ export async function GET(request: NextRequest) {
 
     const allTokens = [...nearTokens, ...nativeChainTokens];
 
-    // Apply static icons + 1Click pricing (no external API calls needed)
+    // Apply static icons + symbol overrides (pricing loaded separately via /api/tokens/prices)
     applyIcons(allTokens);
-    allTokens.forEach(applyPricing);
+    allTokens.forEach(removePricing);
     allTokens.forEach((token) => {
       const sym = token.symbol as string;
       if (SYMBOL_OVERRIDES[sym]) token.symbol = SYMBOL_OVERRIDES[sym];
