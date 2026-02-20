@@ -28,7 +28,7 @@ export interface BlockvisionResponse {
 }
 
 export async function getSuiAccountCoins(address: string): Promise<BlockvisionResponse> {
-  const apiKey = process.env.BLOCKVISION_API_KEY;
+  const apiKey = process.env.BLOCKVISION_API_KEY?.trim();
   if (!apiKey) throw new Error('BLOCKVISION_API_KEY is not configured');
   const response = await axios.get<BlockvisionResponse>(
     `${BLOCKVISION_BASE_URL}/sui/account/coins`,
