@@ -56,9 +56,10 @@ export default function TokenSelector({
   }, [isOpen]);
 
   const selected = tokens.find(t => t.assetId === selectedToken);
-  const filtered = search
+  const filtered = (search
     ? tokens.filter(t => t.symbol.toLowerCase().includes(search.toLowerCase()) || t.name?.toLowerCase().includes(search.toLowerCase()))
-    : tokens;
+    : tokens
+  ).slice().sort((a, b) => a.symbol.localeCompare(b.symbol));
 
   const close = () => { setIsOpen(false); setSearch(''); };
 
