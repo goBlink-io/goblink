@@ -13,6 +13,7 @@ import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
+  refreshKey?: number;
   onSwapInitiated: (depositAddress: string) => void;
 }
 
@@ -39,7 +40,7 @@ function SkeletonPulse({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded ${className || ''}`} style={{ background: 'var(--elevated)' }} />;
 }
 
-export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
+export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps) {
   const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
   const { toast } = useToast();
   const recipientRef = useRef<HTMLInputElement>(null);
@@ -230,7 +231,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
     };
     setBalances({});
     fetchBalances();
-  }, [fromAddress(), fromTokens, fromChain]);
+  }, [fromAddress(), fromTokens, fromChain, refreshKey]);
 
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
     amount = amount.trim();
