@@ -36,14 +36,14 @@ export const metadata: Metadata = {
     description: 'Transfer tokens across 29 blockchains in seconds. One click, any chain, no bridges.',
     siteName: 'goBlink',
     url: baseUrl,
-    images: [{ url: `${baseUrl}/og-image.png`, width: 1200, height: 630, alt: 'goBlink — Move value anywhere, instantly' }],
+    images: [{ url: `${baseUrl}/og-image.png?v=2`, width: 1200, height: 630, alt: 'goBlink — Move value anywhere, instantly' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'goBlink — Move Value Anywhere, Instantly',
     description: 'Transfer tokens across 29 blockchains in seconds.',
-    images: [`${baseUrl}/og-image.png`],
+    images: [`${baseUrl}/og-image.png?v=2`],
     creator: '@goBlink_io',
   },
   alternates: {
