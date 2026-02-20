@@ -2,11 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
-import { Web3Provider } from '@/components/Web3Provider';
-import { ToastProvider } from '@/contexts/ToastContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import ClientLayout from '@/components/ClientLayout';
 import UnifiedConnectButton from '@/components/UnifiedConnectButton';
-import ThemeToggle from '@/components/ThemeToggle';
+import AppMenu from '@/components/AppMenu';
 
 const baseUrl = process.env.NODE_ENV === 'production' 
   ? 'https://goblink.io' 
@@ -79,9 +77,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans noise-overlay" suppressHydrationWarning>
-        <ThemeProvider>
-        <Web3Provider>
-        <ToastProvider>
+        <ClientLayout>
           <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
             {/* ── Navbar ── */}
             <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--surface) 80%, transparent)', borderColor: 'var(--border)' }}>
@@ -104,7 +100,7 @@ export default function RootLayout({
 
                   {/* Right side */}
                   <div className="flex items-center gap-2">
-                    <ThemeToggle />
+                    <AppMenu />
                     <UnifiedConnectButton />
                   </div>
                 </div>
@@ -124,25 +120,16 @@ export default function RootLayout({
                     <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
                     <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                    <a href="/pay" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Request Payment
-                    </a>
-                    <a href="/widget" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Embed Widget
-                    </a>
+                  <div className="flex items-center gap-6">
                     <a href="/terms" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Terms of Service
+                      Terms
                     </a>
                     <a href="/privacy" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Privacy Policy
+                      Privacy
                     </a>
                   </div>
                   <div>
-                    <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                      Powered by goBlink
-                    </p>
-                    <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
+                    <p className="text-tiny" style={{ color: 'var(--text-faint)' }}>
                       &copy; 2026 goBlink
                     </p>
                   </div>
@@ -150,9 +137,7 @@ export default function RootLayout({
               </div>
             </footer>
           </div>
-        </ToastProvider>
-        </Web3Provider>
-        </ThemeProvider>
+        </ClientLayout>
       </body>
     </html>
   );
