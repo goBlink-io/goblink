@@ -34,9 +34,10 @@ export default function TransferSuccess({
   amountIn,
   amountInUsd,
   recipientAddress,
-  fromTokenIcon,
+  fromTokenIcon: _fromTokenIcon,
   toTokenIcon,
 }: TransferSuccessProps) {
+  void _fromTokenIcon; // reserved for future use
   const [shared, setShared] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [addressSaved, setAddressSaved] = useState(false);
