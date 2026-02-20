@@ -13,7 +13,7 @@ export async function GET(
       jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address],
     });
     const lamports = response.data?.result?.value || 0;
-    const balanceInSol = (lamports / 1e9).toFixed(4);
+    const balanceInSol = String(lamports / 1e9);
     return NextResponse.json({ balance: balanceInSol, balanceLamports: lamports.toString(), address });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

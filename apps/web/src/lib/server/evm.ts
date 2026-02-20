@@ -93,7 +93,7 @@ export async function getNativeBalance(chainName: SupportedChain, address: strin
   const balanceWei = await client.getBalance({ address: address as Address });
   const balance = formatUnits(balanceWei, 18);
   return {
-    balance: parseFloat(balance).toFixed(4),
+    balance,
     balanceWei: balanceWei.toString(),
     address,
     chain: chainName,
@@ -116,7 +116,7 @@ export async function getTokenBalance(
   }
   const balance = formatUnits(balanceRaw as bigint, tokenDecimals);
   return {
-    balance: parseFloat(balance).toFixed(4),
+    balance,
     balanceRaw: (balanceRaw as bigint).toString(),
     address, tokenAddress, chain: chainName, decimals: tokenDecimals,
   };
