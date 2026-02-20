@@ -196,14 +196,14 @@ export default function Home() {
             {[
               { value: '29', label: 'Chains' },
               { value: '120', label: 'Tokens' },
-              { value: '30', label: 'Avg. Transfer (s)' },
+              { value: '45', label: 'Avg. Transfer (s)' },
               { value: '100', label: '% Auto-Refund on Failure' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
                 <div className="text-center">
                   <div className="stat-value text-gradient">
                     <AnimatedCounter value={stat.value} />
-                    {stat.value === '120' ? '+' : stat.value === '30' ? 's' : stat.value === '100' ? '%' : ''}
+                    {stat.value === '120' ? '+' : stat.value === '45' ? 's' : stat.value === '100' ? '%' : ''}
                   </div>
                   <div className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
                 </div>
