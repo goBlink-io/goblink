@@ -18,6 +18,9 @@ interface TransferSuccessProps {
   amountInUsd?: string;
   // Optional recipient address for address book
   recipientAddress?: string;
+  // Token icons
+  fromTokenIcon?: string;
+  toTokenIcon?: string;
 }
 
 export default function TransferSuccess({
@@ -31,6 +34,8 @@ export default function TransferSuccess({
   amountIn,
   amountInUsd,
   recipientAddress,
+  fromTokenIcon,
+  toTokenIcon,
 }: TransferSuccessProps) {
   const [shared, setShared] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -133,7 +138,8 @@ export default function TransferSuccess({
       <div className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
         🎉 Done!
       </div>
-      <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-sm mb-4 inline-flex items-center gap-1.5 justify-center flex-wrap" style={{ color: 'var(--text-secondary)' }}>
+        {toTokenIcon && <img src={toTokenIcon} alt={toToken} className="w-5 h-5 rounded-full inline-block" />}
         {amountOut} {toToken} arrived on {chainName} in {elapsedSeconds}s
       </p>
 

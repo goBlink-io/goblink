@@ -283,6 +283,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           assetId: originToken.assetId,
           blockchain: originToken.blockchain,
           contractAddress: originToken.contractAddress,
+          icon: originToken.icon,
         },
         destinationTokenMetadata: {
           symbol: destinationToken.symbol,
@@ -290,6 +291,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           assetId: destinationToken.assetId,
           blockchain: destinationToken.blockchain,
           contractAddress: destinationToken.contractAddress,
+          icon: destinationToken.icon,
         },
       };
       toast('Quote ready — review and confirm below', 'success');

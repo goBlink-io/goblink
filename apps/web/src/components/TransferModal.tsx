@@ -482,7 +482,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 {/* Celebration on completion (Win #5) */}
                 {isComplete && (
                   <TransferSuccess
-                    amountOut={transaction?.amountOut || quoteData.amountOutFormatted}
+                    amountOut={transaction?.amountOut && destinationTokenMetadata?.decimals ? formatAtomicAmount(transaction.amountOut, destinationTokenMetadata.decimals) : (quoteData.amountOutFormatted || '?')}
                     toToken={destinationTokenMetadata?.symbol || '?'}
                     toChain={toChain}
                     elapsedSeconds={elapsedSeconds}
@@ -492,6 +492,8 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                     amountIn={quoteData.amountInFormatted}
                     amountInUsd={quoteData.amountInUsd}
                     recipientAddress={quoteRequest?.recipient}
+                    fromTokenIcon={originTokenMetadata?.icon}
+                    toTokenIcon={destinationTokenMetadata?.icon}
                   />
                 )}
 
@@ -515,12 +517,14 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   fromToken={originTokenMetadata?.symbol || '?'}
                   toToken={destinationTokenMetadata?.symbol || '?'}
                   amountIn={quoteData.amountInFormatted}
-                  amountOut={transaction?.amountOut || quoteData.amountOutFormatted}
+                  amountOut={transaction?.amountOut && destinationTokenMetadata?.decimals ? formatAtomicAmount(transaction.amountOut, destinationTokenMetadata.decimals) : (quoteData.amountOutFormatted || null)}
                   timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
                   depositTxHash={transaction?.depositTxHash || null}
                   fulfillmentTxHash={transaction?.fulfillmentTxHash || null}
                   fromLogo={fromLogo}
                   toLogo={toLogo}
+                  fromTokenIcon={originTokenMetadata?.icon}
+                  toTokenIcon={destinationTokenMetadata?.icon}
                   getExplorerLink={getExplorerLink}
                   startedAt={trackingStartedAt}
                 />
