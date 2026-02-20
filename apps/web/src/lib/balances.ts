@@ -244,7 +244,7 @@ export async function getTokenBalance(
   
   if (blockchain === 'near') {
     // Native NEAR token
-    if (token.symbol === 'NEAR' || token.symbol === 'wNEAR') {
+    if (token.symbol === 'NEAR') {
       return getNearBalance(address);
     }
     

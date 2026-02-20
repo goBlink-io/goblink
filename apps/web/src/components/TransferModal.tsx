@@ -505,7 +505,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   >
                     <Trophy className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand, #2563eb)' }} />
                     <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Solvers competed for your transfer — you got the best available rate.
+                      Multiple routes competed for your transfer — you got the best available rate.
                     </p>
                   </div>
                 )}

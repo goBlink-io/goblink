@@ -120,7 +120,7 @@ export default function RootLayout({
                   </div>
                   <div>
                     <p className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                      Powered by NEAR Intents
+                      Powered by goBlink
                     </p>
                     <p className="text-tiny mt-1" style={{ color: 'var(--text-faint)' }}>
                       &copy; 2026 goBlink
