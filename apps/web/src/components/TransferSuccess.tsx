@@ -84,7 +84,7 @@ export default function TransferSuccess({
     const text = [
       `Just transferred ${amountOut} ${toToken} to ${chainName} in ${elapsedSeconds}s using goBlink ⚡`,
       `No bridges. No waiting. Just instant transfers.`,
-      `https://goblink.xyz`,
+      `https://goblink.io`,
     ].join('\n');
 
     navigator.clipboard.writeText(text).then(() => {

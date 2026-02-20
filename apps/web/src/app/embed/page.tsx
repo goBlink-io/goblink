@@ -61,7 +61,7 @@ function EmbedInner() {
       <div className="mt-4 flex items-center gap-1.5">
         <span className="text-tiny" style={{ color: 'var(--text-faint)' }}>Powered by</span>
         <Link
-          href="https://goblink.xyz"
+          href="https://goblink.io"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
