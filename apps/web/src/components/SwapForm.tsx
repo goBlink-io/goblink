@@ -50,6 +50,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   const [loading, setLoading] = useState(false);
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [loadingBalances, setLoadingBalances] = useState(false);
+  const [toBalances, setToBalances] = useState<Record<string, string>>({});
+  const [loadingToBalances, setLoadingToBalances] = useState(false);
   
   const [fromChain, setFromChain] = useState<string>('near');
   const [toChain, setToChain] = useState<string>('near');
@@ -232,6 +234,35 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
     setBalances({});
     fetchBalances();
   }, [fromAddress(), fromTokens, fromChain, refreshKey]);
+
+  // Fetch destination chain balances
+  useEffect(() => {
+    const fetchToBalances = async () => {
+      const address = toAddress();
+      if (!address || toTokens.length === 0) { setToBalances({}); return; }
+      setLoadingToBalances(true);
+      const newBalances: Record<string, string> = {};
+      await Promise.all(
+        toTokens.map(async (token) => {
+          try {
+            const balance = await getTokenBalance(address, {
+              blockchain: token.blockchain,
+              contractAddress: token.contractAddress,
+              decimals: token.decimals,
+              symbol: token.symbol,
+            });
+            newBalances[token.assetId] = balance;
+          } catch {
+            newBalances[token.assetId] = '0.00';
+          }
+        })
+      );
+      setToBalances(newBalances);
+      setLoadingToBalances(false);
+    };
+    setToBalances({});
+    fetchToBalances();
+  }, [toAddress(), toTokens, toChain, refreshKey]);
 
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
     amount = amount.trim();
@@ -446,7 +477,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
         </div>
 
         <TokenSelector tokens={toTokens} selectedToken={destinationAsset} onSelect={setDestinationAsset}
-          balances={{}} loadingBalances={false} label="Token" placeholder="Select a token..." />
+          balances={toBalances} loadingBalances={loadingToBalances} label="Token" placeholder="Select a token..." />
 
         {/* No wallet on destination chain — three-path card */}
         {!toAddress() && (
