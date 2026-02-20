@@ -2,9 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
-import { Web3Provider } from '@/components/Web3Provider';
-import { ToastProvider } from '@/contexts/ToastContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import ClientLayout from '@/components/ClientLayout';
 import UnifiedConnectButton from '@/components/UnifiedConnectButton';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -79,9 +77,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans noise-overlay" suppressHydrationWarning>
-        <ThemeProvider>
-        <Web3Provider>
-        <ToastProvider>
+        <ClientLayout>
           <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
             {/* ── Navbar ── */}
             <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--surface) 80%, transparent)', borderColor: 'var(--border)' }}>
@@ -150,9 +146,7 @@ export default function RootLayout({
               </div>
             </footer>
           </div>
-        </ToastProvider>
-        </Web3Provider>
-        </ThemeProvider>
+        </ClientLayout>
       </body>
     </html>
   );
