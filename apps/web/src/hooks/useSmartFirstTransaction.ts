@@ -61,7 +61,6 @@ const TEST_AMOUNTS: Record<string, string> = {
   WETH: '0.002',
   SOL: '0.05',
   NEAR: '1',
-  NEAR: '1',
   SUI: '0.5',
   USDC: '5',
   USDT: '5',
