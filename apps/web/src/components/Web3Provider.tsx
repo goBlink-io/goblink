@@ -108,7 +108,11 @@ createAppKit({
   ] as any,
   projectId,
   metadata,
-  features: { analytics: false },
+  features: {
+    analytics: false,
+    email: true,
+    socials: ['google', 'apple', 'discord', 'x', 'github', 'farcaster'],
+  },
   themeMode: 'light',
 });
 
