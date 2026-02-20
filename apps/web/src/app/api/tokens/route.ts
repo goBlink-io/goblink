@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import * as oneclick from '@/lib/server/oneclick';
 import tokenIcons from '@/data/token-icons.json';
+import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
+import { errorResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { logger } from '@/lib/logger';
 
 // Cache token list for 5 minutes
 export const revalidate = 300;
@@ -18,14 +21,10 @@ const SYMBOL_OVERRIDES: Record<string, string> = {
   'wNEAR': 'NEAR',
 };
 
-/** Carry over the `price` field from 1Click API as `priceUsd` */
-function applyPricing(token: Record<string, unknown>): void {
-  const price = token.price as number | undefined;
-  if (price != null && price > 0) {
-    token.priceUsd = String(price);
-  }
-  // Remove raw field so clients get a consistent shape
+/** Remove pricing fields — clients should fetch from /api/tokens/prices separately */
+function removePricing(token: Record<string, unknown>): void {
   delete token.price;
+  delete token.priceUsd;
   delete token.priceUpdatedAt;
 }
 
@@ -58,7 +57,18 @@ const BLOCKCHAIN_ALIASES: Record<string, string> = {
   'sol': 'solana', 'pol': 'polygon', 'op': 'optimism', 'avax': 'avalanche',
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limiting
+  const identifier = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.tokens);
+  
+  if (!rateLimit.allowed) {
+    return addRateLimitHeaders(
+      errorResponse('Rate limit exceeded', 429),
+      rateLimit
+    );
+  }
+  
   try {
     const rawTokens = await oneclick.getTokens();
 
@@ -148,21 +158,27 @@ export async function GET() {
 
     const allTokens = [...nearTokens, ...nativeChainTokens];
 
-    // Apply static icons + 1Click pricing (no external API calls needed)
+    // Apply static icons + symbol overrides (pricing loaded separately via /api/tokens/prices)
     applyIcons(allTokens);
-    allTokens.forEach(applyPricing);
+    allTokens.forEach(removePricing);
     allTokens.forEach((token) => {
       const sym = token.symbol as string;
       if (SYMBOL_OVERRIDES[sym]) token.symbol = SYMBOL_OVERRIDES[sym];
     });
 
-    return NextResponse.json(allTokens, {
+    const response = NextResponse.json(allTokens, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
       },
     });
+    
+    return addRateLimitHeaders(response, rateLimit);
   } catch (error: unknown) {
+    logger.error('[TOKENS_ERROR]', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch tokens', message }, { status: 500 });
+    return addRateLimitHeaders(
+      errorResponse('Failed to fetch tokens', 500, { details: message }),
+      rateLimit
+    );
   }
 }

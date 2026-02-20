@@ -8,6 +8,7 @@ import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
 import NoWalletCard from './NoWalletCard';
 import SmartTransactionNudge from './SmartTransactionNudge';
+import { Skeleton } from './ui/Skeleton';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 
@@ -35,10 +36,6 @@ const SUPPORTED_CHAINS = [
   { id: 'ton', name: 'TON', type: 'ton' as const },
   { id: 'tron', name: 'Tron', type: 'tron' as const },
 ] as const;
-
-function SkeletonPulse({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded ${className || ''}`} style={{ background: 'var(--elevated)' }} />;
-}
 
 export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps) {
   const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
@@ -108,20 +105,49 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   const fetchTokens = async () => {
     setTokensLoading(true);
     try {
-      const response = await fetch('/api/tokens');
-      if (!response.ok) throw new Error(`API responded with status ${response.status}`);
-      const data = await response.json();
-      setTokens(data);
-      if (data.length > 0) {
-        const near = data.find((t: Token) => t.symbol === 'NEAR' && t.assetId.includes('wrap.near')) || data.find((t: Token) => t.symbol === 'wNEAR');
-        const usdc = data.find((t: Token) => t.symbol === 'USDC' && t.assetId.includes('17208628'));
+      // Fetch tokens immediately (fast — no pricing data)
+      const tokensResponse = await fetch('/api/tokens');
+      if (!tokensResponse.ok) throw new Error(`API responded with status ${tokensResponse.status}`);
+      const tokensData = await tokensResponse.json();
+      setTokens(tokensData);
+      
+      // Set defaults immediately
+      if (tokensData.length > 0) {
+        const near = tokensData.find((t: Token) => t.symbol === 'NEAR' && t.assetId.includes('wrap.near')) || tokensData.find((t: Token) => t.symbol === 'wNEAR');
+        const usdc = tokensData.find((t: Token) => t.symbol === 'USDC' && t.assetId.includes('17208628'));
         if (near) setOriginAsset(near.assetId);
         if (usdc) setDestinationAsset(usdc.assetId);
       }
+      
+      setTokensLoading(false);
+      
+      // Fetch prices in parallel (fills in after)
+      fetch('/api/tokens/prices')
+        .then(async (pricesResponse) => {
+          if (!pricesResponse.ok) return;
+          const pricesData = await pricesResponse.json();
+          
+          // Merge prices into tokens
+          const priceMap = new Map<string, string>(
+            pricesData.map((p: { assetId: string; priceUsd?: string }) => [p.assetId, p.priceUsd || ''])
+          );
+          setTokens((prev) =>
+            prev.map((token) => {
+              const newPrice = priceMap.get(token.assetId);
+              return {
+                ...token,
+                priceUsd: newPrice || token.priceUsd,
+              };
+            })
+          );
+        })
+        .catch((err) => {
+          console.warn('Failed to fetch prices:', err);
+          // Non-critical — tokens still work without prices
+        });
     } catch (error) {
       console.error('Failed to fetch tokens:', error);
       toast('Failed to load tokens. Please refresh.', 'error');
-    } finally {
       setTokensLoading(false);
     }
   };
@@ -356,10 +382,10 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       <div className="card p-5 sm:p-6">
         <h2 className="text-h3 mb-5">Transfer</h2>
         <div className="space-y-4">
-          <div><SkeletonPulse className="h-4 w-16 mb-2" /><SkeletonPulse className="h-11 w-full mb-2" /><SkeletonPulse className="h-12 w-full mb-2" /><SkeletonPulse className="h-11 w-full" /></div>
-          <div className="flex justify-center"><SkeletonPulse className="h-10 w-10 rounded-full" /></div>
-          <div><SkeletonPulse className="h-4 w-16 mb-2" /><SkeletonPulse className="h-11 w-full mb-2" /><SkeletonPulse className="h-12 w-full" /></div>
-          <SkeletonPulse className="h-11 w-full" /><SkeletonPulse className="h-11 w-full" /><SkeletonPulse className="h-12 w-full rounded-xl" />
+          <div><Skeleton className="h-4 w-16 mb-2" /><Skeleton className="h-11 w-full mb-2" /><Skeleton className="h-12 w-full mb-2" /><Skeleton className="h-11 w-full" /></div>
+          <div className="flex justify-center"><Skeleton className="h-10 w-10 rounded-full" /></div>
+          <div><Skeleton className="h-4 w-16 mb-2" /><Skeleton className="h-11 w-full mb-2" /><Skeleton className="h-12 w-full" /></div>
+          <Skeleton className="h-11 w-full" /><Skeleton className="h-11 w-full" /><Skeleton className="h-12 w-full rounded-xl" />
         </div>
       </div>
     );

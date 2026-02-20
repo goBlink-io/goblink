@@ -548,14 +548,50 @@ export function getPrimaryWallet(chainId: string): WalletGuide | null {
 }
 
 /**
+ * Safely access a nested property on window object
+ * Replaces eval() with safe property access
+ */
+function safeWindowPropertyCheck(propertyPath: string): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    // Extract property path from detector string
+    // Example: "typeof window !== "undefined" && !!(window as any).ethereum?.isMetaMask"
+    // We need to extract: "ethereum.isMetaMask"
+    
+    // Match pattern: (window as any).property or window.property
+    const match = propertyPath.match(/window(?:\s+as\s+any)?\)?\.([a-zA-Z0-9_.?]+)/);
+    if (!match) return false;
+    
+    const path = match[1].replace(/\?/g, ''); // Remove optional chaining ?
+    const parts = path.split('.');
+    
+    let obj: any = window;
+    for (const part of parts) {
+      // Only allow alphanumeric property names for security
+      if (!/^[a-zA-Z0-9_]+$/.test(part)) return false;
+      
+      obj = obj?.[part];
+      if (obj === undefined || obj === null) return false;
+    }
+    
+    return !!obj;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Detect if a wallet extension is installed (desktop only).
+ * SECURITY: Replaced eval() with safe property access pattern
  */
 export function detectWallet(wallet: WalletGuide): boolean {
   if (isMobileDevice()) return false; // Can't detect extensions on mobile
   if (!wallet.detector) return false;
+  
   try {
-    // eslint-disable-next-line no-eval
-    return !!eval(wallet.detector);
+    // Use safe property access instead of eval()
+    return safeWindowPropertyCheck(wallet.detector);
   } catch {
     return false;
   }
