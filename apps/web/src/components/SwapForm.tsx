@@ -393,7 +393,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
                       const natives = ['NEAR', 'SUI', 'SOL', 'ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'];
                       if (natives.includes(sel.symbol)) {
                         const reserves: Record<string, number> = { NEAR: 0.1, SUI: 0.01, SOL: 0.001, ETH: 0.01, BNB: 0.002, MATIC: 0.1, BERA: 0.01, MON: 0.01, APT: 0.01, STRK: 0.01, TON: 0.05, TRX: 5 };
-                        amt = Math.max(0, bal - (reserves[sel.symbol] || 0));
+                        const reserve = reserves[sel.symbol] || 0;
+                        amt = bal > reserve ? bal - reserve : bal;
                       }
                     }
                     setAmount(amt.toFixed(6).replace(/\.?0+$/, ''));
