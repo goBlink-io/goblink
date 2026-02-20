@@ -3,6 +3,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Check, ChevronDown, X } from 'lucide-react';
 
+/** Format balance for display — full precision kept internally, truncated visually */
+function formatBal(raw: string): string {
+  const n = parseFloat(raw);
+  if (isNaN(n) || n === 0) return '0.00';
+  if (n >= 1000) return n.toFixed(2);
+  if (n >= 1) return n.toFixed(4);
+  // For small values, show up to 6 significant digits
+  const s = n.toPrecision(6);
+  return parseFloat(s).toString();
+}
+
 interface Token {
   assetId: string;
   symbol: string;
@@ -72,7 +83,7 @@ export default function TokenSelector({
             <div className="flex flex-col items-start min-w-0">
               <span className="font-semibold text-body-sm truncate">{cleanSymbol(selected.symbol)}</span>
               <span className="text-tiny truncate" style={{ color: 'var(--text-muted)' }}>
-                {loadingBalances ? '...' : `Bal: ${balances[selected.assetId] || '0.00'}`}
+                {loadingBalances ? '...' : `Bal: ${formatBal(balances[selected.assetId] || '0')}`}
                 {(selected.priceUsd || selected.price) && ` · $${Number(selected.priceUsd || selected.price).toFixed(Number(selected.priceUsd || selected.price) < 0.01 ? 6 : 2)}`}
               </span>
             </div>
@@ -141,7 +152,7 @@ export default function TokenSelector({
                             {token.name && <span className="text-tiny truncate" style={{ color: 'var(--text-faint)' }}>{token.name}</span>}
                           </div>
                           <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-                            {loadingBalances ? '...' : `Bal: ${bal}`}
+                            {loadingBalances ? '...' : `Bal: ${formatBal(bal)}`}
                             {price && ` · $${Number(price).toFixed(Number(price) < 0.01 ? 6 : 2)}`}
                           </div>
                         </div>

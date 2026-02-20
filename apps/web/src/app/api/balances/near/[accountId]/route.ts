@@ -13,7 +13,7 @@ export async function GET(
     const account = await provider.query({
       request_type: 'view_account', finality: 'final', account_id: accountId,
     }) as unknown as { amount: string };
-    const balanceInNear = (Number(account.amount) / 1e24).toFixed(4);
+    const balanceInNear = String(Number(account.amount) / 1e24);
     return NextResponse.json({ balance: balanceInNear, balanceYocto: account.amount, accountId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
