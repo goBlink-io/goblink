@@ -110,9 +110,9 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
       const data = await response.json();
       setTokens(data);
       if (data.length > 0) {
-        const wnear = data.find((t: Token) => t.symbol === 'wNEAR');
+        const near = data.find((t: Token) => t.symbol === 'NEAR' && t.assetId.includes('wrap.near')) || data.find((t: Token) => t.symbol === 'wNEAR');
         const usdc = data.find((t: Token) => t.symbol === 'USDC' && t.assetId.includes('17208628'));
-        if (wnear) setOriginAsset(wnear.assetId);
+        if (near) setOriginAsset(near.assetId);
         if (usdc) setDestinationAsset(usdc.assetId);
       }
     } catch (error) {
@@ -283,6 +283,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           assetId: originToken.assetId,
           blockchain: originToken.blockchain,
           contractAddress: originToken.contractAddress,
+          icon: originToken.icon,
         },
         destinationTokenMetadata: {
           symbol: destinationToken.symbol,
@@ -290,6 +291,7 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
           assetId: destinationToken.assetId,
           blockchain: destinationToken.blockchain,
           contractAddress: destinationToken.contractAddress,
+          icon: destinationToken.icon,
         },
       };
       toast('Quote ready — review and confirm below', 'success');
@@ -387,9 +389,9 @@ export default function SwapForm({ onQuoteReceived }: SwapFormProps) {
                     const bal = parseFloat(balances[originAsset] || '0');
                     let amt = bal * (pct / 100);
                     if (pct === 100) {
-                      const natives = ['NEAR', 'wNEAR', 'SUI', 'SOL', 'ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'];
+                      const natives = ['NEAR', 'SUI', 'SOL', 'ETH', 'BNB', 'MATIC', 'BERA', 'MON', 'APT', 'STRK', 'TON', 'TRX'];
                       if (natives.includes(sel.symbol)) {
-                        const reserves: Record<string, number> = { NEAR: 0.1, wNEAR: 0.1, SUI: 0.01, SOL: 0.001, ETH: 0.01, BNB: 0.002, MATIC: 0.1, BERA: 0.01, MON: 0.01, APT: 0.01, STRK: 0.01, TON: 0.05, TRX: 5 };
+                        const reserves: Record<string, number> = { NEAR: 0.1, SUI: 0.01, SOL: 0.001, ETH: 0.01, BNB: 0.002, MATIC: 0.1, BERA: 0.01, MON: 0.01, APT: 0.01, STRK: 0.01, TON: 0.05, TRX: 5 };
                         amt = Math.max(0, bal - (reserves[sel.symbol] || 0));
                       }
                     }

@@ -13,6 +13,11 @@ function applyIcons(tokens: Record<string, unknown>[]): void {
   }
 }
 
+/** User-facing symbol overrides (hide wrapped token names) */
+const SYMBOL_OVERRIDES: Record<string, string> = {
+  'wNEAR': 'NEAR',
+};
+
 /** Carry over the `price` field from 1Click API as `priceUsd` */
 function applyPricing(token: Record<string, unknown>): void {
   const price = token.price as number | undefined;
@@ -146,6 +151,10 @@ export async function GET() {
     // Apply static icons + 1Click pricing (no external API calls needed)
     applyIcons(allTokens);
     allTokens.forEach(applyPricing);
+    allTokens.forEach((token) => {
+      const sym = token.symbol as string;
+      if (SYMBOL_OVERRIDES[sym]) token.symbol = SYMBOL_OVERRIDES[sym];
+    });
 
     return NextResponse.json(allTokens, {
       headers: {

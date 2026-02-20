@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({
         success: true,
-        message: 'Transaction will be tracked via Intents Explorer',
+        message: 'Transaction submitted for tracking',
         txHash,
       });
     }
   } catch {
     return NextResponse.json({
       success: true,
-      message: 'Transaction will be tracked via Intents Explorer',
+      message: 'Transaction submitted for tracking',
     });
   }
 }

@@ -44,7 +44,7 @@ if (!projectId) {
 
 const metadata = {
   name: 'Blink',
-  description: 'Cross-Chain Transfers powered by NEAR Intents',
+  description: 'Cross-Chain Transfers — instant, low-cost, any chain',
   url: typeof window !== 'undefined' ? window.location.origin : 'https://goblink.io',
   icons: ['https://goblink.io/icon.png']
 };

@@ -25,6 +25,8 @@ interface TransactionStorylineProps {
   fulfillmentTxHash: string | null;
   fromLogo?: { icon: string; name: string } | null;
   toLogo?: { icon: string; name: string } | null;
+  fromTokenIcon?: string;
+  toTokenIcon?: string;
   getExplorerLink: (txHash: string, chain: string) => string;
   startedAt: number;               // Date.now() when tracking began
 }
@@ -111,6 +113,8 @@ export default function TransactionStoryline({
   fulfillmentTxHash,
   fromLogo,
   toLogo,
+  fromTokenIcon,
+  toTokenIcon,
   getExplorerLink,
   startedAt,
 }: TransactionStorylineProps) {
@@ -145,8 +149,8 @@ export default function TransactionStoryline({
       {/* ── Header: amount flow ── */}
       <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--elevated)' }}>
         <div className="flex items-center gap-2">
-          {fromLogo && (
-            <img src={fromLogo.icon} alt={fromLogo.name} className="w-6 h-6 rounded-full"
+          {(fromTokenIcon || fromLogo) && (
+            <img src={fromTokenIcon || fromLogo!.icon} alt={fromToken} className="w-6 h-6 rounded-full"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{amountIn} {fromToken}</span>
@@ -156,8 +160,8 @@ export default function TransactionStoryline({
           <span className="font-semibold text-sm" style={{ color: complete ? 'var(--success)' : 'var(--text-primary)' }}>
             {amountOut || '...'} {toToken}
           </span>
-          {toLogo && (
-            <img src={toLogo.icon} alt={toLogo.name} className="w-6 h-6 rounded-full"
+          {(toTokenIcon || toLogo) && (
+            <img src={toTokenIcon || toLogo!.icon} alt={toToken} className="w-6 h-6 rounded-full"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
         </div>
