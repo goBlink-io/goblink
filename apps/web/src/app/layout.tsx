@@ -69,7 +69,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="font-sans noise-overlay">
+      <body className="font-sans noise-overlay" suppressHydrationWarning>
         <ThemeProvider>
         <Web3Provider>
         <ToastProvider>
