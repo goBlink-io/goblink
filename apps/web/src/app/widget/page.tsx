@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-const BASE_EMBED_URL = 'https://goblink.xyz/embed';
+const BASE_EMBED_URL = 'https://goblink.io/embed';
 
 const EXAMPLE_CONFIGS = [
   {

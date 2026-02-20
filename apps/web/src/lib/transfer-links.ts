@@ -50,7 +50,7 @@ export function decodeTransferLink(encoded: string): TransferLinkData | null {
 
 /** Generate the full shareable URL */
 export function generateTransferUrl(data: TransferLinkData, baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://goblink.xyz');
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://goblink.io');
   const encoded = encodeTransferLink(data);
   return encoded ? `${base}/t/${encoded}` : base;
 }

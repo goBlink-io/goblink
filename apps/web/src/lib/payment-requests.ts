@@ -52,7 +52,7 @@ export function decodePaymentRequest(encoded: string): PaymentRequestData | null
 
 /** Generate the full payment request URL */
 export function generatePaymentUrl(data: PaymentRequestData, baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://goblink.xyz');
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://goblink.io');
   const encoded = encodePaymentRequest(data);
   return encoded ? `${base}/pay/${encoded}` : base;
 }
