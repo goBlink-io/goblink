@@ -251,8 +251,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
     }
     setLoading(true);
     try {
-      const originToken = tokens.find(t => t.assetId === originAsset);
-      const destinationToken = tokens.find(t => t.assetId === destinationAsset);
+      const originToken = fromTokens.find(t => t.assetId === originAsset) || tokens.find(t => t.assetId === originAsset);
+      const destinationToken = toTokens.find(t => t.assetId === destinationAsset) || tokens.find(t => t.assetId === destinationAsset);
       if (!originToken) throw new Error('Origin token not found');
       if (!destinationToken) throw new Error('Destination token not found');
 
