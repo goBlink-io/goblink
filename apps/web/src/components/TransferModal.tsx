@@ -122,6 +122,18 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 : null,
             }),
           }).catch(() => {});
+
+          // Update transaction status in database
+          fetch(`/api/transactions/search?q=${depAddr}`, { method: 'GET' })
+            .then(res => res.json())
+            .then(result => {
+              if (result.success && result.data?.transactions?.[0]?.id) {
+                const txId = result.data.transactions[0].id;
+                // Trigger sync to update with latest data from explorer
+                fetch(`/api/transactions/${txId}/sync`, { method: 'POST' }).catch(() => {});
+              }
+            })
+            .catch(() => {});
         }
         return true;
       }
@@ -164,6 +176,58 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
+
+      // Log transaction to database for history tracking
+      const logTransaction = async () => {
+        try {
+          let walletAddress = '';
+          let walletChain = originChain || '';
+
+          // Get wallet address based on chain
+          if (originChain === 'sui' && currentAccount) {
+            walletAddress = currentAccount.address;
+            walletChain = 'sui';
+          } else if (originChain === 'solana' && solanaProvider?.publicKey) {
+            walletAddress = solanaProvider.publicKey.toString();
+            walletChain = 'solana';
+          } else if (isEvmChain(originChain!)) {
+            const wc = await getWalletClient(wagmiConfig);
+            if (wc?.account?.address) {
+              walletAddress = wc.account.address;
+              walletChain = originChain || 'ethereum';
+            }
+          }
+          // For NEAR, we'll log without wallet address for now (can be added later)
+
+          if (walletAddress) {
+            await fetch('/api/transactions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                walletAddress,
+                walletChain,
+                depositAddress: depAddr,
+                fromChain: fromChain || originChain,
+                fromToken: originTokenMetadata?.symbol || quoteRequest.originAsset,
+                toChain: toChain,
+                toToken: destinationTokenMetadata?.symbol || quoteRequest.destinationAsset,
+                amountIn: quoteRequest.amount,
+                recipient: quoteRequest.recipient,
+                refundTo: quoteRequest.refundTo,
+                status: 'pending',
+                feeBps: feeInfo?.bps,
+                feeAmount: feeInfo?.amount,
+                amountUsd: feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : undefined,
+              }),
+            }).catch(err => console.error('Failed to log transaction:', err));
+          }
+        } catch (err) {
+          console.error('Failed to log transaction:', err);
+        }
+      };
+
+      // Log transaction in background (non-blocking)
+      void logTransaction();
 
       if (originChain === 'near') {
         setConfirmationStep('Approve in your NEAR wallet...');
