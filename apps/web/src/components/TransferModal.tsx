@@ -291,7 +291,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
   // Human-readable fee percentage
   const feePercent = feeInfo?.percent ? `${feeInfo.percent}%` : null;
-  const timeEstimateSecs = quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : 25;
+  const timeEstimateSecs = 60; // Conservative — under-promise, over-deliver
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
