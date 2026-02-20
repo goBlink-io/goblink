@@ -35,7 +35,7 @@ class IntentsExplorerService {
   private jwtToken: string | null;
 
   constructor() {
-    this.jwtToken = process.env.INTENTS_EXPLORER_JWT || null;
+    this.jwtToken = process.env.INTENTS_EXPLORER_JWT?.trim() || null;
     this.client = axios.create({
       baseURL: INTENTS_EXPLORER_BASE_URL,
       timeout: 10000,
