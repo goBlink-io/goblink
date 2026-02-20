@@ -20,6 +20,7 @@ export default function Home() {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [, setTrackingAddress] = useState<string>('');
+  const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
   const { history, addEntry } = useTransactionHistory();
   const { recordTransfer, updateLastRecordSuccess } = useSmartFirstTransaction('', '', '', 0);
   const { recordRoute } = useSmartDefaults();
@@ -87,6 +88,7 @@ export default function Home() {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setBalanceRefreshKey(k => k + 1);
     setTimeout(() => { setQuoteData(null); setTrackingAddress(''); }, 300);
   };
 
@@ -141,6 +143,7 @@ export default function Home() {
         >
           <SwapForm
             onQuoteReceived={handleQuoteReceived}
+            refreshKey={balanceRefreshKey}
             onSwapInitiated={() => {}}
           />
         </motion.section>
