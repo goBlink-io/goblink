@@ -242,7 +242,7 @@ export default function PrivacyPage() {
               5.1 Service Providers
             </h3>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>Cross-Chain Infrastructure:</strong> Third-party intent execution services and Solver networks. We share transaction parameters (tokens, amounts, addresses) necessary to execute transfers.</li>
+              <li><strong>Cross-Chain Infrastructure:</strong> Third-party execution services and networks. We share transaction parameters (tokens, amounts, addresses) necessary to execute transfers.</li>
               <li><strong>Reown AppKit (WalletConnect):</strong> Wallet connection and authentication service. Your wallet address is shared to enable wallet connectivity.</li>
               <li><strong>Blockchain Networks:</strong> Transaction data is broadcast to public blockchain networks (Ethereum, Solana, NEAR, etc.) as part of the on-chain execution process.</li>
               <li><strong>Analytics Providers:</strong> We may use services like Vercel Analytics, Google Analytics, or similar tools to analyze anonymized usage data.</li>

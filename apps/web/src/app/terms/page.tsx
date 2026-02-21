@@ -84,11 +84,10 @@ export default function TermsPage() {
               The following terms have specific meanings in these Terms:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>Protocol:</strong> The NEAR Intents Protocol and associated infrastructure that enables cross-chain intent execution, including the 1Click Service and Solver Network.</li>
-              <li><strong>Intent:</strong> A user's expression of a desired outcome (e.g., "transfer 100 USDC from Ethereum to Solana") without specifying the exact execution path.</li>
+              <li><strong>Protocol:</strong> The underlying cross-chain infrastructure and smart contracts that enable intent-based token transfers across blockchains.</li>
+              <li><strong>Intent:</strong> A user&apos;s expression of a desired outcome (e.g., &quot;transfer 100 USDC from Ethereum to Solana&quot;) without specifying the exact execution path.</li>
               <li><strong>Solver:</strong> A third-party service provider that competes to fulfill user intents by finding optimal execution paths and providing quotes.</li>
-              <li><strong>Solver Network:</strong> The decentralized network of independent Solvers that execute cross-chain transfers through the Protocol.</li>
-              <li><strong>1Click Service:</strong> The intent execution infrastructure operated by third parties that coordinates Solvers and manages cross-chain transaction routing.</li>
+              <li><strong>Execution Network:</strong> The decentralized network of independent Solvers and infrastructure providers that execute cross-chain transfers through the Protocol.</li>
               <li><strong>Third-Party Bridges:</strong> External cross-chain bridging infrastructure (including Chain Signatures, MPC networks, and other bridge solutions) used to transfer assets between blockchains.</li>
             </ul>
           </div>
@@ -107,9 +106,9 @@ export default function TermsPage() {
               <strong>Important clarifications:</strong>
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>Interface Only:</strong> goBlink is a frontend interface. We do NOT operate the Protocol, Solver Network, 1Click Service, or any underlying blockchain infrastructure. All cross-chain execution is performed by independent third parties.</li>
-              <li><strong>Non-Custodial:</strong> goBlink does not hold, store, or have access to user funds at any time. All transactions are executed on-chain via smart contracts and the Solver Network.</li>
-              <li><strong>Third-Party Infrastructure:</strong> Cross-chain transfer execution is performed by the Protocol, Solver Network, Third-Party Bridges, and blockchain networks. goBlink is not responsible for the operation, reliability, security, or availability of these systems.</li>
+              <li><strong>Interface Only:</strong> goBlink is a frontend interface. We do NOT operate the Protocol, Execution Network, or any underlying blockchain infrastructure. All cross-chain execution is performed by independent third parties.</li>
+              <li><strong>Non-Custodial:</strong> goBlink does not hold, store, or have access to user funds at any time. All transactions are executed on-chain via smart contracts and the Execution Network.</li>
+              <li><strong>Third-Party Infrastructure:</strong> Cross-chain transfer execution is performed by the Protocol, Execution Network, Third-Party Bridges, and blockchain networks. goBlink is not responsible for the operation, reliability, security, or availability of these systems.</li>
               <li><strong>No Control Over Execution:</strong> goBlink does not control how Solvers execute intents, which execution paths are chosen, or the final pricing and timing of transactions.</li>
               <li><strong>Auto-Refund:</strong> Failed transfers may trigger automatic refunds through the underlying Protocol infrastructure, though network fees may still apply and are non-refundable.</li>
             </ul>
@@ -252,7 +251,7 @@ export default function TermsPage() {
               <li><strong>Sanctions Evasion:</strong> Transferring funds to or from sanctioned individuals, entities, or jurisdictions.</li>
               <li><strong>Fraud or Misrepresentation:</strong> Engaging in fraudulent activities, scams, or misrepresenting your identity or intent.</li>
               <li><strong>Market Manipulation:</strong> Engaging in wash trading, spoofing, front-running, or other forms of market manipulation.</li>
-              <li><strong>Intent Manipulation:</strong> Submitting intents with falsified parameters, spamming the Protocol or Solver Network with bogus intents, or attempting to manipulate intent execution for personal gain.</li>
+              <li><strong>Intent Manipulation:</strong> Submitting intents with falsified parameters, spamming the Protocol or Execution Network with bogus intents, or attempting to manipulate intent execution for personal gain.</li>
               <li><strong>Solver Abuse:</strong> Front-running Solver quotes, spamming Solvers with quote requests to cause denial of service, or exploiting Solver pricing mechanisms.</li>
               <li><strong>Cross-Chain Exploits:</strong> Leveraging settlement delays, bridge vulnerabilities, or timing attacks to exploit cross-chain infrastructure for unauthorized financial gain.</li>
               <li><strong>Illegal Activity:</strong> Using the Service for any activity that violates applicable laws or regulations in your jurisdiction.</li>
@@ -298,9 +297,9 @@ export default function TermsPage() {
               The Service integrates with and relies on third-party services and infrastructure, including but not limited to:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>NEAR Intents Protocol:</strong> The underlying Protocol that coordinates intent execution</li>
-              <li><strong>Solver Network:</strong> Independent third-party Solvers that execute cross-chain transfers</li>
-              <li><strong>1Click Service:</strong> Intent execution infrastructure operated by third parties</li>
+              <li><strong>Cross-Chain Protocol:</strong> The underlying Protocol that coordinates intent execution</li>
+              <li><strong>Execution Network:</strong> Independent third-party Solvers that execute cross-chain transfers</li>
+              <li><strong>Routing Infrastructure:</strong> Intent execution and routing services operated by third parties</li>
               <li><strong>Third-Party Bridges:</strong> Cross-chain bridging infrastructure including Chain Signatures, MPC networks, and other bridge solutions</li>
               <li><strong>Reown AppKit (WalletConnect):</strong> Wallet connection and authentication</li>
               <li><strong>Blockchain Networks:</strong> Ethereum, Solana, NEAR, Sui, and other supported blockchains</li>
@@ -344,7 +343,7 @@ export default function TermsPage() {
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Cryptocurrency transactions involve significant financial risk due to market volatility, regulatory uncertainty, and technical complexity.</li>
               <li>The value of cryptocurrencies can fluctuate dramatically and may result in substantial losses.</li>
-              <li><strong>Smart Contract Risks:</strong> The Protocol, Solver Network, Third-Party Bridges, and blockchain networks rely on smart contracts, which may contain bugs, vulnerabilities, or exploits that could result in loss of funds. Smart contracts are immutable once deployed and may not be updatable to fix security issues.</li>
+              <li><strong>Smart Contract Risks:</strong> The Protocol, Execution Network, Third-Party Bridges, and blockchain networks rely on smart contracts, which may contain bugs, vulnerabilities, or exploits that could result in loss of funds. Smart contracts are immutable once deployed and may not be updatable to fix security issues.</li>
               <li><strong>Bridge and MPC Risks:</strong> Third-Party Bridges, including Chain Signatures and MPC networks, involve cryptographic operations that could be compromised through validator collusion, key theft, consensus failures, or vulnerabilities in MPC protocols. Assets transferred via bridges may be permanently lost if bridge infrastructure fails.</li>
               <li><strong>Quantum Computing Risks:</strong> Future advances in quantum computing could potentially compromise blockchain cryptography, including wallet signatures and bridge security mechanisms.</li>
               <li><strong>Blockchain Forks:</strong> Blockchain networks may undergo forks (planned or unplanned) that could result in transaction reversals, duplicate assets, or loss of funds.</li>
@@ -356,7 +355,7 @@ export default function TermsPage() {
               <strong>Assumption of Risk and Release:</strong>
             </p>
             <p>
-              You expressly acknowledge and agree that you assume full responsibility for all risks associated with using the Service, interacting with the Protocol, Solver Network, Third-Party Bridges, and blockchain networks. You irrevocably waive and release any and all claims against goBlink and its affiliates arising from or related to these risks.
+              You expressly acknowledge and agree that you assume full responsibility for all risks associated with using the Service, interacting with the Protocol, Execution Network, Third-Party Bridges, and blockchain networks. You irrevocably waive and release any and all claims against goBlink and its affiliates arising from or related to these risks.
             </p>
           </div>
         </section>
@@ -405,7 +404,7 @@ export default function TermsPage() {
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Your use of the Service;</li>
-              <li>The Protocol, Solver Network, 1Click Service, or Third-Party Bridges;</li>
+              <li>The Protocol, Execution Network, or Third-Party Bridges;</li>
               <li>Any transactions initiated through the Service;</li>
               <li>Smart contract vulnerabilities, bridge failures, or blockchain network issues;</li>
               <li>Solver performance, misconduct, or unavailability;</li>
