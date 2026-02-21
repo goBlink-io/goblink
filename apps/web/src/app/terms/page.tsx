@@ -17,11 +17,6 @@ export default function TermsPage() {
         <p className="text-body-sm mb-2" style={{ color: 'var(--text-muted)' }}>
           Last Updated: February 21, 2026
         </p>
-        <div className="p-4 rounded-lg mt-4" style={{ background: 'var(--warning-bg)', border: '1px solid var(--border)' }}>
-          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-            <strong>Important Legal Notice:</strong> This document is provided for informational purposes only and does not constitute legal advice. Users should consult their own legal counsel before using the Service.
-          </p>
-        </div>
       </div>
 
       {/* Table of Contents */}
