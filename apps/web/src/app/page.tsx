@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SwapForm from '@/components/SwapForm';
 import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { useSmartDefaults } from '@/hooks/useSmartDefaults';
@@ -141,11 +142,13 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
         >
-          <SwapForm
-            onQuoteReceived={handleQuoteReceived}
-            refreshKey={balanceRefreshKey}
-            onSwapInitiated={() => {}}
-          />
+          <ErrorBoundary fallbackMessage="We couldn't load the transfer form. Please refresh the page.">
+            <SwapForm
+              onQuoteReceived={handleQuoteReceived}
+              refreshKey={balanceRefreshKey}
+              onSwapInitiated={() => {}}
+            />
+          </ErrorBoundary>
         </motion.section>
 
         {/* ═══ Trust Bar — right below swap card, still above fold ═══ */}
@@ -376,12 +379,14 @@ export default function Home() {
 
       {/* ═══ Transfer Modal ═══ */}
       {showModal && quoteData && (
-        <TransferModal
-          quote={quoteData}
-          onClose={handleCloseModal}
-          onComplete={handleTransferComplete}
-          onOutcome={(success: boolean) => updateLastRecordSuccess(success)}
-        />
+        <ErrorBoundary fallbackMessage="Something went wrong with the transfer. Please close and try again.">
+          <TransferModal
+            quote={quoteData}
+            onClose={handleCloseModal}
+            onComplete={handleTransferComplete}
+            onOutcome={(success: boolean) => updateLastRecordSuccess(success)}
+          />
+        </ErrorBoundary>
       )}
     </div>
   );

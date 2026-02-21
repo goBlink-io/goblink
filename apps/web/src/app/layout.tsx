@@ -5,6 +5,8 @@ import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 import UnifiedConnectButton from '@/components/UnifiedConnectButton';
 import AppMenu from '@/components/AppMenu';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const baseUrl = process.env.NODE_ENV === 'production' 
   ? 'https://goblink.io' 
@@ -141,6 +143,8 @@ export default function RootLayout({
             </footer>
           </div>
         </ClientLayout>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

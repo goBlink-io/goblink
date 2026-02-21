@@ -145,6 +145,32 @@ export async function getSolanaBalance(address: string): Promise<string> {
 }
 
 /**
+ * Fetch SPL token balance for a Solana wallet
+ * @param address - Solana wallet address
+ * @param mintAddress - SPL token mint address
+ */
+export async function getSolanaTokenBalance(
+  address: string,
+  mintAddress: string
+): Promise<string> {
+  try {
+    const response = await fetch(
+      `${API_URL}/api/balances/solana-token/${address}?mint=${encodeURIComponent(mintAddress)}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SPL balance: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.balance;
+  } catch (error) {
+    console.error('Failed to fetch SPL token balance:', error);
+    return '0.00';
+  }
+}
+
+/**
  * Fetch native EVM balance (ETH, BNB, BERA, MON, etc.)
  * @param chain - Chain name (ethereum, base, arbitrum, bsc, polygon, optimism, berachain, monad)
  * @param address - EVM wallet address
@@ -273,8 +299,13 @@ export async function getTokenBalance(
     if (token.symbol === 'SOL') {
       return getSolanaBalance(address);
     }
-    
-    // SPL tokens - not yet implemented
+
+    // SPL token — contractAddress is the mint address
+    const mintAddress = token.contractAddress || token.address;
+    if (mintAddress) {
+      return getSolanaTokenBalance(address, mintAddress);
+    }
+
     return '0.00';
   }
   

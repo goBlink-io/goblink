@@ -214,7 +214,6 @@ export async function sendSuiTransaction(
   signAndExecuteTransaction: any
 ): Promise<string> {
   const { tokenAddress, recipientAddress, amount } = params;
-  void suiClient; // Reserved for direct Sui RPC calls
 
   if (!currentAccount) {
     throw new Error('Sui wallet not connected');
@@ -229,15 +228,35 @@ export async function sendSuiTransaction(
                         tokenAddress === '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
 
     if (isNativeSui) {
-      // Native SUI transfer
-      // Convert the amount string to a number (amount is in MIST - smallest unit)
+      // Native SUI transfer — split from gas coin (always available)
       const amountInMist = BigInt(amount);
       const [coin] = txb.splitCoins(txb.gas, [amountInMist]);
       txb.transferObjects([coin], recipientAddress);
     } else {
-      // Custom token transfer would go here
-      // This requires more complex logic with coin selection
-      throw new Error('Custom Sui token transfers not yet implemented');
+      // Custom Sui token transfer (USDC, wETH, USDT, etc.)
+      // Fetch all coin objects of this type from the wallet
+      const coins = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: tokenAddress,
+      });
+
+      if (!coins.data || coins.data.length === 0) {
+        throw new Error(`No coins of type ${tokenAddress} found in wallet`);
+      }
+
+      const primaryCoin = txb.object(coins.data[0].coinObjectId);
+
+      // Merge additional coin objects into primary (wallet may have multiple)
+      if (coins.data.length > 1) {
+        txb.mergeCoins(
+          primaryCoin,
+          coins.data.slice(1).map((c: { coinObjectId: string }) => txb.object(c.coinObjectId))
+        );
+      }
+
+      // Split exact amount and transfer
+      const [sendCoin] = txb.splitCoins(primaryCoin, [BigInt(amount)]);
+      txb.transferObjects([sendCoin], recipientAddress);
     }
 
     // Sign and execute transaction using the hook
