@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { MoreHorizontal, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function AppMenu() {
@@ -178,8 +178,30 @@ export default function AppMenu() {
             </span>
           </Link>
 
-          {/* Docs - removed for now, users have chatbot */}
-          {/* Terms/Privacy - removed for now */}
+          {/* Divider */}
+          <div className="border-t" style={{ borderColor: 'var(--border)' }} />
+
+          {/* Terms of Service */}
+          <Link
+            href="/terms"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+              Terms of Service
+            </span>
+          </Link>
+
+          {/* Privacy Policy */}
+          <Link
+            href="/privacy"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+              Privacy Policy
+            </span>
+          </Link>
         </div>
       )}
 
