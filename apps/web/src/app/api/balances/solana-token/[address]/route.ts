@@ -95,9 +95,10 @@ export async function GET(
     );
   } catch (error: unknown) {
     logger.error('[SOLANA_TOKEN_BALANCE_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    // Return 0.00 gracefully on RPC failures (rate limits, timeouts, etc.)
+    // SPL tokens route to manual deposit anyway, so a 0 balance is safe for UI
     return addRateLimitHeaders(
-      errorResponse('Failed to fetch SPL token balance', 500, { details: message }),
+      successResponse({ balance: '0.00', address: '', mint: '' }),
       rateLimit
     );
   }
