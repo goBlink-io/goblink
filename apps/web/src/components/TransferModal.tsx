@@ -257,6 +257,23 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         if (!solanaProvider || !isAppKitConnected || !caipAddress?.startsWith('solana:'))
           throw new Error('Connect your Solana wallet first');
 
+        // Determine if this is native SOL or an SPL token.
+        // SPL tokens (USDC, USDT, etc.) require a different transaction type —
+        // SystemProgram.transfer only works for native SOL. Routing SPL to manual
+        // deposit prevents silently sending the wrong token.
+        const solTokenAddr = getTokenAddressFromAssetId(quoteRequest.originAsset);
+        const isNativeSol = solTokenAddr === 'native' || solTokenAddr === 'sol' ||
+          solTokenAddr === 'So11111111111111111111111111111111111111112' ||
+          originTokenMetadata?.symbol?.toUpperCase() === 'SOL';
+
+        if (!isNativeSol) {
+          // SPL token — use manual deposit. User sends from their Solana wallet directly.
+          setShowManualDeposit(true);
+          setStep('preview');
+          setConfirmationStep('');
+          return;
+        }
+
         setConfirmationStep('Preparing Solana transaction...');
         const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
         const fromPubkey = new PublicKey(solanaProvider.publicKey);

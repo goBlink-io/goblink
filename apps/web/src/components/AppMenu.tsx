@@ -167,6 +167,17 @@ export default function AppMenu() {
             )}
           </div>
 
+          {/* Report an Issue */}
+          <a
+            href="mailto:support@goblink.io?subject=Bug Report&body=Describe the issue you encountered:"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+              Report an Issue
+            </span>
+          </a>
+
           {/* Request Feature */}
           <Link
             href="/features"
