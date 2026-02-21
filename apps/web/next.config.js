@@ -41,10 +41,10 @@ const nextConfig = {
             value: [
               "default-src 'self' https://goblink.io",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://goblink.io", // unsafe-eval needed for wallet libs
-              "style-src 'self' 'unsafe-inline' https://goblink.io",
+              "style-src 'self' 'unsafe-inline' https://goblink.io https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net",
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org",
-              "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
+              "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net https://fonts.googleapis.com",
               "frame-src 'self' blob: data:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
@@ -78,10 +78,10 @@ const nextConfig = {
             value: [
               "default-src 'self' https://goblink.io",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://goblink.io",
-              "style-src 'self' 'unsafe-inline' https://goblink.io",
+              "style-src 'self' 'unsafe-inline' https://goblink.io https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net",
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org",
-              "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
+              "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net https://fonts.googleapis.com",
               "frame-src 'self' blob: data:",
               "frame-ancestors 'self' https://goblink.io https://*.goblink.io *",
               "base-uri 'self'",
