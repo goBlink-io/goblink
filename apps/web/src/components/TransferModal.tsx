@@ -552,7 +552,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
                 {/* Confidence Score */}
                 <ConfidenceScore
-                  timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
+                  timeEstimate={quoteData.timeEstimate ? Math.max(60, parseInt(quoteData.timeEstimate, 10)) : null}
                   fromChain={fromChain}
                   toChain={toChain}
                   fromToken={originTokenMetadata?.symbol || ''}

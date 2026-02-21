@@ -35,13 +35,12 @@ export default function StatusTracker({ depositAddress, onReset }: StatusTracker
       const response = await fetch(`/api/status/${depositAddress}`);
       
       if (!response.ok) {
-        if (response.status === 404) {
-          setError('Swap not found. Please check the deposit address.');
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to fetch status');
+        // 404 = explorer hasn't indexed yet OR JWT not set — silent retry, not an error
+        if (response.status === 404 || response.status === 503) {
+          return;
         }
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch status');
       }
 
       const data = await response.json();

@@ -438,7 +438,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           {/* Time Estimate */}
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Estimated time</span>
-            <span className="font-medium">{quoteData.timeEstimate} seconds</span>
+            <span className="font-medium">{Math.max(60, quoteData.timeEstimate ?? 60)} seconds</span>
           </div>
 
           {/* Fees */}
