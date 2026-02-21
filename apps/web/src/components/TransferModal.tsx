@@ -632,7 +632,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   toToken={destinationTokenMetadata?.symbol || '?'}
                   amountIn={quoteData.amountInFormatted}
                   amountOut={transaction?.amountOut && destinationTokenMetadata?.decimals ? formatAtomicAmount(transaction.amountOut, destinationTokenMetadata.decimals) : (quoteData.amountOutFormatted || null)}
-                  timeEstimate={quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : null}
+                  timeEstimate={Math.max(60, quoteData.timeEstimate ? parseInt(quoteData.timeEstimate, 10) : 60)}
                   depositTxHash={transaction?.depositTxHash || null}
                   fulfillmentTxHash={transaction?.fulfillmentTxHash || null}
                   fromLogo={fromLogo}
