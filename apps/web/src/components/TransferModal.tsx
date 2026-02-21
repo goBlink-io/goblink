@@ -241,8 +241,14 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       } else if (originChain === 'sui') {
         if (!currentAccount) throw new Error('Connect your Sui wallet first');
         setConfirmationStep('Approve in your Sui wallet...');
+        // Derive the Sui coin type from the origin asset ID.
+        // Handles formats: raw `0x...::module::TOKEN` or prefixed `sui:0x...::module::TOKEN`
+        const rawOriginAsset = quoteRequest.originAsset;
+        const suiTokenAddress = rawOriginAsset.startsWith('sui:')
+          ? rawOriginAsset.slice(4)  // strip 'sui:' prefix, preserve full type string
+          : rawOriginAsset;          // already a raw Sui coin type or 'native'
         const txHash = await sendSuiTransaction({
-          chain: 'sui', tokenAddress: 'native', recipientAddress: depAddr,
+          chain: 'sui', tokenAddress: suiTokenAddress, recipientAddress: depAddr,
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
         }, suiClient, currentAccount, signAndExecuteTransaction);
         onComplete(depAddr, txHash);
