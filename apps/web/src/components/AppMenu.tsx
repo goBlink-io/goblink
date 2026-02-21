@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { MoreHorizontal, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function AppMenu() {
@@ -178,18 +178,18 @@ export default function AppMenu() {
             </span>
           </Link>
 
-          {/* Docs */}
+          {/* Follow on X */}
           <a
-            href="https://docs.goblink.io"
+            href="https://x.com/goBlink_io"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
             onClick={() => setIsOpen(false)}
           >
             <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-              Docs
+              Follow on X
             </span>
-            <ExternalLink className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+            <svg className="ml-auto h-4 w-4" style={{ color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
 
           {/* Divider */}
