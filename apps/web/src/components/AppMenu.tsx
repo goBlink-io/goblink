@@ -178,44 +178,8 @@ export default function AppMenu() {
             </span>
           </Link>
 
-          {/* Docs */}
-          <a
-            href="https://docs.goblink.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
-            onClick={() => setIsOpen(false)}
-          >
-            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-              Docs
-            </span>
-            <ExternalLink className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
-          </a>
-
-          {/* Divider */}
-          <div className="border-t" style={{ borderColor: 'var(--border)' }} />
-
-          {/* Terms of Service */}
-          <Link
-            href="/terms"
-            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
-            onClick={() => setIsOpen(false)}
-          >
-            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-              Terms of Service
-            </span>
-          </Link>
-
-          {/* Privacy Policy */}
-          <Link
-            href="/privacy"
-            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
-            onClick={() => setIsOpen(false)}
-          >
-            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-              Privacy Policy
-            </span>
-          </Link>
+          {/* Docs - removed for now, users have chatbot */}
+          {/* Terms/Privacy - removed for now */}
         </div>
       )}
 
