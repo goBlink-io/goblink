@@ -69,6 +69,30 @@ const nextConfig = {
         ],
       },
       {
+        // Allow /embed to be iframed on any site (it's the embeddable widget)
+        source: '/embed',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self' https://goblink.io",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://goblink.io",
+              "style-src 'self' 'unsafe-inline' https://goblink.io",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org",
+              "frame-ancestors 'self' https://goblink.io https://*.goblink.io *",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+        ],
+      },
+      {
         source: '/api/:path*',
         headers: [
           {
