@@ -155,7 +155,7 @@ export default function AppMenu() {
                   </span>
                 </Link>
                 <Link
-                  href="/docs"
+                  href="/api-docs"
                   className="flex items-center pl-8 pr-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
                   onClick={() => setIsOpen(false)}
                 >
