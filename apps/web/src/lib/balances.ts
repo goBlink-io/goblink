@@ -6,6 +6,16 @@ import { isEvmChain, isNativeToken } from './chains';
 const API_URL = '';
 
 /**
+ * Normalize balance API responses.
+ * Some routes use successResponse wrapper: { success: true, data: { balance: "..." } }
+ * Others return flat:                      { balance: "..." }
+ * This handles both shapes safely.
+ */
+function extractBal(data: any): string {
+  return data?.data?.balance ?? data?.balance ?? '0.00';
+}
+
+/**
  * Fetch NEAR account balance using backend API
  * @param accountId - NEAR account ID
  * @returns Balance in NEAR (not yoctoNEAR)
@@ -19,7 +29,7 @@ export async function getNearBalance(accountId: string): Promise<string> {
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch NEAR balance:', error);
     return '0.00';
@@ -67,7 +77,7 @@ export async function getNearTokenBalance(
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch NEAR token balance:', error);
     return '0.00';
@@ -88,7 +98,7 @@ export async function getSuiBalance(address: string): Promise<string> {
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch SUI balance:', error);
     return '0.00';
@@ -116,7 +126,7 @@ export async function getSuiTokenBalance(
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch Sui token balance:', error);
     return '0.00';
@@ -137,7 +147,7 @@ export async function getSolanaBalance(address: string): Promise<string> {
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch SOL balance:', error);
     return '0.00';
@@ -163,7 +173,7 @@ export async function getSolanaTokenBalance(
     }
 
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error('Failed to fetch SPL token balance:', error);
     return '0.00';
@@ -189,7 +199,7 @@ export async function getEvmBalance(
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error(`Failed to fetch ${chain} balance:`, error);
     return '0.00';
@@ -222,7 +232,7 @@ export async function getEvmTokenBalance(
     }
     
     const data = await response.json();
-    return data.balance;
+    return extractBal(data);
   } catch (error) {
     console.error(`Failed to fetch ${chain} token balance:`, error);
     return '0.00';
