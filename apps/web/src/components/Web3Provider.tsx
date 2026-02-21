@@ -114,6 +114,9 @@ createAppKit({
     socials: ['google', 'apple', 'discord', 'x', 'github', 'farcaster'],
   },
   themeMode: 'light',
+  enableWalletConnect: true,
+  enableInjected: true,
+  enableCoinbase: true,
 });
 
 // Sui

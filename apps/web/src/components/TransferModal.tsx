@@ -323,13 +323,40 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       }
     } catch (err: any) {
       console.error('Transfer error:', err);
+      let errorMessage = 'Transfer failed. Please try again.';
+      
+      // User rejected transaction
+      if (err.code === 4001 || err.message?.includes('User rejected') || err.message?.includes('user rejected')) {
+        errorMessage = 'Transaction cancelled.';
+      }
+      // Network/connection errors
+      else if (err.name === 'NetworkError' || err.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      // Insufficient funds
+      else if (err.message?.includes('insufficient') || err.message?.includes('balance')) {
+        errorMessage = 'Insufficient balance. Please check your wallet balance.';
+      }
+      // Gas/fee errors
+      else if (err.message?.includes('gas') || err.message?.includes('fee')) {
+        errorMessage = 'Transaction failed due to gas fees. Please try again.';
+      }
+      // API/quote errors
+      else if (err.message?.includes('quote') || err.message?.includes('address')) {
+        errorMessage = err.message || 'Unable to get transfer address. Please try again.';
+      }
+      // Generic wallet error
+      else if (err.shortMessage || err.message) {
+        errorMessage = err.shortMessage || err.message;
+      }
+      
       if (depositAddress) {
         setShowManualDeposit(true);
         setStep('preview');
       } else {
         setStep('preview');
       }
-      setError(err.shortMessage || err.message || 'Transfer failed');
+      setError(errorMessage);
       setConfirmationStep('');
     }
   };

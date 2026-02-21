@@ -314,6 +314,9 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       if (!destinationToken) throw new Error('Destination token not found');
 
       const amountInSmallestUnit = convertToSmallestUnit(amount, originToken.decimals);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
       const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -325,10 +328,14 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
           refundTo,
           dry: true,
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to get quote');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Unable to get a quote right now. Please try again.');
       }
       const data = await response.json();
       const enrichedData = {
@@ -355,8 +362,16 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       toast('Quote ready — review and confirm below', 'success');
       onQuoteReceived(enrichedData);
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to get quote. Please try again.';
+      let errorMessage = 'Unable to get a quote right now. Please try again.';
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setFormError(errorMessage);
+      toast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -456,7 +471,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
                     }
                     setAmount(amt.toFixed(6).replace(/\.?0+$/, ''));
                   }}
-                  className="flex-1 py-2 text-tiny font-semibold rounded-lg transition-all active:scale-95"
+                  className="flex-1 h-11 text-tiny font-semibold rounded-lg transition-all active:scale-95"
                   style={{ background: 'var(--elevated)', color: 'var(--text-secondary)' }}>
                   {pct}%
                 </button>
