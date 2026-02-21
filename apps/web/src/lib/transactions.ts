@@ -234,27 +234,40 @@ export async function sendSuiTransaction(
       txb.transferObjects([coin], recipientAddress);
     } else {
       // Custom Sui token transfer (USDC, wETH, USDT, etc.)
-      // Fetch all coin objects of this type from the wallet
-      const coins = await suiClient.getCoins({
-        owner: currentAccount.address,
-        coinType: tokenAddress,
-      });
+      // Paginate through ALL coin objects — getCoins returns max 50 per page
+      const allCoinObjects: { coinObjectId: string; balance: string }[] = [];
+      let cursor: string | null | undefined = null;
+      do {
+        const page: { data: { coinObjectId: string; balance: string }[]; hasNextPage: boolean; nextCursor?: string | null } = await suiClient.getCoins({
+          owner: currentAccount.address,
+          coinType: tokenAddress,
+          cursor,
+        });
+        allCoinObjects.push(...page.data);
+        cursor = page.hasNextPage ? page.nextCursor : null;
+      } while (cursor);
 
-      if (!coins.data || coins.data.length === 0) {
+      if (allCoinObjects.length === 0) {
         throw new Error(`No coins of type ${tokenAddress} found in wallet`);
       }
 
-      const primaryCoin = txb.object(coins.data[0].coinObjectId);
+      // Verify total balance covers the amount
+      const totalBalance = allCoinObjects.reduce((sum, c) => sum + BigInt(c.balance), BigInt(0));
+      if (totalBalance < BigInt(amount)) {
+        throw new Error(`Insufficient balance: have ${totalBalance}, need ${amount}`);
+      }
 
-      // Merge additional coin objects into primary (wallet may have multiple)
-      if (coins.data.length > 1) {
+      const primaryCoin = txb.object(allCoinObjects[0].coinObjectId);
+
+      // Merge all additional coin objects into primary in one PTB step
+      if (allCoinObjects.length > 1) {
         txb.mergeCoins(
           primaryCoin,
-          coins.data.slice(1).map((c: { coinObjectId: string }) => txb.object(c.coinObjectId))
+          allCoinObjects.slice(1).map((c: { coinObjectId: string }) => txb.object(c.coinObjectId))
         );
       }
 
-      // Split exact amount and transfer
+      // Split exact amount and transfer — remainder stays in primary coin
       const [sendCoin] = txb.splitCoins(primaryCoin, [BigInt(amount)]);
       txb.transferObjects([sendCoin], recipientAddress);
     }
