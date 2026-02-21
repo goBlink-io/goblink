@@ -72,7 +72,7 @@ export default function AppMenu() {
       {isOpen && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-full mt-2 w-64 sm:w-72 rounded-xl shadow-lg border overflow-hidden z-50"
+          className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-full sm:mt-2 w-[calc(100vw-16px)] sm:w-72 max-w-72 rounded-xl shadow-lg border overflow-hidden z-50"
           style={{
             background: 'var(--surface)',
             borderColor: 'var(--border)',
@@ -168,17 +168,15 @@ export default function AppMenu() {
           </div>
 
           {/* Request Feature */}
-          <a
-            href="https://github.com/Urban-Blazer/goblink/issues/new?labels=feature-request&template=feature_request.md"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+          <Link
+            href="/features"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
           >
             <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
               Request Feature
             </span>
-            <ExternalLink className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
-          </a>
+          </Link>
 
           {/* Docs */}
           <a
@@ -186,6 +184,7 @@ export default function AppMenu() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
           >
             <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
               Docs
