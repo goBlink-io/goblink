@@ -3,7 +3,7 @@ import { supabase } from '@/lib/server/db';
 import { getGitHubUser } from '@/lib/github-auth';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
