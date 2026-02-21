@@ -245,6 +245,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
             const balance = await getTokenBalance(address, {
               blockchain: token.blockchain,
               contractAddress: token.contractAddress,
+              assetId: token.assetId,
               decimals: token.decimals,
               symbol: token.symbol,
             });
@@ -274,6 +275,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
             const balance = await getTokenBalance(address, {
               blockchain: token.blockchain,
               contractAddress: token.contractAddress,
+              assetId: token.assetId,
               decimals: token.decimals,
               symbol: token.symbol,
             });

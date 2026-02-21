@@ -251,6 +251,7 @@ export async function getTokenBalance(
     blockchain?: string;
     contractAddress?: string;
     address?: string;
+    assetId?: string;
     decimals: number;
     symbol: string;
   }
@@ -283,10 +284,20 @@ export async function getTokenBalance(
     if (token.symbol === 'NEAR') {
       return getNearBalance(address);
     }
-    
-    // NEAR FT token
-    if (token.contractAddress) {
-      return getNearTokenBalance(address, token.contractAddress, token.decimals);
+
+    // NEAR FT token: derive the NEAR contract from assetId (nep141:<contract>)
+    // The 1Click API stores the *source-chain* address in contractAddress for OMFT tokens
+    // (e.g. contractAddress='usdcx' for aleo-usdcx.omft.near) — that's wrong for NEAR RPC.
+    // The correct NEAR contract is always the part after 'nep141:' in assetId.
+    let nearContract: string | undefined;
+    if (token.assetId?.startsWith('nep141:')) {
+      nearContract = token.assetId.replace('nep141:', '');
+    } else {
+      nearContract = token.contractAddress;
+    }
+
+    if (nearContract) {
+      return getNearTokenBalance(address, nearContract, token.decimals);
     }
   }
   
