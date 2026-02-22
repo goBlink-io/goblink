@@ -83,7 +83,8 @@ function getPublicClient(chainName: SupportedChain): PublicClient {
   if (clientCache.has(chainName)) return clientCache.get(chainName)!;
   const config = CHAIN_CONFIGS[chainName];
   if (!config) throw new Error(`Unsupported chain: ${chainName}`);
-  const client = createPublicClient({ chain: config.chain, transport: http(config.rpcUrl) });
+  // 5s timeout prevents Vercel serverless hangs on slow/unreliable public RPCs
+  const client = createPublicClient({ chain: config.chain, transport: http(config.rpcUrl, { timeout: 5000 }) });
   clientCache.set(chainName, client as PublicClient);
   return client as PublicClient;
 }
