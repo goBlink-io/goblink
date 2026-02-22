@@ -23,7 +23,6 @@ const SUPPORTED_CHAINS = [
   { id: 'aptos', name: 'Aptos', type: 'aptos' as const },
   { id: 'arbitrum', name: 'Arbitrum', type: 'evm' as const },
   { id: 'base', name: 'Base', type: 'evm' as const },
-  { id: 'berachain', name: 'Berachain', type: 'evm' as const },
   { id: 'bsc', name: 'BNB Chain', type: 'evm' as const },
   { id: 'ethereum', name: 'Ethereum', type: 'evm' as const },
   { id: 'near', name: 'NEAR', type: 'near' as const },
