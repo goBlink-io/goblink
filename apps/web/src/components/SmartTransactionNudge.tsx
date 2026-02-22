@@ -5,7 +5,7 @@ import { type Nudge } from '@/hooks/useSmartFirstTransaction';
 interface SmartTransactionNudgeProps {
   nudge: Nudge;
   onDismiss: () => void;
-  onUseSuggestion?: (amount: string) => void;
+  onUseSuggestion?: (amount: string) => void; // kept for API compat; button removed
 }
 
 const ICONS: Record<string, string> = {
@@ -42,7 +42,7 @@ const COLORS: Record<string, { bg: string; border: string; text: string; accent:
   },
 };
 
-export default function SmartTransactionNudge({ nudge, onDismiss, onUseSuggestion }: SmartTransactionNudgeProps) {
+export default function SmartTransactionNudge({ nudge, onDismiss }: SmartTransactionNudgeProps) {
   const type = nudge.type || 'first-ever';
   const icon = ICONS[type] || '💡';
   const colors = COLORS[type] || COLORS['first-ever'];
@@ -62,21 +62,7 @@ export default function SmartTransactionNudge({ nudge, onDismiss, onUseSuggestio
             {nudge.message}
           </p>
 
-          {nudge.suggestion && onUseSuggestion && (
-            <button
-              onClick={() => onUseSuggestion(nudge.suggestion!)}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption font-semibold transition-all active:scale-95"
-              style={{
-                background: colors.accent,
-                color: 'white',
-              }}
-            >
-              Try {nudge.suggestion} {/* amount shown without token symbol — context makes it clear */}
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
-          )}
+          {/* Try-it button removed — message alone is sufficient */}
         </div>
 
         {nudge.dismissable && (

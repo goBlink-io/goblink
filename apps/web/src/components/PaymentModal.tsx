@@ -8,6 +8,8 @@ import { PaymentRequestData } from '@/lib/payment-requests';
 import { ChainLogo } from '@/lib/chain-logos';
 import { useWalletContext } from '@/contexts/WalletContext';
 import type { ChainType } from '@/contexts/WalletContext';
+import { getTokenBalance } from '@/lib/balances';
+import { filterTokens } from '@/lib/token-filters';
 
 // ── Supported chains (mirrors SwapForm) ──────────────────────────────────────
 const SUPPORTED_CHAINS = [
@@ -70,6 +72,10 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
   const [fromChainId, setFromChainId] = useState<ChainId>('solana');
   const [fromAssetId, setFromAssetId] = useState<string>('');
 
+  // Balance state
+  const [balances, setBalances] = useState<Record<string, string>>({});
+  const [loadingBalances, setLoadingBalances] = useState(false);
+
   // Quote state
   const [quote, setQuote] = useState<any>(null);
   const [quoting, setQuoting] = useState(false);
@@ -88,7 +94,7 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     fetch('/api/tokens')
       .then(r => r.json())
       .then((tokens: any[]) => {
-        setAllTokens(tokens);
+        setAllTokens(filterTokens(tokens));
         setTokensLoading(false);
 
         // Resolve destination token
@@ -180,6 +186,42 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     const first = allTokens.find(t => (t.blockchain || 'near').toLowerCase() === fromChainId);
     setFromAssetId(first?.assetId || '');
   }, [fromChainId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch balances for FROM chain whenever address or token list changes
+  useEffect(() => {
+    if (!fromAddress || fromTokens.length === 0) {
+      setBalances({});
+      return;
+    }
+    let cancelled = false;
+    const fetchBalances = async () => {
+      setLoadingBalances(true);
+      const newBalances: Record<string, string> = {};
+      await Promise.all(
+        fromTokens.map(async (token: any) => {
+          try {
+            const balance = await getTokenBalance(fromAddress, {
+              blockchain: token.blockchain,
+              contractAddress: token.contractAddress,
+              assetId: token.assetId,
+              decimals: token.decimals,
+              symbol: token.symbol,
+            });
+            newBalances[token.assetId] = balance;
+          } catch {
+            newBalances[token.assetId] = '0.00';
+          }
+        })
+      );
+      if (!cancelled) {
+        setBalances(newBalances);
+        setLoadingBalances(false);
+      }
+    };
+    setBalances({});
+    fetchBalances();
+    return () => { cancelled = true; };
+  }, [fromAddress, fromChainId, fromTokens.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Build transfer quote for TransferModal ───────────────────────────────────
   const handlePreview = () => {
@@ -324,8 +366,8 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                   tokens={fromTokens}
                   selectedToken={fromAssetId}
                   onSelect={setFromAssetId}
-                  balances={{}}
-                  loadingBalances={false}
+                  balances={balances}
+                  loadingBalances={loadingBalances}
                   label="Token"
                   placeholder="Select a token..."
                 />
