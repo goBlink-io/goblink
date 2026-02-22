@@ -400,28 +400,69 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
 
                 {hasQuote && !quoting && (
                   <div className="space-y-3">
-                    {/* You send */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-caption" style={{ color: 'var(--text-muted)' }}>You send</span>
-                      <div className="text-right">
-                        <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {sendFormatted} {fromToken?.symbol}
-                        </span>
-                        {quoteInner?.amountInUsd && (
-                          <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-                            ≈ ${parseFloat(quoteInner.amountInUsd).toFixed(2)}
+                    {/* Cost breakdown */}
+                    {(() => {
+                      const totalUsd = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
+                      const feeUsd   = quote?.feeInfo?.usd    ? parseFloat(quote.feeInfo.usd)       : null;
+                      const baseUsd  = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd   : null;
+                      const feeBps   = quote?.feeInfo?.bps || 0;
+                      // Token amounts: split sendFormatted by fee ratio
+                      const totalTokens = parseFloat(sendFormatted) || 0;
+                      const baseTokens  = feeBps > 0 ? totalTokens * (10000 - feeBps) / 10000 : totalTokens;
+                      const feeTokens   = feeBps > 0 ? totalTokens * feeBps / 10000          : 0;
+                      const fmt = (n: number) => n < 0.0001 ? n.toFixed(8) : n.toPrecision(6).replace(/\.?0+$/, '');
+                      const sym = fromToken?.symbol || '';
+                      return (
+                        <div className="space-y-1.5">
+                          {/* Line 1: Estimated swap cost */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Estimated cost</span>
+                            <div className="text-right">
+                              <span className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {fmt(baseTokens)} {sym}
+                              </span>
+                              {baseUsd !== null && (
+                                <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
+                                  ≈ ${baseUsd.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        {quote?.feeInfo?.percent && (
-                          <div className="text-tiny" style={{ color: 'var(--text-faint)' }}>
-                            incl. {quote.feeInfo.percent}% goBlink fee
-                            {quote.feeInfo.usd && parseFloat(quote.feeInfo.usd) > 0
-                              ? ` (~$${quote.feeInfo.usd})`
-                              : ''}
+                          {/* Line 2: Fee */}
+                          {feeBps > 0 && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-caption" style={{ color: 'var(--text-faint)' }}>
+                                goBlink fee ({quote.feeInfo.percent}%)
+                              </span>
+                              <div className="text-right">
+                                <span className="text-body-sm" style={{ color: 'var(--text-faint)' }}>
+                                  {fmt(feeTokens)} {sym}
+                                </span>
+                                {feeUsd !== null && feeUsd > 0 && (
+                                  <span className="text-tiny ml-1" style={{ color: 'var(--text-faint)' }}>
+                                    ≈ ${feeUsd.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {/* Line 3: Total */}
+                          <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border)' }}>
+                            <span className="text-caption font-semibold" style={{ color: 'var(--text-primary)' }}>You send</span>
+                            <div className="text-right">
+                              <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
+                                {sendFormatted} {sym}
+                              </span>
+                              {totalUsd !== null && (
+                                <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
+                                  ≈ ${totalUsd.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Divider with arrow */}
                     <div className="flex items-center gap-2">
