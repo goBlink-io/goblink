@@ -9,6 +9,7 @@ import { ChainLogo } from '@/lib/chain-logos';
 import { useWalletContext } from '@/contexts/WalletContext';
 import type { ChainType } from '@/contexts/WalletContext';
 import { getTokenBalance } from '@/lib/balances';
+import { filterTokens } from '@/lib/token-filters';
 
 // ── Supported chains (mirrors SwapForm) ──────────────────────────────────────
 const SUPPORTED_CHAINS = [
@@ -93,7 +94,7 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     fetch('/api/tokens')
       .then(r => r.json())
       .then((tokens: any[]) => {
-        setAllTokens(tokens);
+        setAllTokens(filterTokens(tokens));
         setTokensLoading(false);
 
         // Resolve destination token
