@@ -18,4 +18,13 @@ export const submitDeposit = async (txHash: string, depositAddress: string) => {
   return await OneClickService.submitDepositTx({ txHash, depositAddress });
 };
 
+/**
+ * Get real execution status from the 1Click API.
+ * Public endpoint — no JWT required.
+ * Statuses: PENDING_DEPOSIT | KNOWN_DEPOSIT_TX | INCOMPLETE_DEPOSIT | PROCESSING | SUCCESS | REFUNDED | FAILED
+ */
+export const getExecutionStatus = async (depositAddress: string, depositMemo?: string) => {
+  return await OneClickService.getExecutionStatus(depositAddress, depositMemo);
+};
+
 export { QuoteRequest };

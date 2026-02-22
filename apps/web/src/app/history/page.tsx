@@ -88,21 +88,50 @@ export default function HistoryPage() {
     fetchTransactions();
   }, [allWalletAddresses.join(','), page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /**
-   * Derive a display status from what we know without needing the Intents Explorer.
-   * - deposit_tx_hash set + > 3 min old → completed (NEAR intents resolve in ~30s)
-   * - deposit_tx_hash set + < 3 min old → processing
-   * - no deposit_tx_hash → pending (funds not sent yet)
-   * - any non-pending DB value → use as-is
-   */
-  const getEffectiveStatus = (tx: Transaction): string => {
-    const dbStatus = tx.status?.toLowerCase() || 'pending';
-    if (dbStatus !== 'pending') return dbStatus; // already resolved in DB — trust it
-    if (!tx.deposit_tx_hash) return 'pending'; // funds not sent yet
-    const ageMs = Date.now() - new Date(tx.created_at).getTime();
-    if (ageMs > 3 * 60 * 1000) return 'completed'; // > 3 min old + tx hash = done
-    return 'processing';
-  };
+  // After transactions load, refresh real status for any non-terminal tx from 1Click API
+  useEffect(() => {
+    if (loading || transactions.length === 0) return;
+
+    const TERMINAL = new Set(['completed', 'refunded', 'failed']);
+    const pending = transactions.filter(
+      tx => !TERMINAL.has(tx.status?.toLowerCase()) && tx.deposit_address
+    );
+    if (pending.length === 0) return;
+
+    // Stagger requests — 300ms apart to avoid hammering the API
+    pending.forEach((tx, i) => {
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/status/${tx.deposit_address}`);
+          if (!res.ok) return; // 404 = not yet indexed, 429 = rate limited — both ok to skip
+
+          const data = await res.json();
+          const newStatus: string = data.status;
+          if (!newStatus || newStatus === tx.status) return;
+
+          // Update local state immediately for instant UI feedback
+          setTransactions(prev =>
+            prev.map(t => t.id === tx.id ? { ...t, status: newStatus } : t)
+          );
+
+          // Persist to DB — fire and forget
+          fetch(`/api/transactions/${tx.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              depositAddress: tx.deposit_address,
+              status: newStatus,
+              ...(data.amountOut && { amountOut: data.amountOut }),
+              ...(data.fulfillmentTxHash && { fulfillmentTxHash: data.fulfillmentTxHash }),
+              ...(data.refundTxHash && { refundTxHash: data.refundTxHash }),
+            }),
+          }).catch(() => {}); // DB sync is best-effort — UI already updated
+        } catch {
+          // Network error — skip silently
+        }
+      }, i * 300);
+    });
+  }, [loading, transactions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -307,7 +336,7 @@ export default function HistoryPage() {
 
                     {/* Status */}
                     <div className="min-w-[100px] flex justify-end">
-                      {getStatusBadge(getEffectiveStatus(tx))}
+                      {getStatusBadge(tx.status)}
                     </div>
                   </div>
 
