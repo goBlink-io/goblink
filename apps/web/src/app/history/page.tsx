@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useAccount } from 'wagmi';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { Clock, ExternalLink, ChevronRight, Wallet, Search } from 'lucide-react';
 
 interface Transaction {
@@ -42,12 +43,14 @@ export default function HistoryPage() {
   const { address: evmAddress } = useAccount();
   const suiAccount = useCurrentAccount();
   const { caipAddress } = useAppKitAccount();
+  const { getAddressForChain } = useWalletContext();
 
-  // Collect ALL connected wallet addresses (not just first)
+  // Collect ALL connected wallet addresses (EVM + Sui + Solana + NEAR)
   const allWalletAddresses = [
     evmAddress,
     suiAccount?.address,
     caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null,
+    getAddressForChain('near'),
   ].filter(Boolean) as string[];
 
   const limit = 20;
