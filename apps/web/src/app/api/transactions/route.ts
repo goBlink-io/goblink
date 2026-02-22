@@ -139,7 +139,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await getTransactionsByWallet(wallet, { page, limit, status });
+    // Support comma-separated wallet addresses (multi-wallet history)
+    const wallets = wallet.split(',').map(w => w.trim()).filter(Boolean).slice(0, 10);
+    const result = await getTransactionsByWallet(wallets.length === 1 ? wallets[0] : wallets, { page, limit, status });
 
     if (!result.success) {
       return addRateLimitHeaders(

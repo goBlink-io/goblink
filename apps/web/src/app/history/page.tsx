@@ -43,13 +43,17 @@ export default function HistoryPage() {
   const suiAccount = useCurrentAccount();
   const { caipAddress } = useAppKitAccount();
 
-  // Determine active wallet
-  const walletAddress = evmAddress || suiAccount?.address || (caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null);
+  // Collect ALL connected wallet addresses (not just first)
+  const allWalletAddresses = [
+    evmAddress,
+    suiAccount?.address,
+    caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null,
+  ].filter(Boolean) as string[];
 
   const limit = 20;
 
   useEffect(() => {
-    if (!walletAddress) {
+    if (allWalletAddresses.length === 0) {
       setLoading(false);
       return;
     }
@@ -59,7 +63,8 @@ export default function HistoryPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/transactions?wallet=${walletAddress}&page=${page}&limit=${limit}`);
+        const walletsParam = allWalletAddresses.join(',');
+        const response = await fetch(`/api/transactions?wallet=${encodeURIComponent(walletsParam)}&page=${page}&limit=${limit}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch transaction history');
@@ -81,7 +86,52 @@ export default function HistoryPage() {
     };
 
     fetchTransactions();
-  }, [walletAddress, page]);
+  }, [allWalletAddresses.join(','), page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // After transactions load, refresh real status for any non-terminal tx from 1Click API
+  useEffect(() => {
+    if (loading || transactions.length === 0) return;
+
+    const TERMINAL = new Set(['completed', 'refunded', 'failed']);
+    const pending = transactions.filter(
+      tx => !TERMINAL.has(tx.status?.toLowerCase()) && tx.deposit_address
+    );
+    if (pending.length === 0) return;
+
+    // Stagger requests — 300ms apart to avoid hammering the API
+    pending.forEach((tx, i) => {
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/status/${tx.deposit_address}`);
+          if (!res.ok) return; // 404 = not yet indexed, 429 = rate limited — both ok to skip
+
+          const data = await res.json();
+          const newStatus: string = data.status;
+          if (!newStatus || newStatus === tx.status) return;
+
+          // Update local state immediately for instant UI feedback
+          setTransactions(prev =>
+            prev.map(t => t.id === tx.id ? { ...t, status: newStatus } : t)
+          );
+
+          // Persist to DB — fire and forget
+          fetch(`/api/transactions/${tx.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              depositAddress: tx.deposit_address,
+              status: newStatus,
+              ...(data.amountOut && { amountOut: data.amountOut }),
+              ...(data.fulfillmentTxHash && { fulfillmentTxHash: data.fulfillmentTxHash }),
+              ...(data.refundTxHash && { refundTxHash: data.refundTxHash }),
+            }),
+          }).catch(() => {}); // DB sync is best-effort — UI already updated
+        } catch {
+          // Network error — skip silently
+        }
+      }, i * 300);
+    });
+  }, [loading, transactions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -94,7 +144,15 @@ export default function HistoryPage() {
       );
     }
     
-    if (statusLower === 'pending' || statusLower === 'pending_deposit' || statusLower === 'processing') {
+    if (statusLower === 'processing') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+          Processing
+        </span>
+      );
+    }
+
+    if (statusLower === 'pending' || statusLower === 'pending_deposit') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800">
           Pending
@@ -175,7 +233,7 @@ export default function HistoryPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  if (!walletAddress) {
+  if (allWalletAddresses.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
         <div className="text-center max-w-md mx-auto">
@@ -320,13 +378,16 @@ export default function HistoryPage() {
                       </div>
                     )}
 
-                    {/* Fee */}
+                    {/* Fee — show USD amount (never %, which is misleading due to min-fee floor) */}
                     {tx.fee_bps && (
                       <div className="flex justify-between items-start">
                         <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Fee:</span>
                         <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {(tx.fee_bps / 100).toFixed(2)}%
-                          {tx.fee_amount && ` (${formatAmount(tx.fee_amount)} ${tx.from_token})`}
+                          {tx.amount_usd
+                            ? `~$${(tx.amount_usd * tx.fee_bps / 10000).toFixed(2)}`
+                            : tx.fee_amount
+                              ? formatAmount(tx.fee_amount)
+                              : `${(Math.min(tx.fee_bps, 75) / 100).toFixed(2)}%`}
                         </span>
                       </div>
                     )}

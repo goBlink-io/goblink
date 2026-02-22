@@ -157,7 +157,7 @@ export async function updateTransactionStatus(
  * Get transactions by wallet address (paginated)
  */
 export async function getTransactionsByWallet(
-  walletAddress: string,
+  walletAddress: string | string[],
   options: GetTransactionsOptions = {}
 ): Promise<{ success: boolean; transactions?: TransactionRecord[]; total?: number; error?: string }> {
   try {
@@ -165,10 +165,15 @@ export async function getTransactionsByWallet(
     const limit = options.limit || 20;
     const offset = (page - 1) * limit;
 
+    // Support querying multiple wallet addresses at once
+    const addresses = Array.isArray(walletAddress)
+      ? walletAddress.map(a => a.toLowerCase())
+      : [walletAddress.toLowerCase()];
+
     let query = supabase
       .from('transaction_history')
       .select('*', { count: 'exact' })
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .in('wallet_address', addresses)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
