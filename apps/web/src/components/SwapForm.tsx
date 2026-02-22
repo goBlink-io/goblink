@@ -34,6 +34,16 @@ const SUPPORTED_CHAINS = [
   { id: 'tron', name: 'Tron', type: 'tron' as const },
 ] as const;
 
+// Tokens hidden from the UI (obscure/meme/incomplete tokens)
+const HIDDEN_TOKEN_SYMBOLS = new Set([
+  'ABG', 'ADI', 'ALEO', 'APT', 'BERA', 'BLACKDRAGON', 'BOME', 'BRETT',
+  'cbBTC', 'CFI', 'EURe', 'FMS', 'GBPe', 'HAPI', 'INX', 'ITLX', 'JAMBO',
+  'KAITO', 'LOUD', 'MELANIA', 'MOG', 'mpDAO', 'NearKat', 'NPRO', 'PENGU',
+  'PUBLIC', 'PURGE', 'RHEA', 'SAFE', 'SPX', 'SWEAT', 'TITN', 'TRUMP',
+  'TURBO', 'USD1', 'USDf',
+]);
+const filterTokens = (list: Token[]) => list.filter(t => !HIDDEN_TOKEN_SYMBOLS.has(t.symbol));
+
 export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps) {
   const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
   const { toast } = useToast();
@@ -106,7 +116,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       const tokensResponse = await fetch('/api/tokens');
       if (!tokensResponse.ok) throw new Error(`API responded with status ${tokensResponse.status}`);
       const tokensData = await tokensResponse.json();
-      setTokens(tokensData);
+      setTokens(filterTokens(tokensData));
       
       // Set defaults immediately
       if (tokensData.length > 0) {
