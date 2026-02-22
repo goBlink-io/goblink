@@ -39,17 +39,23 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
+              "upgrade-insecure-requests",  // Force HTTP→HTTPS for all sub-resources — prevents Phantom iOS from blocking mixed content
               "default-src 'self' https://goblink.io",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://goblink.io https://www.googletagmanager.com https://www.google-analytics.com", // unsafe-eval needed for wallet libs
               "style-src 'self' 'unsafe-inline' https://goblink.io https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net https://rsms.me https://fonts.cdnfonts.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org https://fullnode.mainnet.sui.io https://fullnode.testnet.sui.io https://cca-lite.coinbase.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com",
+              "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org https://fullnode.mainnet.sui.io wss://fullnode.mainnet.sui.io https://fullnode.testnet.sui.io wss://fullnode.testnet.sui.io https://cca-lite.coinbase.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://*.phantom.app wss://*.phantom.app",
               "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net https://fonts.googleapis.com https://rsms.me https://fonts.cdnfonts.com https:",
               "frame-src 'self' blob: data:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join('; '),
+          },
+          {
+            // HSTS — override Vercel's default with preload-eligible version
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
             key: 'X-Frame-Options',
@@ -76,11 +82,12 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
+              "upgrade-insecure-requests",
               "default-src 'self' https://goblink.io",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://goblink.io https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline' https://goblink.io https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.bunny.net https://rsms.me https://fonts.cdnfonts.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org https://fullnode.mainnet.sui.io https://fullnode.testnet.sui.io https://cca-lite.coinbase.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com",
+              "connect-src 'self' https://goblink.io https://*.rpc.blockvision.org https://api.mainnet-beta.solana.com https://mainnet.helius-rpc.com https://rpc.ankr.com https://1click.chaindefuser.com https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://raw.githubusercontent.com https://cdn.jsdelivr.net https://rpc.mainnet.near.org https://rpc.near.org https://*.near.org https://free.rpc.fastnear.com https://*.fastnear.com https://config.ton.org https://api.mainnet.aptoslabs.com https://api.web3modal.org https://*.web3modal.org https://fullnode.mainnet.sui.io wss://fullnode.mainnet.sui.io https://fullnode.testnet.sui.io wss://fullnode.testnet.sui.io https://cca-lite.coinbase.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://*.phantom.app wss://*.phantom.app",
               "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net https://fonts.googleapis.com https://rsms.me https://fonts.cdnfonts.com https:",
               "frame-src 'self' blob: data:",
               "frame-ancestors 'self' https://goblink.io https://*.goblink.io *",
