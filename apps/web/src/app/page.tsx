@@ -128,7 +128,7 @@ const CATEGORIES: Category[] = [
         title: 'Transaction Storyline',
         tagline: 'Four narrative phases. Not a spinner.',
         detail:
-          'Once a transfer is submitted, the status display shifts from raw API codes to a four-phase narrative: Sending your token → NEAR Intents receiving the deposit → Routing across chains → Delivered to destination. Each phase has a human-readable label and a detail line explaining what\'s happening. Phase transitions animate in real time as 1Click API status updates arrive every 5 seconds. Time estimates are clamped to a minimum of 60 seconds — we don\'t show "15s" and set up users for disappointment.',
+          'Once a transfer is submitted, the status display shifts from raw API codes to a four-phase narrative: Sending your token → goBlink routing across chains → Delivered to destination. Each phase has a human-readable label and a detail line explaining what\'s happening. Phase transitions animate in real time as status updates arrive every 5 seconds. Time estimates are clamped to a minimum of 60 seconds — we don\'t show "15s" and set up users for disappointment.',
         highlight: 'Waiting is tolerable when users follow a story, not a code.',
       },
       {
@@ -136,7 +136,7 @@ const CATEGORIES: Category[] = [
         title: 'Real-time Status Tracking',
         tagline: 'Live polling from submission to delivery.',
         detail:
-          'Status polls the 1Click API every 5 seconds using the deposit address as the tracking key. States mapped: PENDING_DEPOSIT → DEPOSIT_RECEIVED → PROCESSING → SUCCESS / REFUNDED / FAILED. 404 and 503 responses during the indexing window are silently swallowed — they\'re normal during the first ~30 seconds as the intent explorer catches up. The StatusTracker displays the current phase, updates without page reload, and stops polling once a terminal state is reached.',
+          'Status updates every 5 seconds using the deposit address as the tracking key. States mapped: PENDING_DEPOSIT → DEPOSIT_RECEIVED → PROCESSING → SUCCESS / REFUNDED / FAILED. 404 and 503 responses during the indexing window are silently swallowed — they\'re normal during the first ~30 seconds as the goBlink catches up. The StatusTracker displays the current phase, updates without page reload, and stops polling once a terminal state is reached.',
         highlight: 'No manual refresh. No "check the explorer" instructions.',
       },
       {
@@ -178,7 +178,7 @@ const CATEGORIES: Category[] = [
         tagline: 'Embed goBlink inside any dApp or website.',
         detail:
           'The full transfer interface is available as an embeddable iframe at goblink.io/embed and goblink.io/widget. The CSP `frame-ancestors` directive is permissive, allowing embedding from any origin. The widget is white-label ready — it inherits the host page\'s dark/light mode signal and renders cleanly inside any layout. DEXes, launchpads, wallets, and portfolio apps can offer cross-chain transfers without building the infrastructure.',
-        highlight: 'NEAR Intents distribution through every app that embeds us.',
+        highlight: 'goBlink distribution through every app that embeds us.',
       },
       {
         icon: <BookOpen className="h-5 w-5" />,
@@ -191,9 +191,9 @@ const CATEGORIES: Category[] = [
       {
         icon: <History className="h-5 w-5" />,
         title: 'Transaction History',
-        tagline: 'Multi-wallet history with live status from 1Click API.',
+        tagline: 'Multi-wallet history with live status tracking.',
         detail:
-          'The /history page connects NEAR, EVM, Solana, and Sui wallets simultaneously and shows a unified transfer history. Each entry shows: from/to chains, tokens, amounts, timestamp, and live execution status pulled from the 1Click status API. Status reflects real settlement state — PENDING, PROCESSING, SUCCESS, REFUNDED, or FAILED. History is queryable per wallet and updates without a full page reload. Works alongside the Supabase transaction_history table for persistence.',
+          'The /history page connects NEAR, EVM, Solana, and Sui wallets simultaneously and shows a unified transfer history. Each entry shows: from/to chains, tokens, amounts, timestamp, and live execution status. Status reflects real settlement state — PENDING, PROCESSING, SUCCESS, REFUNDED, or FAILED. History is queryable per wallet and updates without a full page reload. Works alongside the Supabase transaction_history table for persistence.',
         highlight: 'One view for every transfer across every chain.',
       },
     ],
@@ -210,7 +210,7 @@ const CATEGORIES: Category[] = [
         title: 'Support Chatbot',
         tagline: 'Instant answers. Zero LLM cost. Always available.',
         detail:
-          'A fully deterministic, rule-based support system runs client-side with zero API calls. It handles the top Tier 1 questions out of the box: how goBlink works, fees and fee tiers, supported chains and tokens, what happens if a transfer is pending, how refunds work, what NEAR Intents is, and how to find a transaction. A ProactiveTip component surfaces context-aware warnings at the right moment — for example, a minimum amount warning before a user hits an API validation error. Chat history persists in the session.',
+          'A fully deterministic, rule-based support system runs client-side with zero API calls. It handles the top Tier 1 questions out of the box: how goBlink works, fees and fee tiers, supported chains and tokens, what happens if a transfer is pending, how refunds work, and how to find a transaction. A ProactiveTip component surfaces context-aware warnings at the right moment — for example, a minimum amount warning before a user hits an API validation error. Chat history persists in the session.',
         highlight: 'Real answers in seconds. No escalation for common questions.',
       },
       {
@@ -218,7 +218,7 @@ const CATEGORIES: Category[] = [
         title: 'Non-custodial + Auto-refund',
         tagline: 'We never hold your tokens. Failed transfers return automatically.',
         detail:
-          'Every transfer routes through NEAR Intents intent settlement — goBlink generates a deposit address from the 1Click API and passes it to the user\'s wallet for signing. We never control, route, or hold funds at any step. Every transfer request includes a refund address (auto-filled from the sending wallet). If a transfer fails to settle for any reason — slippage, timing, route failure — the 1Click protocol automatically returns funds to the refund address. No manual claims, no support ticket.',
+          'goBlink generates a deposit address and passes it to the user\'s wallet for signing. We never control, route, or hold funds at any step. Every transfer request includes a refund address (auto-filled from the sending wallet). If a transfer fails to settle for any reason — slippage, timing, route failure — goBlink automatically returns funds to the refund address. No manual claims, no support ticket.',
         highlight: '100% auto-refund on failure. By protocol design.',
       },
       {
@@ -393,7 +393,6 @@ export default function LandingPage() {
           transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
         >
           Cross-chain transfers across 12 chains and 65+ tokens — designed to be as simple as sending a text.
-          Built on NEAR Intents.
         </motion.p>
 
         {/* CTAs */}
@@ -451,7 +450,7 @@ export default function LandingPage() {
               Every feature, explained
             </h2>
             <p className="text-body-sm max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              goBlink isn&apos;t just a swap form. It&apos;s a full human experience layer built on NEAR Intents — every detail designed to remove friction and build trust.
+              goBlink isn&apos;t just a swap form. It&apos;s a full human experience layer — every detail designed to remove friction and build trust.
             </p>
           </div>
         </ScrollReveal>
