@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { X, Copy, Check, Trash2, BookUser } from 'lucide-react';
+import { X, Copy, Check, Trash2, BookUser, ArrowRight } from 'lucide-react';
 import { useUserProfile, SavedAddress } from '@/hooks/useUserProfile';
 import { CHAIN_LOGOS } from '@/lib/chain-logos';
 
 interface AddressBookProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Optional: when provided, each row gets a "Use" button that fires this and closes the modal */
+  onSelect?: (address: string, chain: string) => void;
 }
 
 function truncateAddress(address: string): string {
@@ -18,9 +20,11 @@ function truncateAddress(address: string): string {
 function AddressRow({
   entry,
   onRemove,
+  onSelect,
 }: {
   entry: SavedAddress;
   onRemove: (address: string) => void;
+  onSelect?: (address: string, chain: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -65,6 +69,16 @@ function AddressRow({
 
       {/* Actions */}
       <div className="flex items-center gap-1 flex-shrink-0">
+        {onSelect && (
+          <button
+            onClick={() => onSelect(entry.address, entry.chain)}
+            title="Use this address"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-tiny font-semibold transition-all hover:opacity-80 active:scale-95"
+            style={{ background: 'var(--brand)', color: '#fff' }}
+          >
+            Use <ArrowRight className="h-3 w-3" />
+          </button>
+        )}
         <button
           onClick={handleCopy}
           title="Copy address"
@@ -86,9 +100,13 @@ function AddressRow({
   );
 }
 
-export default function AddressBook({ isOpen, onClose }: AddressBookProps) {
+export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookProps) {
   const { profile, hydrated, removeAddress } = useUserProfile();
   const [filterChain, setFilterChain] = useState<string>('');
+
+  const handleSelect = onSelect
+    ? (address: string, chain: string) => { onSelect(address, chain); onClose(); }
+    : undefined;
 
   if (!isOpen) return null;
 
@@ -175,7 +193,7 @@ export default function AddressBook({ isOpen, onClose }: AddressBookProps) {
             </div>
           ) : (
             addresses.map(entry => (
-              <AddressRow key={entry.address} entry={entry} onRemove={removeAddress} />
+              <AddressRow key={entry.address} entry={entry} onRemove={removeAddress} onSelect={handleSelect} />
             ))
           )}
         </div>

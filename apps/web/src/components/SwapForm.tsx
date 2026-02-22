@@ -6,6 +6,7 @@ import { useWalletContext } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
+import AddressBook from './AddressBook';
 import NoWalletCard from './NoWalletCard';
 import SmartTransactionNudge from './SmartTransactionNudge';
 import { Skeleton } from './ui/Skeleton';
@@ -71,6 +72,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   const [recipient, setRecipient] = useState('');
   const [refundTo, setRefundTo] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [addressBookOpen, setAddressBookOpen] = useState(false);
 
   const getChainIdFromType = (chainType: string | null): string => {
     switch (chainType) {
@@ -593,10 +595,21 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
 
       {/* Receiving Address */}
       <div className="mb-4">
-        <label className="flex items-baseline gap-2 text-caption font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-          Receiving Address
-          {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="flex items-baseline gap-2 text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Receiving Address
+            {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
+          </label>
+          <button
+            type="button"
+            onClick={() => setAddressBookOpen(true)}
+            className="flex items-center gap-1 text-tiny font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-80 active:scale-95"
+            style={{ color: 'var(--brand)', background: 'var(--elevated)' }}
+            title="Open address book"
+          >
+            📖 Saved
+          </button>
+        </div>
         <input ref={recipientRef} type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
           placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
           className="input w-full h-11 font-mono text-body-sm" />
@@ -644,6 +657,18 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       <div className="mt-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
         <strong>Tip:</strong> Connect wallets on both chains to auto-fill addresses.
       </div>
+
+      {/* Address Book modal */}
+      <AddressBook
+        isOpen={addressBookOpen}
+        onClose={() => setAddressBookOpen(false)}
+        onSelect={(address, chain) => {
+          setRecipient(address);
+          // Switch toChain to match the saved address's chain
+          const matchedChain = SUPPORTED_CHAINS.find(c => c.id === chain);
+          if (matchedChain) setToChain(matchedChain.id);
+        }}
+      />
     </div>
   );
 }
