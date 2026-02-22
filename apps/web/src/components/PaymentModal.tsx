@@ -234,10 +234,8 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     const refundTo = fromAddress || data.recipient;
     const destAtomicAmount = toAtomicAmount(data.amount, destToken.decimals);
 
-    const minAmountInFormatted = quoteInner.minAmountIn
-      ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
-      : quoteInner.amountInFormatted || '?';
-    const maxAmountInFormatted = quoteInner.maxAmountIn
+    // amountInFormatted = API-computed send amount; use maxAmountIn if present for EXACT_OUTPUT
+    const displayAmountIn = quoteInner.maxAmountIn
       ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
       : quoteInner.amountInFormatted || '?';
 
@@ -246,11 +244,10 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
       // then override display fields for EXACT_OUTPUT context
       quote: {
         ...quoteInner,
-        amountInFormatted: maxAmountInFormatted,
+        amountInFormatted: displayAmountIn,
         amountInUsd: quoteInner.amountInUsd || null,
         amountOutFormatted: data.amount,       // recipient gets exactly this
         amountOutUsd: quoteInner.amountOutUsd || null,
-        minAmountInFormatted,
       },
       quoteRequest: {
         originAsset: fromToken.defuseAssetId || fromToken.assetId,
@@ -281,12 +278,10 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
   const hasQuote = !!quoteInner && !!quoteInner.minAmountIn;
   const canPreview = hasQuote && !!fromAddress;
 
-  const minFormatted = (quoteInner?.minAmountIn && fromToken)
-    ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
-    : null;
-  const maxFormatted = (quoteInner?.maxAmountIn && fromToken)
-    ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
-    : null;
+  // Use amountInFormatted (API-computed) as primary; fall back to minAmountIn
+  const sendFormatted = quoteInner?.amountInFormatted
+    || (quoteInner?.minAmountIn && fromToken ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals) : null)
+    || '?';
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -410,13 +405,19 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                       <span className="text-caption" style={{ color: 'var(--text-muted)' }}>You send</span>
                       <div className="text-right">
                         <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {minFormatted === maxFormatted
-                            ? `${maxFormatted} ${fromToken?.symbol}`
-                            : `${minFormatted}–${maxFormatted} ${fromToken?.symbol}`}
+                          {sendFormatted} {fromToken?.symbol}
                         </span>
                         {quoteInner?.amountInUsd && (
                           <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
                             ≈ ${parseFloat(quoteInner.amountInUsd).toFixed(2)}
+                          </div>
+                        )}
+                        {quote?.feeInfo?.percent && (
+                          <div className="text-tiny" style={{ color: 'var(--text-faint)' }}>
+                            incl. {quote.feeInfo.percent}% goBlink fee
+                            {quote.feeInfo.usd && parseFloat(quote.feeInfo.usd) > 0
+                              ? ` (~$${quote.feeInfo.usd})`
+                              : ''}
                           </div>
                         )}
                       </div>
