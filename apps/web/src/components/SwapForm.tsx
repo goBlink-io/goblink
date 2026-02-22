@@ -13,10 +13,18 @@ import { Skeleton } from './ui/Skeleton';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 
+export interface SwapFormInitialValues {
+  toChain?: string;
+  toToken?: string;   // symbol, e.g. 'SUI'
+  recipient?: string;
+  lockDest?: boolean; // when true, lock the TO chain/token/recipient fields
+}
+
 interface SwapFormProps {
   onQuoteReceived: (quote: any) => void;
   refreshKey?: number;
   onSwapInitiated: (depositAddress: string) => void;
+  initialValues?: SwapFormInitialValues;
 }
 
 // Available chains for selection
@@ -45,7 +53,7 @@ const HIDDEN_TOKEN_SYMBOLS = new Set([
 ]);
 const filterTokens = (list: Token[]) => list.filter(t => !HIDDEN_TOKEN_SYMBOLS.has(t.symbol));
 
-export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps) {
+export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }: SwapFormProps) {
   const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
   const { toast } = useToast();
   const recipientRef = useRef<HTMLInputElement>(null);
@@ -129,6 +137,20 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
         const usdc = tokensData.find((t: Token) => t.symbol === 'USDC' && t.assetId.includes('17208628'));
         if (near) setOriginAsset(near.assetId);
         if (usdc) setDestinationAsset(usdc.assetId);
+
+        // Override with initialValues (payment request pre-fill)
+        if (initialValues) {
+          if (initialValues.toChain) setToChain(initialValues.toChain);
+          if (initialValues.recipient) setRecipient(initialValues.recipient);
+          if (initialValues.toToken) {
+            const destChain = (initialValues.toChain || 'near').toLowerCase();
+            const match = tokensData.find((t: Token) =>
+              t.symbol.toUpperCase() === initialValues.toToken!.toUpperCase() &&
+              (t.blockchain || 'near').toLowerCase() === destChain
+            );
+            if (match) setDestinationAsset(match.assetId);
+          }
+        }
       }
       
       setTokensLoading(false);
@@ -236,6 +258,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   }, [fromChain, fromAddress]);
 
   useEffect(() => {
+    // Don't auto-fill recipient when it's locked by a payment request
+    if (initialValues?.lockDest && initialValues?.recipient) return;
     const addr = toAddress();
     if (addr) {
       setRecipient(addr);
@@ -546,57 +570,91 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
         </div>
       </div>
 
-      {/* Flip */}
-      <div className="flex justify-center -my-1 relative z-10">
-        <button onClick={swapTokens}
-          className="w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all active:scale-90 active:rotate-180"
-          style={{ background: 'var(--surface)', borderColor: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-          </svg>
-        </button>
-      </div>
+      {/* Flip — hidden when destination is locked */}
+      {!initialValues?.lockDest && (
+        <div className="flex justify-center -my-1 relative z-10">
+          <button onClick={swapTokens}
+            className="w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all active:scale-90 active:rotate-180"
+            style={{ background: 'var(--surface)', borderColor: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* To Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>You receive</label>
-          <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-            {toAddress() ? (
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--success)' }} />
-                <span className="font-mono">{formatAddress(toAddress())}</span>
+          <label className="text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>
+            {initialValues?.lockDest ? 'Recipient receives' : 'You receive'}
+          </label>
+          {!initialValues?.lockDest && (
+            <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+              {toAddress() ? (
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--success)' }} />
+                  <span className="font-mono">{formatAddress(toAddress())}</span>
+                </span>
+              ) : (
+                <span style={{ color: 'var(--text-faint)' }}>No wallet</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {initialValues?.lockDest ? (
+          /* Locked destination display — read-only pill */
+          <div
+            className="flex items-center gap-3 p-3 rounded-xl mb-2"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+          >
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-body-sm font-semibold flex-shrink-0"
+              style={{ background: 'var(--surface)', color: 'var(--text-primary)' }}
+            >
+              {SUPPORTED_CHAINS.find(c => c.id === toChain)?.name || toChain}
+            </div>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
+                {toTokens.find(t => t.assetId === destinationAsset)?.symbol || initialValues?.toToken}
               </span>
-            ) : (
-              <span style={{ color: 'var(--text-faint)' }}>No wallet</span>
-            )}
+            </div>
+            <span
+              className="text-tiny font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+              style={{ background: 'rgba(37,99,235,0.1)', color: 'var(--brand)' }}
+            >
+              Locked
+            </span>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="mb-2">
+              <select value={toChain} onChange={(e) => setToChain(e.target.value)}
+                className="input w-full h-11 text-body-sm font-semibold">
+                {SUPPORTED_CHAINS.map((chain) => (
+                  <option key={chain.id} value={chain.id}>{chain.name}</option>
+                ))}
+              </select>
+            </div>
 
-        <div className="mb-2">
-          <select value={toChain} onChange={(e) => setToChain(e.target.value)}
-            className="input w-full h-11 text-body-sm font-semibold">
-            {SUPPORTED_CHAINS.map((chain) => (
-              <option key={chain.id} value={chain.id}>{chain.name}</option>
-            ))}
-          </select>
-        </div>
+            <TokenSelector tokens={toTokens} selectedToken={destinationAsset} onSelect={setDestinationAsset}
+              balances={toBalances} loadingBalances={loadingToBalances} label="Token" placeholder="Select a token..." />
 
-        <TokenSelector tokens={toTokens} selectedToken={destinationAsset} onSelect={setDestinationAsset}
-          balances={toBalances} loadingBalances={loadingToBalances} label="Token" placeholder="Select a token..." />
-
-        {/* No wallet on destination chain — three-path card */}
-        {!toAddress() && (
-          <NoWalletCard
-            chainId={toChain}
-            chainName={SUPPORTED_CHAINS.find(c => c.id === toChain)?.name || toChain}
-            connectedChains={connectedChainOptions}
-            onEnterManually={() => {
-              setTimeout(() => recipientRef.current?.focus(), 100);
-            }}
-            onSwitchChain={(chainId) => setToChain(chainId)}
-            onConnectWallet={() => openModal()}
-          />
+            {/* No wallet on destination chain — three-path card */}
+            {!toAddress() && (
+              <NoWalletCard
+                chainId={toChain}
+                chainName={SUPPORTED_CHAINS.find(c => c.id === toChain)?.name || toChain}
+                connectedChains={connectedChainOptions}
+                onEnterManually={() => {
+                  setTimeout(() => recipientRef.current?.focus(), 100);
+                }}
+                onSwitchChain={(chainId) => setToChain(chainId)}
+                onConnectWallet={() => openModal()}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -605,23 +663,38 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
         <div className="flex items-center justify-between mb-1.5">
           <label className="flex items-baseline gap-2 text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>
             Receiving Address
-            {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
+            {!initialValues?.lockDest && !toAddress() && (
+              <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>
+            )}
           </label>
-          <button
-            type="button"
-            onClick={() => setAddressBookOpen(true)}
-            className="flex items-center gap-1 text-tiny font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-80 active:scale-95"
-            style={{ color: 'var(--brand)', background: 'var(--elevated)' }}
-            title="Open address book"
-          >
-            📖 Saved
-          </button>
+          {!initialValues?.lockDest && (
+            <button
+              type="button"
+              onClick={() => setAddressBookOpen(true)}
+              className="flex items-center gap-1 text-tiny font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-80 active:scale-95"
+              style={{ color: 'var(--brand)', background: 'var(--elevated)' }}
+              title="Open address book"
+            >
+              📖 Saved
+            </button>
+          )}
         </div>
-        <input ref={recipientRef} type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
-          placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
-          className="input w-full h-11 font-mono text-body-sm" />
-        {toAddress() && recipient === toAddress() && (
-          <p className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>Sending to your wallet on {toChain}</p>
+        {initialValues?.lockDest ? (
+          <div
+            className="p-3 rounded-xl font-mono text-xs break-all"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          >
+            {recipient}
+          </div>
+        ) : (
+          <>
+            <input ref={recipientRef} type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
+              placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
+              className="input w-full h-11 font-mono text-body-sm" />
+            {toAddress() && recipient === toAddress() && (
+              <p className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>Sending to your wallet on {toChain}</p>
+            )}
+          </>
         )}
       </div>
 

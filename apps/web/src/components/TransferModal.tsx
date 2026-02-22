@@ -176,6 +176,10 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       const depAddr = actualQuote.depositAddress || actualQuote.quote?.depositAddress || actualQuote.address;
       if (!depAddr) throw new Error('No transfer address in response');
 
+      // For EXACT_OUTPUT swaps, the wallet must send maxAmountIn (the input amount),
+      // NOT quoteRequest.amount (which is the desired output amount).
+      const sendAmount: string = actualQuote.maxAmountIn || quoteRequest.amount;
+
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
 
@@ -213,7 +217,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 fromToken: originTokenMetadata?.symbol || quoteRequest.originAsset,
                 toChain: toChain,
                 toToken: destinationTokenMetadata?.symbol || quoteRequest.destinationAsset,
-                amountIn: quoteRequest.amount,
+                amountIn: sendAmount,
                 recipient: quoteRequest.recipient,
                 refundTo: quoteRequest.refundTo,
                 status: 'pending',
@@ -236,7 +240,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         const tokenAddress = getTokenAddressFromAssetId(quoteRequest.originAsset);
         const txHash = await sendNearTransaction({
           chain: 'near', tokenAddress, recipientAddress: depAddr,
-          amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 18,
+          amount: sendAmount, decimals: originTokenMetadata?.decimals || 18,
         });
         onComplete(depAddr, txHash);
         startTracking();
@@ -253,7 +257,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           : '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
         const txHash = await sendSuiTransaction({
           chain: 'sui', tokenAddress: suiTokenAddress, recipientAddress: depAddr,
-          amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
+          amount: sendAmount, decimals: originTokenMetadata?.decimals || 9,
         }, suiClient, currentAccount, signAndExecuteTransaction);
         onComplete(depAddr, txHash);
         startTracking();
@@ -286,7 +290,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
         const fromPubkey = new PublicKey(solanaProvider.publicKey);
         const toPubkey = new PublicKey(depAddr);
-        const lamports = Number(BigInt(quoteRequest.amount));
+        const lamports = Number(BigInt(sendAmount));
 
         const blockhashRes = await fetch('/api/balances/solana-blockhash');
         if (!blockhashRes.ok) throw new Error('Failed to fetch Solana network data');
@@ -332,7 +336,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
         if (isNative) {
           txHash = await wc.sendTransaction({
-            to: depAddr as `0x${string}`, value: BigInt(quoteRequest.amount),
+            to: depAddr as `0x${string}`, value: BigInt(sendAmount),
           });
         } else {
           const contractAddr = originTokenMetadata?.contractAddress;
@@ -341,7 +345,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
             address: contractAddr as `0x${string}`,
             abi: [{ name: 'transfer', type: 'function', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] }],
             functionName: 'transfer',
-            args: [depAddr as `0x${string}`, BigInt(quoteRequest.amount)],
+            args: [depAddr as `0x${string}`, BigInt(sendAmount)],
           });
         }
 

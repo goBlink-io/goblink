@@ -151,8 +151,12 @@ export async function POST(request: NextRequest) {
     const resolvedOriginAsset = NATIVE_TO_NEP141_MAP[originAsset] || originAsset;
     const resolvedDestinationAsset = NATIVE_TO_NEP141_MAP[destinationAsset] || destinationAsset;
 
-    // Estimate USD value for tiered fee calculation
-    const amountUsd = await estimateAmountUsd(resolvedOriginAsset, amount);
+    // Estimate USD value for tiered fee calculation.
+    // For EXACT_OUTPUT, `amount` is the desired destination amount — use destination asset price.
+    // For EXACT_INPUT (default), `amount` is the origin input amount — use origin asset price.
+    const isExactOutput = swapType === 'EXACT_OUTPUT';
+    const feeEstimationAsset = isExactOutput ? resolvedDestinationAsset : resolvedOriginAsset;
+    const amountUsd = await estimateAmountUsd(feeEstimationAsset, amount);
     const feeBps = fees.calculateEffectiveFeeBps(amountUsd);
     const feeRecipient = fees.getFeeRecipient();
 
