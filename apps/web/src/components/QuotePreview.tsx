@@ -146,8 +146,11 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           
           setConfirmationStep('Please sign the transaction in your Sui wallet...');
           
-          // For Sui swaps, we send native SUI to the deposit address on Sui chain
-          const tokenAddress = 'native';
+          // Use the native Sui coin type from token metadata (not Defuse format).
+          // For native SUI: "0x0000...::sui::SUI". For custom tokens: their coin type.
+          const tokenAddress = originTokenMetadata?.contractAddress ||
+                               originTokenMetadata?.address ||
+                               '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
           const txHash = await sendSuiTransaction({
             chain: 'sui',
             tokenAddress,

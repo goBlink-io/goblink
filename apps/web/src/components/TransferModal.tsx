@@ -242,12 +242,13 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       } else if (originChain === 'sui') {
         if (!currentAccount) throw new Error('Connect your Sui wallet first');
         setConfirmationStep('Approve in your Sui wallet...');
-        // Derive the Sui coin type from the origin asset ID.
-        // Handles formats: raw `0x...::module::TOKEN` or prefixed `sui:0x...::module::TOKEN`
-        const rawOriginAsset = quoteRequest.originAsset;
-        const suiTokenAddress = rawOriginAsset.startsWith('sui:')
-          ? rawOriginAsset.slice(4)  // strip 'sui:' prefix, preserve full type string
-          : rawOriginAsset;          // already a raw Sui coin type or 'native'
+        // Use the native Sui coin type from token metadata — NOT quoteRequest.originAsset,
+        // which is in Defuse/NEAR Intents format (e.g. "nep141:sui.omft.near") and is
+        // meaningless to the Sui wallet. originTokenMetadata.contractAddress holds the
+        // actual Sui Move coin type (e.g. "0x0000...::sui::SUI" for native SUI).
+        const suiTokenAddress = originTokenMetadata?.contractAddress ||
+                                originTokenMetadata?.address ||
+                                '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
         const txHash = await sendSuiTransaction({
           chain: 'sui', tokenAddress: suiTokenAddress, recipientAddress: depAddr,
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
@@ -262,7 +263,11 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         // SPL tokens (USDC, USDT, etc.) require a different transaction type —
         // SystemProgram.transfer only works for native SOL. Routing SPL to manual
         // deposit prevents silently sending the wrong token.
-        const solTokenAddr = getTokenAddressFromAssetId(quoteRequest.originAsset);
+        // Use native Solana address from token metadata; quoteRequest.originAsset is in
+        // Defuse format (nep141:sol.omft.near) which is wrong for Solana wallet logic.
+        const solTokenAddr = originTokenMetadata?.contractAddress ||
+                             originTokenMetadata?.address ||
+                             getTokenAddressFromAssetId(quoteRequest.originAsset);
         const isNativeSol = solTokenAddr === 'native' || solTokenAddr === 'sol' ||
           solTokenAddr === 'So11111111111111111111111111111111111111112' ||
           originTokenMetadata?.symbol?.toUpperCase() === 'SOL';
