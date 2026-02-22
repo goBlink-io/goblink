@@ -199,7 +199,7 @@ export default function WidgetPage() {
         {/* CTA */}
         <div className="text-center">
           <Link
-            href="/"
+            href="/app"
             className="btn btn-primary inline-flex items-center gap-2 mr-3"
           >
             Try goBlink <Zap className="h-4 w-4" />

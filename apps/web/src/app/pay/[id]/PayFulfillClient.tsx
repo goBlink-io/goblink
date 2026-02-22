@@ -20,7 +20,7 @@ function InvalidRequest() {
         <p className="text-body-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
           This payment request link is invalid or has expired.
         </p>
-        <Link href="/" className="btn btn-primary inline-flex items-center gap-2">
+        <Link href="/app" className="btn btn-primary inline-flex items-center gap-2">
           Go to goBlink <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
