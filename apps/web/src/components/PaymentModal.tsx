@@ -229,30 +229,33 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     const fromToken = allTokens.find(t => t.assetId === fromAssetId);
     if (!fromToken) return;
 
+    // QuoteResponse nests swap details under .quote (the Quote type)
+    const quoteInner = quote.quote || {};
     const refundTo = fromAddress || data.recipient;
     const destAtomicAmount = toAtomicAmount(data.amount, destToken.decimals);
-    const minAmountInFormatted = quote.minAmountIn
-      ? formatTokenAmount(quote.minAmountIn, fromToken.decimals)
-      : quote.amountInFormatted || '?';
-    const maxAmountInFormatted = quote.maxAmountIn
-      ? formatTokenAmount(quote.maxAmountIn, fromToken.decimals)
-      : quote.amountInFormatted || '?';
+
+    const minAmountInFormatted = quoteInner.minAmountIn
+      ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
+      : quoteInner.amountInFormatted || '?';
+    const maxAmountInFormatted = quoteInner.maxAmountIn
+      ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
+      : quoteInner.amountInFormatted || '?';
 
     setTransferQuote({
+      // TransferModal destructures { quote: quoteData } — spread the inner Quote object
+      // then override display fields for EXACT_OUTPUT context
       quote: {
-        ...quote,
-        // Display: show what the payer sends (maxAmountIn = max they can send)
+        ...quoteInner,
         amountInFormatted: maxAmountInFormatted,
-        amountInUsd: quote.maxAmountInUsd || quote.amountInUsd || null,
-        // Display: recipient gets exactly this amount
-        amountOutFormatted: data.amount,
-        amountOutUsd: quote.amountOutUsd || null,
+        amountInUsd: quoteInner.amountInUsd || null,
+        amountOutFormatted: data.amount,       // recipient gets exactly this
+        amountOutUsd: quoteInner.amountOutUsd || null,
         minAmountInFormatted,
       },
       quoteRequest: {
         originAsset: fromToken.defuseAssetId || fromToken.assetId,
         destinationAsset: destToken.defuseAssetId || destToken.assetId,
-        amount: destAtomicAmount,    // EXACT_OUTPUT: this is the desired output
+        amount: destAtomicAmount,    // EXACT_OUTPUT: desired output amount
         recipient: data.recipient,
         refundTo,
         swapType: 'EXACT_OUTPUT',
@@ -273,14 +276,16 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
 
   // ── Derived UI state ──────────────────────────────────────────────────────────
   const fromToken = allTokens.find(t => t.assetId === fromAssetId);
-  const hasQuote = !!quote && !!quote.minAmountIn;
+  // QuoteResponse nests swap details under .quote (the inner Quote type)
+  const quoteInner = quote?.quote || null;
+  const hasQuote = !!quoteInner && !!quoteInner.minAmountIn;
   const canPreview = hasQuote && !!fromAddress;
 
-  const minFormatted = (quote?.minAmountIn && fromToken)
-    ? formatTokenAmount(quote.minAmountIn, fromToken.decimals)
+  const minFormatted = (quoteInner?.minAmountIn && fromToken)
+    ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
     : null;
-  const maxFormatted = (quote?.maxAmountIn && fromToken)
-    ? formatTokenAmount(quote.maxAmountIn, fromToken.decimals)
+  const maxFormatted = (quoteInner?.maxAmountIn && fromToken)
+    ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
     : null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -409,9 +414,9 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                             ? `${maxFormatted} ${fromToken?.symbol}`
                             : `${minFormatted}–${maxFormatted} ${fromToken?.symbol}`}
                         </span>
-                        {quote.maxAmountInUsd && (
+                        {quoteInner?.amountInUsd && (
                           <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-                            ≈ ${parseFloat(quote.maxAmountInUsd).toFixed(2)}
+                            ≈ ${parseFloat(quoteInner.amountInUsd).toFixed(2)}
                           </div>
                         )}
                       </div>
@@ -433,9 +438,9 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                     </div>
 
                     {/* Time estimate */}
-                    {quote.timeEstimate && (
+                    {quoteInner?.timeEstimate && (
                       <p className="text-tiny text-center" style={{ color: 'var(--text-faint)' }}>
-                        Estimated delivery: ~{Math.max(60, parseInt(quote.timeEstimate, 10))}s
+                        Estimated delivery: ~{Math.max(60, parseInt(quoteInner.timeEstimate, 10))}s
                       </p>
                     )}
                   </div>

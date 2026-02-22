@@ -178,7 +178,8 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
       // For EXACT_OUTPUT swaps, the wallet must send maxAmountIn (the input amount),
       // NOT quoteRequest.amount (which is the desired output amount).
-      const sendAmount: string = actualQuote.maxAmountIn || quoteRequest.amount;
+      // maxAmountIn is on the nested actualQuote.quote object (QuoteResponse.quote = Quote type).
+      const sendAmount: string = actualQuote.quote?.maxAmountIn || actualQuote.maxAmountIn || quoteRequest.amount;
 
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
