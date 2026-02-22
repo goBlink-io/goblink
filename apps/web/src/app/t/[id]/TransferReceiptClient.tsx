@@ -207,7 +207,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
 
         {/* Footer tagline */}
         <p className="text-center text-tiny" style={{ color: 'var(--text-faint)' }}>
-          Cross-chain transfers in seconds · 29 chains · No bridges
+          Cross-chain transfers in seconds · 26 chains · No bridges
         </p>
       </div>
     </div>

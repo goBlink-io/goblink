@@ -79,7 +79,7 @@ export default function WidgetPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           {[
             { icon: <Code className="h-5 w-5" />, title: 'One line embed', desc: 'Drop in an iframe. Done.' },
-            { icon: <Globe className="h-5 w-5" />, title: '29 chains', desc: 'Your users pay from anywhere.' },
+            { icon: <Globe className="h-5 w-5" />, title: '26 chains', desc: 'Your users pay from anywhere.' },
             { icon: <Layers className="h-5 w-5" />, title: 'Customizable', desc: 'Pre-fill chain, token, address.' },
           ].map(b => (
             <div key={b.title} className="card p-5 text-center">
