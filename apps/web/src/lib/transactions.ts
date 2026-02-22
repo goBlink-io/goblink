@@ -223,8 +223,10 @@ export async function sendSuiTransaction(
     const { Transaction } = await import('@mysten/sui/transactions');
     const txb = new Transaction();
 
-    // Check if it's native SUI or custom token
+    // Check if it's native SUI or custom token.
+    // Accepts both short form (0x2::sui::SUI from token assetId) and full form (from contractAddress).
     const isNativeSui = tokenAddress === 'native' || tokenAddress === 'sui' ||
+                        tokenAddress === '0x2::sui::SUI' ||
                         tokenAddress === '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
 
     if (isNativeSui) {
