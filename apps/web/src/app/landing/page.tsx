@@ -12,7 +12,6 @@ import {
 import GradientMesh from '@/components/ui/GradientMesh';
 import ChainTicker from '@/components/ui/ChainTicker';
 import ScrollReveal from '@/components/ui/ScrollReveal';
-import StaggerContainer, { StaggerItem } from '@/components/ui/StaggerContainer';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 
 // ── Feature Data ──────────────────────────────────────────────────────────────
@@ -355,7 +354,7 @@ export default function LandingPage() {
       <GradientMesh />
 
       {/* ═══ HERO ═══ */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] text-center px-4 pb-8 pt-20">
+      <section className="relative z-10 flex flex-col items-center justify-center text-center px-4 pb-8 pt-20">
 
         {/* Badge */}
         <motion.div
@@ -399,7 +398,7 @@ export default function LandingPage() {
 
         {/* CTAs */}
         <motion.div
-          className="flex flex-col sm:flex-row items-center gap-3 mb-16"
+          className="flex flex-col sm:flex-row items-center gap-3 mb-10"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -416,173 +415,43 @@ export default function LandingPage() {
           </a>
         </motion.div>
 
-        {/* Hero visual — app mockup card */}
+        {/* Stats — tight to the hero */}
         <motion.div
-          className="relative w-full max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 32, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="w-full max-w-2xl mx-auto"
         >
-          {/* Glow behind the card */}
           <div
-            className="absolute inset-0 rounded-3xl"
-            style={{
-              background: 'var(--gradient)',
-              filter: 'blur(48px)',
-              opacity: 0.18,
-              transform: 'scale(0.92) translateY(8px)',
-            }}
-          />
-
-          {/* Mock UI card */}
-          <div
-            className="relative rounded-3xl overflow-hidden"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 32px 80px rgba(0,0,0,0.25)',
-            }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-6 px-6 py-5 rounded-2xl"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
           >
-            {/* Fake window bar */}
-            <div
-              className="flex items-center gap-2 px-4 py-3 border-b"
-              style={{ borderColor: 'var(--border)', background: 'var(--elevated)' }}
-            >
-              <div className="w-3 h-3 rounded-full bg-red-400/70" />
-              <div className="w-3 h-3 rounded-full bg-yellow-400/70" />
-              <div className="w-3 h-3 rounded-full bg-green-400/70" />
-              <div
-                className="ml-3 flex-1 rounded-md text-xs px-3 py-1 text-center"
-                style={{ background: 'var(--bg-primary)', color: 'var(--text-muted)' }}
-              >
-                goblink.io
-              </div>
-            </div>
-
-            {/* Mock swap UI */}
-            <div className="p-6 space-y-3">
-              {/* You send */}
-              <div
-                className="rounded-2xl p-4"
-                style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}
-              >
-                <div className="text-xs mb-2 font-medium" style={{ color: 'var(--text-muted)' }}>You send</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>100</span>
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                    style={{ background: 'var(--elevated)', color: 'var(--text-primary)' }}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-blue-500" />
-                    <span className="font-semibold text-sm">NEAR</span>
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </div>
+            {[
+              { value: '12', suffix: '', label: 'Active Chains' },
+              { value: '65', suffix: '+', label: 'Tokens' },
+              { value: '45', suffix: 's', label: 'Avg. Transfer' },
+              { value: '100', suffix: '%', label: 'Auto-Refund' },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-2xl font-extrabold text-gradient tracking-tight">
+                  <AnimatedCounter value={s.value} />{s.suffix}
                 </div>
-                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>≈ $342.00 · Balance: 148.23 NEAR</div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
               </div>
-
-              {/* Arrow */}
-              <div className="flex items-center justify-center">
-                <div
-                  className="h-8 w-8 rounded-full flex items-center justify-center"
-                  style={{ background: 'var(--gradient)' }}
-                >
-                  <ArrowRight className="h-4 w-4 text-white rotate-90" />
-                </div>
-              </div>
-
-              {/* You receive */}
-              <div
-                className="rounded-2xl p-4"
-                style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}
-              >
-                <div className="text-xs mb-2 font-medium" style={{ color: 'var(--text-muted)' }}>You receive</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>2.31</span>
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                    style={{ background: 'var(--elevated)', color: 'var(--text-primary)' }}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-purple-500" />
-                    <span className="font-semibold text-sm">SOL</span>
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>≈ $340.07 · Fee: $2.56</span>
-                  <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(5,150,105,0.1)', color: '#059669' }}
-                  >
-                    Confidence: 96 ✓
-                  </span>
-                </div>
-              </div>
-
-              {/* Button */}
-              <div
-                className="w-full rounded-xl py-3.5 text-center text-sm font-bold text-white"
-                style={{ background: 'var(--gradient)' }}
-              >
-                Preview Transfer
-              </div>
-
-              {/* Trust row */}
-              <div className="flex items-center justify-center gap-4 pt-1">
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  🔒 Non-custodial
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  ⚡ ~42s avg
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  ✅ Auto-refund
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
         </motion.div>
       </section>
 
-      {/* ═══ CHAIN TICKER ═══ */}
-      <ScrollReveal>
-        <section className="relative z-10 py-12 border-y" style={{ borderColor: 'var(--border)' }}>
-          <ChainTicker />
-        </section>
-      </ScrollReveal>
-
-      {/* ═══ STATS BAR ═══ */}
-      <ScrollReveal>
-        <section className="relative z-10 py-16 max-w-3xl mx-auto px-4">
-          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-            {[
-              { value: '12', suffix: '', label: 'Active Chains' },
-              { value: '65', suffix: '+', label: 'Tokens Supported' },
-              { value: '45', suffix: 's', label: 'Avg. Transfer Time' },
-              { value: '100', suffix: '%', label: 'Auto-Refund on Failure' },
-            ].map((s) => (
-              <StaggerItem key={s.label}>
-                <div className="text-center">
-                  <div className="text-4xl font-extrabold text-gradient tracking-tight">
-                    <AnimatedCounter value={s.value} />{s.suffix}
-                  </div>
-                  <div className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </section>
-      </ScrollReveal>
-
-      {/* ═══ FEATURES ═══ */}
-      <section id="features" className="relative z-10 py-16 px-4 max-w-5xl mx-auto">
+      {/* ═══ FEATURES — front and centre ═══ */}
+      <section id="features" className="relative z-10 pt-10 pb-16 px-4 max-w-5xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
               Every feature, explained
             </h2>
             <p className="text-body-sm max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              goBlink isn&apos;t just a swap form. It&apos;s a full human experience layer built on top of NEAR Intents — every feature designed to remove friction and build trust.
+              goBlink isn&apos;t just a swap form. It&apos;s a full human experience layer built on NEAR Intents — every detail designed to remove friction and build trust.
             </p>
           </div>
         </ScrollReveal>
@@ -591,6 +460,13 @@ export default function LandingPage() {
           <CategorySection key={cat.id} cat={cat} />
         ))}
       </section>
+
+      {/* ═══ CHAIN TICKER ═══ */}
+      <ScrollReveal>
+        <section className="relative z-10 py-12 border-y" style={{ borderColor: 'var(--border)' }}>
+          <ChainTicker />
+        </section>
+      </ScrollReveal>
 
       {/* ═══ CTA BANNER ═══ */}
       <ScrollReveal>
