@@ -47,7 +47,7 @@ function InvalidReceipt() {
         <p className="text-body-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
           This transfer receipt link appears to be invalid or expired.
         </p>
-        <Link href="/" className="btn btn-primary inline-flex items-center gap-2">
+        <Link href="/app" className="btn btn-primary inline-flex items-center gap-2">
           Try goBlink <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -197,7 +197,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
             {copied ? 'Copied!' : 'Share'}
           </button>
           <Link
-            href="/"
+            href="/app"
             className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all btn-primary text-white"
             style={{ background: 'var(--gradient)' }}
           >

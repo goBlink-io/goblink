@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { MoreHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { MoreHorizontal, ChevronDown, ChevronRight, Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 
 export default function AppMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDevelopersOpen, setIsDevelopersOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { setMode, resolvedTheme } = useTheme();
+  const { mode, setMode } = useTheme();
 
   // Close on click outside
   useEffect(() => {
@@ -42,14 +42,11 @@ export default function AppMenu() {
     };
   }, [isOpen]);
 
-  const handleDarkModeToggle = () => {
-    // Simple toggle: if dark, go to light; if light or auto, go to dark
-    if (resolvedTheme === 'dark') {
-      setMode('light');
-    } else {
-      setMode('dark');
-    }
-  };
+  const THEME_OPTIONS: { value: ThemeMode; icon: typeof Sun; label: string }[] = [
+    { value: 'light', icon: Sun,     label: 'Light' },
+    { value: 'auto',  icon: Monitor, label: 'Auto'  },
+    { value: 'dark',  icon: Moon,    label: 'Dark'  },
+  ];
 
   return (
     <div className="relative">
@@ -79,26 +76,38 @@ export default function AppMenu() {
             animation: 'menuFadeIn 150ms ease-out',
           }}
         >
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]">
-            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-              Dark Mode
+          {/* Appearance — 3-way segmented control */}
+          <div className="px-4 py-3">
+            <span className="block text-xs font-medium mb-2.5" style={{ color: 'var(--text-muted)' }}>
+              Appearance
             </span>
-            <button
-              onClick={handleDarkModeToggle}
-              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              style={{
-                background: resolvedTheme === 'dark' ? 'var(--gradient)' : '#4B5563',
-              }}
-              aria-label="Toggle dark mode"
+            <div
+              className="grid grid-cols-3 gap-1 p-1 rounded-xl"
+              style={{ background: 'var(--bg-primary)' }}
+              role="group"
+              aria-label="Appearance"
             >
-              <span
-                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                style={{
-                  transform: resolvedTheme === 'dark' ? 'translateX(24px)' : 'translateX(4px)',
-                }}
-              />
-            </button>
+              {THEME_OPTIONS.map(({ value, icon: Icon, label }) => {
+                const active = mode === value;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setMode(value)}
+                    aria-pressed={active}
+                    aria-label={label}
+                    className="flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background: active ? 'var(--gradient)' : 'transparent',
+                      color: active ? '#fff' : 'var(--text-muted)',
+                      boxShadow: active ? '0 1px 6px rgba(37,99,235,0.25)' : 'none',
+                    }}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Divider */}

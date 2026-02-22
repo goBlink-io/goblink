@@ -290,7 +290,7 @@ export default function HistoryPage() {
           <p className="text-body max-w-sm mx-auto mb-6" style={{ color: 'var(--text-secondary)' }}>
             When you make transfers with goBlink, they'll appear here
           </p>
-          <a href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all" style={{ background: 'var(--gradient)', color: 'white' }}>
+          <a href="/app" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all" style={{ background: 'var(--gradient)', color: 'white' }}>
             Make Your First Transfer
           </a>
         </div>

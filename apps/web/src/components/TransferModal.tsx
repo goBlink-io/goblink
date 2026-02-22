@@ -611,7 +611,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                               style={{ background: 'var(--brand)', color: '#fff' }}
                             >2</span>
                             <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                              Your wallet sends <strong style={{ color: 'var(--text-primary)' }}>{quoteData.amountInFormatted} {originTokenMetadata?.symbol}</strong> there. The NEAR Intents protocol detects it and immediately starts the conversion.
+                              Your wallet sends <strong style={{ color: 'var(--text-primary)' }}>{quoteData.amountInFormatted} {originTokenMetadata?.symbol}</strong> there. goBlink detects it and immediately starts the conversion.
                             </p>
                           </li>
                           <li className="flex gap-3">

@@ -15,7 +15,7 @@ const baseUrl = process.env.NODE_ENV === 'production'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-  description: 'Transfer tokens across 26 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+  description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -33,16 +33,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-    description: 'Transfer tokens across 26 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+    description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
     siteName: 'goBlink',
     url: baseUrl,
-    images: [{ url: `${baseUrl}/og-image.jpg`, width: 1200, height: 630, alt: 'goBlink — Transfer tokens across 26 chains in seconds. Try it now at goblink.io' }],
+    images: [{ url: `${baseUrl}/og-image.jpg`, width: 1200, height: 630, alt: 'goBlink — Transfer tokens across 12 chains in seconds. Try it now at goblink.io' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-    description: 'Transfer tokens across 26 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+    description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
     images: [`${baseUrl}/og-image.jpg`],
     creator: '@goBlink_io',
   },
