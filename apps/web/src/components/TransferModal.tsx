@@ -9,7 +9,7 @@ import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
 import { formatTokenAmount } from '@/lib/format';
-import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy } from 'lucide-react';
+import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy, ChevronDown, HelpCircle } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
 import TransferSuccess from './TransferSuccess';
@@ -44,6 +44,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
   const [copied, setCopied] = useState(false);
   const [showManualDeposit, setShowManualDeposit] = useState(false);
   const [trackingStartedAt, setTrackingStartedAt] = useState(0);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const startTracking = () => {
     setTrackingStartedAt(Date.now());
@@ -567,6 +568,69 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   amountUsd={feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : null}
                   quoteAvailable={true}
                 />
+
+                {/* How does this work? — collapsible deposit address explainer */}
+                {!showManualDeposit && (
+                  <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setHowItWorksOpen(o => !o)}
+                      className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:opacity-80"
+                      style={{ background: 'var(--elevated)' }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <HelpCircle className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
+                        <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          What happens after I click confirm?
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className="h-4 w-4 flex-shrink-0 transition-transform duration-200"
+                        style={{
+                          color: 'var(--text-faint)',
+                          transform: howItWorksOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                      />
+                    </button>
+
+                    {howItWorksOpen && (
+                      <div className="px-4 pb-4 pt-1" style={{ background: 'var(--elevated)' }}>
+                        <ol className="space-y-2.5">
+                          <li className="flex gap-3">
+                            <span
+                              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-tiny font-bold mt-0.5"
+                              style={{ background: 'var(--brand)', color: '#fff' }}
+                            >1</span>
+                            <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                              goBlink creates a <strong style={{ color: 'var(--text-primary)' }}>one-time deposit address</strong> just for your transfer — it&apos;s not a wallet anyone controls, it&apos;s a smart routing contract.
+                            </p>
+                          </li>
+                          <li className="flex gap-3">
+                            <span
+                              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-tiny font-bold mt-0.5"
+                              style={{ background: 'var(--brand)', color: '#fff' }}
+                            >2</span>
+                            <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                              Your wallet sends <strong style={{ color: 'var(--text-primary)' }}>{quoteData.amountInFormatted} {originTokenMetadata?.symbol}</strong> there. The NEAR Intents protocol detects it and immediately starts the conversion.
+                            </p>
+                          </li>
+                          <li className="flex gap-3">
+                            <span
+                              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-tiny font-bold mt-0.5"
+                              style={{ background: 'var(--brand)', color: '#fff' }}
+                            >3</span>
+                            <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                              <strong style={{ color: 'var(--text-primary)' }}>~{destinationTokenMetadata?.symbol} arrives in your {toLogo?.name || toChain} wallet</strong> — usually within 60 seconds. You don&apos;t need to do anything else.
+                            </p>
+                          </li>
+                        </ol>
+                        <p className="text-tiny mt-3 pt-3" style={{ color: 'var(--text-faint)', borderTop: '1px solid var(--border)' }}>
+                          If anything goes wrong, your {originTokenMetadata?.symbol} is automatically returned to your sending wallet. No manual steps needed.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Confirm button */}
                 {!showManualDeposit && (

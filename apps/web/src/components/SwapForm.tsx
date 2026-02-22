@@ -6,6 +6,7 @@ import { useWalletContext } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
+import AddressBook from './AddressBook';
 import NoWalletCard from './NoWalletCard';
 import SmartTransactionNudge from './SmartTransactionNudge';
 import { Skeleton } from './ui/Skeleton';
@@ -60,6 +61,9 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   const [fromChain, setFromChain] = useState<string>('near');
   const [toChain, setToChain] = useState<string>('near');
 
+  // Track whether user has manually picked the FROM token (suppresses smart auto-select)
+  const userSelectedFromToken = useRef(false);
+
   // Smart defaults — pre-fill from user's most common route
   const { getSuggestedRoute, isHydrated: defaultsHydrated } = useSmartDefaults();
   const [originAsset, setOriginAsset] = useState('');
@@ -68,6 +72,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
   const [recipient, setRecipient] = useState('');
   const [refundTo, setRefundTo] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [addressBookOpen, setAddressBookOpen] = useState(false);
 
   const getChainIdFromType = (chainType: string | null): string => {
     switch (chainType) {
@@ -184,6 +189,17 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
     });
   }, [tokens, fromChain]);
 
+  // For the FROM selector: hide tokens with zero balance when wallet is connected and balances are ready.
+  // This removes the noise of 60+ tokens the user can't actually send.
+  const displayFromTokens = useMemo(() => {
+    const addr = fromAddress();
+    // Not connected or balances still loading → show everything (don't flash an empty list)
+    if (!addr || loadingBalances || Object.keys(balances).length === 0) return fromTokens;
+    const withBalance = fromTokens.filter(t => parseFloat(balances[t.assetId] || '0') > 0);
+    // Safety: if somehow all are zero (e.g., fresh wallet), show full list
+    return withBalance.length > 0 ? withBalance : fromTokens;
+  }, [fromTokens, balances, loadingBalances]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const toTokens = useMemo(() => {
     return tokens.filter(token => {
       const tokenChain = (token.blockchain || 'near').toLowerCase();
@@ -230,10 +246,41 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
     }
   }, [toChain, toAddress]);
 
+  // Reset smart selection when from-chain changes so we re-evaluate for the new chain
+  useEffect(() => {
+    userSelectedFromToken.current = false;
+  }, [fromChain]);
+
   useEffect(() => {
     const isOriginTokenValid = fromTokens.some(t => t.assetId === originAsset);
     if (!isOriginTokenValid && fromTokens.length > 0) setOriginAsset(fromTokens[0].assetId);
   }, [fromChain, fromTokens]);
+
+  // Smart auto-select: after balances load, pick the token with the highest USD value
+  useEffect(() => {
+    if (userSelectedFromToken.current) return; // user chose manually — don't override
+    if (loadingBalances || Object.keys(balances).length === 0) return;
+    if (fromTokens.length === 0) return;
+
+    let bestToken = fromTokens[0];
+    let bestValue = -1;
+
+    for (const token of fromTokens) {
+      const bal = parseFloat(balances[token.assetId] || '0');
+      if (bal <= 0) continue;
+      const price = parseFloat(String(token.priceUsd || token.price || '0'));
+      const value = bal * price;
+      if (value > bestValue) {
+        bestValue = value;
+        bestToken = token;
+      }
+    }
+
+    // Only switch if we found a token with actual balance
+    if (bestValue > 0) {
+      setOriginAsset(bestToken.assetId);
+    }
+  }, [balances, loadingBalances]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const isDestTokenValid = toTokens.some(t => t.assetId === destinationAsset);
@@ -454,8 +501,10 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
           </select>
         </div>
 
-        <TokenSelector tokens={fromTokens} selectedToken={originAsset} onSelect={setOriginAsset}
-          balances={balances} loadingBalances={loadingBalances} label="Token" placeholder="Select a token..." />
+        <TokenSelector tokens={displayFromTokens} selectedToken={originAsset}
+          onSelect={(assetId) => { userSelectedFromToken.current = true; setOriginAsset(assetId); }}
+          balances={balances} loadingBalances={loadingBalances} label="Token" placeholder="Select a token..."
+          emptyMessage={fromAddress() ? "No tokens with balance on this chain" : undefined} />
 
         <div>
           <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
@@ -546,10 +595,21 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
 
       {/* Receiving Address */}
       <div className="mb-4">
-        <label className="flex items-baseline gap-2 text-caption font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-          Receiving Address
-          {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="flex items-baseline gap-2 text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Receiving Address
+            {!toAddress() && <span className="text-tiny" style={{ color: 'var(--warning)' }}>(enter manually)</span>}
+          </label>
+          <button
+            type="button"
+            onClick={() => setAddressBookOpen(true)}
+            className="flex items-center gap-1 text-tiny font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-80 active:scale-95"
+            style={{ color: 'var(--brand)', background: 'var(--elevated)' }}
+            title="Open address book"
+          >
+            📖 Saved
+          </button>
+        </div>
         <input ref={recipientRef} type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)}
           placeholder={toAddress() ? "Auto-filled from wallet" : "Enter receiving address"}
           className="input w-full h-11 font-mono text-body-sm" />
@@ -597,6 +657,18 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
       <div className="mt-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
         <strong>Tip:</strong> Connect wallets on both chains to auto-fill addresses.
       </div>
+
+      {/* Address Book modal */}
+      <AddressBook
+        isOpen={addressBookOpen}
+        onClose={() => setAddressBookOpen(false)}
+        onSelect={(address, chain) => {
+          setRecipient(address);
+          // Switch toChain to match the saved address's chain
+          const matchedChain = SUPPORTED_CHAINS.find(c => c.id === chain);
+          if (matchedChain) setToChain(matchedChain.id);
+        }}
+      />
     </div>
   );
 }

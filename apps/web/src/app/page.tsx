@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SwapForm from '@/components/SwapForm';
+import FirstVisitBanner, { markIntroDismissed } from '@/components/FirstVisitBanner';
 import TransferModal from '@/components/TransferModal';
 import RecentTransfers from '@/components/RecentTransfers';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -43,6 +44,7 @@ export default function Home() {
   };
 
   const handleTransferComplete = (depositAddress: string, txHash?: string) => {
+    markIntroDismissed(); // First transfer = user understands the flow, banner never needed again
     setTrackingAddress(depositAddress);
     if (quoteData) {
       addEntry({
@@ -142,6 +144,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
         >
+          <FirstVisitBanner />
           <ErrorBoundary fallbackMessage="We couldn't load the transfer form. Please refresh the page.">
             <SwapForm
               onQuoteReceived={handleQuoteReceived}

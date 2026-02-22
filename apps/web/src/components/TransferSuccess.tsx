@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Trophy, Share2, Check, Link as LinkIcon, Bookmark } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trophy, Share2, Check, Link as LinkIcon, Bookmark, X } from 'lucide-react';
 import { generateTransferUrl } from '@/lib/transfer-links';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
@@ -40,7 +40,13 @@ export default function TransferSuccess({
   const [shared, setShared] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [addressSaved, setAddressSaved] = useState(false);
+  const [labelEditing, setLabelEditing] = useState(false);
+  const [customLabel, setCustomLabel] = useState('');
+  const labelInputRef = useRef<HTMLInputElement>(null);
   const { saveAddress, profile } = useUserProfile();
+
+  const chainName = toChain.charAt(0).toUpperCase() + toChain.slice(1);
+  const smartDefaultLabel = `My ${chainName} Wallet`;
 
   const isAlreadySaved = recipientAddress
     ? profile.savedAddresses.some(a => a.address === recipientAddress)
@@ -63,7 +69,6 @@ export default function TransferSuccess({
   }, []);
 
   const estimatedSavings = null; // Removed — no reliable comparison data
-  const chainName = toChain.charAt(0).toUpperCase() + toChain.slice(1);
 
   const handleCopyLink = () => {
     if (!fromChain || !fromToken || !amountIn) return;
@@ -157,27 +162,92 @@ export default function TransferSuccess({
       )}
 
       <div className="flex flex-col sm:flex-row gap-2 justify-center flex-wrap">
-        {recipientAddress && !isAlreadySaved && (
+        {recipientAddress && !isAlreadySaved && !addressSaved && !labelEditing && (
+          /* Stage 1: Save prompt button */
           <button
             onClick={() => {
-              const shortChain = toChain.charAt(0).toUpperCase() + toChain.slice(1);
-              saveAddress(`My ${shortChain} wallet`, recipientAddress, toChain);
-              setAddressSaved(true);
+              setCustomLabel(smartDefaultLabel);
+              setLabelEditing(true);
+              setTimeout(() => {
+                labelInputRef.current?.focus();
+                labelInputRef.current?.select();
+              }, 50);
             }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
             style={{
-              background: addressSaved ? 'rgba(34,197,94,0.1)' : 'var(--elevated)',
-              color: addressSaved ? 'var(--success)' : 'var(--text-secondary)',
-              border: `1px solid ${addressSaved ? 'rgba(34,197,94,0.3)' : 'var(--border)'}`,
+              background: 'var(--elevated)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border)',
             }}
           >
-            {addressSaved ? (
-              <Check className="h-4 w-4" style={{ color: 'var(--success)' }} />
-            ) : (
-              <Bookmark className="h-4 w-4" />
-            )}
-            {addressSaved ? 'Address saved!' : 'Save address'}
+            <Bookmark className="h-4 w-4" />
+            Save address
           </button>
+        )}
+
+        {recipientAddress && labelEditing && (
+          /* Stage 2: Inline label input — morphs in place */
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg w-full sm:w-auto"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--brand)' }}
+          >
+            <Bookmark className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
+            <input
+              ref={labelInputRef}
+              type="text"
+              value={customLabel}
+              onChange={(e) => setCustomLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customLabel.trim()) {
+                  saveAddress(customLabel.trim(), recipientAddress, toChain);
+                  setLabelEditing(false);
+                  setAddressSaved(true);
+                }
+                if (e.key === 'Escape') {
+                  setLabelEditing(false);
+                }
+              }}
+              placeholder="Name this address..."
+              maxLength={40}
+              className="bg-transparent text-sm font-medium outline-none min-w-0 w-36"
+              style={{ color: 'var(--text-primary)' }}
+            />
+            <button
+              onClick={() => {
+                if (!customLabel.trim()) return;
+                saveAddress(customLabel.trim(), recipientAddress, toChain);
+                setLabelEditing(false);
+                setAddressSaved(true);
+              }}
+              disabled={!customLabel.trim()}
+              className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: 'var(--brand)', color: '#fff' }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setLabelEditing(false)}
+              className="flex-shrink-0 p-1 rounded-md transition-all hover:opacity-70"
+              style={{ color: 'var(--text-faint)' }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        {addressSaved && (
+          /* Stage 3: Confirmation */
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{
+              background: 'rgba(34,197,94,0.1)',
+              color: 'var(--success)',
+              border: '1px solid rgba(34,197,94,0.3)',
+            }}
+          >
+            <Check className="h-4 w-4" />
+            Saved as &ldquo;{customLabel}&rdquo;
+          </div>
         )}
         <button
           onClick={handleShare}
