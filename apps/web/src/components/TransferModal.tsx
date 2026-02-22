@@ -8,6 +8,7 @@ import { useSwitchChain, useConfig as useWagmiConfig } from 'wagmi';
 import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
+import { formatTokenAmount } from '@/lib/format';
 import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
@@ -476,7 +477,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600 dark:text-green-400">~{quoteData.amountOutFormatted}</div>
+                        <div className="text-lg font-bold text-green-600 dark:text-green-400">~{formatTokenAmount(quoteData.amountOutFormatted)}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">${quoteData.amountOutUsd}</div>
                       </div>
                     </div>

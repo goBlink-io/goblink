@@ -8,6 +8,7 @@ import { useSwitchChain } from 'wagmi';
 import { getWalletClient } from 'wagmi/actions';
 import { useConfig as useWagmiConfig } from 'wagmi';
 import { isEvmChain, isNativeToken, EVM_CHAINS } from '@goblink/shared';
+import { formatTokenAmount } from '@/lib/format';
 
 interface QuotePreviewProps {
   quote: any;
@@ -419,7 +420,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
         <div className="flex justify-between items-center">
           <span className="text-gray-600">You receive</span>
           <div className="text-right">
-            <div className="font-semibold text-lg text-green-600">{quoteData.amountOutFormatted}</div>
+            <div className="font-semibold text-lg text-green-600">{formatTokenAmount(quoteData.amountOutFormatted)}</div>
             <div className="text-sm text-gray-500">${quoteData.amountOutUsd}</div>
           </div>
         </div>
