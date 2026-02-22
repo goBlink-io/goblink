@@ -234,10 +234,8 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
     const refundTo = fromAddress || data.recipient;
     const destAtomicAmount = toAtomicAmount(data.amount, destToken.decimals);
 
-    const minAmountInFormatted = quoteInner.minAmountIn
-      ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
-      : quoteInner.amountInFormatted || '?';
-    const maxAmountInFormatted = quoteInner.maxAmountIn
+    // amountInFormatted = API-computed send amount; use maxAmountIn if present for EXACT_OUTPUT
+    const displayAmountIn = quoteInner.maxAmountIn
       ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
       : quoteInner.amountInFormatted || '?';
 
@@ -246,11 +244,10 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
       // then override display fields for EXACT_OUTPUT context
       quote: {
         ...quoteInner,
-        amountInFormatted: maxAmountInFormatted,
+        amountInFormatted: displayAmountIn,
         amountInUsd: quoteInner.amountInUsd || null,
         amountOutFormatted: data.amount,       // recipient gets exactly this
         amountOutUsd: quoteInner.amountOutUsd || null,
-        minAmountInFormatted,
       },
       quoteRequest: {
         originAsset: fromToken.defuseAssetId || fromToken.assetId,
@@ -281,12 +278,10 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
   const hasQuote = !!quoteInner && !!quoteInner.minAmountIn;
   const canPreview = hasQuote && !!fromAddress;
 
-  const minFormatted = (quoteInner?.minAmountIn && fromToken)
-    ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals)
-    : null;
-  const maxFormatted = (quoteInner?.maxAmountIn && fromToken)
-    ? formatTokenAmount(quoteInner.maxAmountIn, fromToken.decimals)
-    : null;
+  // Use amountInFormatted (API-computed) as primary; fall back to minAmountIn
+  const sendFormatted = quoteInner?.amountInFormatted
+    || (quoteInner?.minAmountIn && fromToken ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals) : null)
+    || '?';
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -405,22 +400,74 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
 
                 {hasQuote && !quoting && (
                   <div className="space-y-3">
-                    {/* You send */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-caption" style={{ color: 'var(--text-muted)' }}>You send</span>
-                      <div className="text-right">
-                        <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {minFormatted === maxFormatted
-                            ? `${maxFormatted} ${fromToken?.symbol}`
-                            : `${minFormatted}–${maxFormatted} ${fromToken?.symbol}`}
-                        </span>
-                        {quoteInner?.amountInUsd && (
-                          <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-                            ≈ ${parseFloat(quoteInner.amountInUsd).toFixed(2)}
+                    {/* Cost breakdown — Line1 = Line3 − Line2 */}
+                    {(() => {
+                      const sym        = fromToken?.symbol || '';
+                      const feeBps     = quote?.feeInfo?.bps    ? parseFloat(quote.feeInfo.bps)    : 0;
+                      const feePercent = quote?.feeInfo?.percent || '0';
+                      // Line 3 (total)
+                      const totalTokens = parseFloat(sendFormatted) || 0;
+                      const totalUsd    = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
+                      // Line 2 (fee) — direct ratio so subtraction is exact
+                      const feeTokens   = feeBps > 0 ? totalTokens * feeBps / 10000 : 0;
+                      const feeUsd      = quote?.feeInfo?.usd ? parseFloat(quote.feeInfo.usd) : null;
+                      // Line 1 (base) — Line3 − Line2 exactly
+                      const baseTokens  = totalTokens - feeTokens;
+                      const baseUsd     = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd : null;
+                      // Consistent formatting: match decimal places of sendFormatted
+                      const decimals = (sendFormatted.split('.')[1] || '').length;
+                      const fmt = (n: number) => n.toFixed(decimals);
+                      return (
+                        <div className="space-y-1.5">
+                          {/* Line 1: Estimated cost (= total − fee) */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Estimated cost</span>
+                            <div className="text-right">
+                              <span className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {fmt(baseTokens)} {sym}
+                              </span>
+                              {baseUsd !== null && (
+                                <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
+                                  ≈ ${baseUsd.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          {/* Line 2: goBlink fee */}
+                          {feeBps > 0 && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-caption" style={{ color: 'var(--text-faint)' }}>
+                                goBlink fee ({feePercent}%)
+                              </span>
+                              <div className="text-right">
+                                <span className="text-body-sm" style={{ color: 'var(--text-faint)' }}>
+                                  {fmt(feeTokens)} {sym}
+                                </span>
+                                {feeUsd !== null && feeUsd > 0 && (
+                                  <span className="text-tiny ml-1" style={{ color: 'var(--text-faint)' }}>
+                                    ≈ ${feeUsd.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {/* Line 3: Total you send */}
+                          <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border)' }}>
+                            <span className="text-caption font-semibold" style={{ color: 'var(--text-primary)' }}>You send</span>
+                            <div className="text-right">
+                              <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
+                                {sendFormatted} {sym}
+                              </span>
+                              {totalUsd !== null && (
+                                <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
+                                  ≈ ${totalUsd.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Divider with arrow */}
                     <div className="flex items-center gap-2">
