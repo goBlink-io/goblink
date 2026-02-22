@@ -57,6 +57,14 @@ export async function POST(
     const syncResult = await syncTransactionStatus(deposit_address);
 
     if (!syncResult.success) {
+      // Not configured = expected state, not an error (INTENTS_EXPLORER_JWT may not be set)
+      if (syncResult.error === 'Intents Explorer not configured' || 
+          syncResult.error === 'Transaction not found in Intents Explorer') {
+        return addRateLimitHeaders(
+          successResponse({ synced: false, reason: syncResult.error }),
+          rateLimit
+        );
+      }
       return addRateLimitHeaders(
         errorResponse(syncResult.error || 'Failed to sync transaction', 500),
         rateLimit
