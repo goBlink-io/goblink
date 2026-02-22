@@ -10,9 +10,11 @@ function formatBal(raw: string): string {
   if (isNaN(n) || n === 0) return '0.00';
   if (n >= 1000) return n.toFixed(2);
   if (n >= 1) return n.toFixed(4);
-  // For small values, show up to 6 significant digits
-  const s = n.toPrecision(6);
-  return parseFloat(s).toString();
+  // For small values: avoid scientific notation by using toFixed with enough decimal places.
+  // toPrecision(6) can produce "1.23456e-7" for tiny numbers; .toString() preserves it.
+  if (n >= 0.001) return n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+  if (n >= 0.000001) return n.toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
+  return n.toFixed(12).replace(/0+$/, '').replace(/\.$/, '');
 }
 
 interface Token {
