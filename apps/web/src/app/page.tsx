@@ -198,7 +198,7 @@ export default function Home() {
           <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
             {[
               { value: '26', label: 'Chains' },
-              { value: '84', label: 'Tokens' },
+              { value: '65', label: 'Tokens' },
               { value: '45', label: 'Avg. Transfer (s)' },
               { value: '100', label: '% Auto-Refund on Failure' },
             ].map((stat) => (
@@ -206,7 +206,7 @@ export default function Home() {
                 <div className="text-center">
                   <div className="stat-value text-gradient">
                     <AnimatedCounter value={stat.value} />
-                    {stat.value === '84' ? '+' : stat.value === '45' ? 's' : stat.value === '100' ? '%' : ''}
+                    {stat.value === '65' ? '+' : stat.value === '45' ? 's' : stat.value === '100' ? '%' : ''}
                   </div>
                   <div className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
                 </div>
