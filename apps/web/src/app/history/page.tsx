@@ -43,13 +43,17 @@ export default function HistoryPage() {
   const suiAccount = useCurrentAccount();
   const { caipAddress } = useAppKitAccount();
 
-  // Determine active wallet
-  const walletAddress = evmAddress || suiAccount?.address || (caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null);
+  // Collect ALL connected wallet addresses (not just first)
+  const allWalletAddresses = [
+    evmAddress,
+    suiAccount?.address,
+    caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null,
+  ].filter(Boolean) as string[];
 
   const limit = 20;
 
   useEffect(() => {
-    if (!walletAddress) {
+    if (allWalletAddresses.length === 0) {
       setLoading(false);
       return;
     }
@@ -59,7 +63,8 @@ export default function HistoryPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/transactions?wallet=${walletAddress}&page=${page}&limit=${limit}`);
+        const walletsParam = allWalletAddresses.join(',');
+        const response = await fetch(`/api/transactions?wallet=${encodeURIComponent(walletsParam)}&page=${page}&limit=${limit}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch transaction history');
@@ -81,7 +86,23 @@ export default function HistoryPage() {
     };
 
     fetchTransactions();
-  }, [walletAddress, page]);
+  }, [allWalletAddresses.join(','), page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Derive a display status from what we know without needing the Intents Explorer.
+   * - deposit_tx_hash set + > 3 min old → completed (NEAR intents resolve in ~30s)
+   * - deposit_tx_hash set + < 3 min old → processing
+   * - no deposit_tx_hash → pending (funds not sent yet)
+   * - any non-pending DB value → use as-is
+   */
+  const getEffectiveStatus = (tx: Transaction): string => {
+    const dbStatus = tx.status?.toLowerCase() || 'pending';
+    if (dbStatus !== 'pending') return dbStatus; // already resolved in DB — trust it
+    if (!tx.deposit_tx_hash) return 'pending'; // funds not sent yet
+    const ageMs = Date.now() - new Date(tx.created_at).getTime();
+    if (ageMs > 3 * 60 * 1000) return 'completed'; // > 3 min old + tx hash = done
+    return 'processing';
+  };
 
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -94,7 +115,15 @@ export default function HistoryPage() {
       );
     }
     
-    if (statusLower === 'pending' || statusLower === 'pending_deposit' || statusLower === 'processing') {
+    if (statusLower === 'processing') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+          Processing
+        </span>
+      );
+    }
+
+    if (statusLower === 'pending' || statusLower === 'pending_deposit') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800">
           Pending
@@ -175,7 +204,7 @@ export default function HistoryPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  if (!walletAddress) {
+  if (allWalletAddresses.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
         <div className="text-center max-w-md mx-auto">
@@ -278,7 +307,7 @@ export default function HistoryPage() {
 
                     {/* Status */}
                     <div className="min-w-[100px] flex justify-end">
-                      {getStatusBadge(tx.status)}
+                      {getStatusBadge(getEffectiveStatus(tx))}
                     </div>
                   </div>
 
@@ -320,13 +349,16 @@ export default function HistoryPage() {
                       </div>
                     )}
 
-                    {/* Fee */}
+                    {/* Fee — show USD amount (never %, which is misleading due to min-fee floor) */}
                     {tx.fee_bps && (
                       <div className="flex justify-between items-start">
                         <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Fee:</span>
                         <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {(tx.fee_bps / 100).toFixed(2)}%
-                          {tx.fee_amount && ` (${formatAmount(tx.fee_amount)} ${tx.from_token})`}
+                          {tx.amount_usd
+                            ? `~$${(tx.amount_usd * tx.fee_bps / 10000).toFixed(2)}`
+                            : tx.fee_amount
+                              ? formatAmount(tx.fee_amount)
+                              : `${(Math.min(tx.fee_bps, 75) / 100).toFixed(2)}%`}
                         </span>
                       </div>
                     )}
