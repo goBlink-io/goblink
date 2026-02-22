@@ -57,16 +57,11 @@ export async function POST(
     const syncResult = await syncTransactionStatus(deposit_address);
 
     if (!syncResult.success) {
-      // Not configured = expected state, not an error (INTENTS_EXPLORER_JWT may not be set)
-      if (syncResult.error === 'Intents Explorer not configured' || 
-          syncResult.error === 'Transaction not found in Intents Explorer') {
-        return addRateLimitHeaders(
-          successResponse({ synced: false, reason: syncResult.error }),
-          rateLimit
-        );
-      }
+      // Sync is best-effort — explorer not configured, tx not indexed yet, or transient error.
+      // Never surface as 500 since the transfer itself succeeded; client ignores this anyway.
+      logger.info('[TRANSACTION_SYNC_SKIPPED]', { id, reason: syncResult.error });
       return addRateLimitHeaders(
-        errorResponse(syncResult.error || 'Failed to sync transaction', 500),
+        successResponse({ synced: false, reason: syncResult.error }),
         rateLimit
       );
     }
