@@ -6,18 +6,18 @@ import { PaymentRequestData, generatePaymentUrl } from '@/lib/payment-requests';
 import { getChainLogo } from '@/lib/chain-logos';
 
 const SUPPORTED_CHAINS = [
-  { id: 'ethereum', name: 'Ethereum' },
-  { id: 'base', name: 'Base' },
   { id: 'arbitrum', name: 'Arbitrum' },
+  { id: 'base', name: 'Base' },
+  { id: 'bsc', name: 'BNB Chain' },
+  { id: 'ethereum', name: 'Ethereum' },
+  { id: 'near', name: 'NEAR' },
   { id: 'optimism', name: 'Optimism' },
   { id: 'polygon', name: 'Polygon' },
-  { id: 'bsc', name: 'BNB Chain' },
-  { id: 'near', name: 'NEAR' },
   { id: 'solana', name: 'Solana' },
   { id: 'sui', name: 'Sui' },
 ];
 
-const POPULAR_TOKENS = ['USDC', 'USDT', 'ETH', 'WETH', 'DAI', 'NEAR', 'SOL', 'SUI'];
+const POPULAR_TOKENS = ['DAI', 'ETH', 'NEAR', 'SOL', 'SUI', 'USDC', 'USDT', 'WETH'];
 
 interface Props {
   onGenerated?: (url: string, data: PaymentRequestData) => void;
