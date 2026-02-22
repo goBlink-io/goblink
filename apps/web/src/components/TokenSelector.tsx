@@ -36,12 +36,13 @@ interface TokenSelectorProps {
   loadingBalances: boolean;
   label: string;
   placeholder?: string;
+  emptyMessage?: string;
 }
 
 const cleanSymbol = (s: string) => s.replace(/\.(omft|omdep)$/, '');
 
 export default function TokenSelector({
-  tokens, selectedToken, onSelect, balances, loadingBalances, label, placeholder = 'Select a token'
+  tokens, selectedToken, onSelect, balances, loadingBalances, label, placeholder = 'Select a token', emptyMessage
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -63,7 +64,19 @@ export default function TokenSelector({
   const filtered = (search
     ? withIcons.filter(t => t.symbol.toLowerCase().includes(search.toLowerCase()) || t.name?.toLowerCase().includes(search.toLowerCase()))
     : withIcons
-  ).slice().sort((a, b) => a.symbol.localeCompare(b.symbol));
+  ).slice().sort((a, b) => {
+    // Primary sort: USD value descending (highest balance wins)
+    const balA = parseFloat(balances[a.assetId] || '0');
+    const balB = parseFloat(balances[b.assetId] || '0');
+    const priceA = parseFloat(String(a.priceUsd || a.price || '0'));
+    const priceB = parseFloat(String(b.priceUsd || b.price || '0'));
+    const valA = balA * priceA;
+    const valB = balB * priceB;
+    if (valA !== valB) return valB - valA;
+    if (balA !== balB) return balB - balA;
+    // Fallback: alphabetical
+    return a.symbol.localeCompare(b.symbol);
+  });
 
   const close = () => { setIsOpen(false); setSearch(''); };
 
@@ -143,7 +156,9 @@ export default function TokenSelector({
                     ))}
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>No tokens found</div>
+                  <div className="px-4 py-12 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
+                    {search ? 'No tokens found' : (emptyMessage || 'No tokens found')}
+                  </div>
                 ) : (
                   filtered.map((token) => {
                     const bal = balances[token.assetId] || '0.00';
