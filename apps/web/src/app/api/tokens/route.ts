@@ -28,6 +28,57 @@ function removePricing(token: Record<string, unknown>): void {
   delete token.priceUpdatedAt;
 }
 
+/**
+ * Deduplicate NEAR tokens by symbol — the 1Click API returns one entry per bridge variant
+ * (e.g. USDT exists as native, ETH-omft, SOL-omft, ARB-omft, etc.). We pick one canonical
+ * entry per symbol using priority: native NEAR > eth-omft > any omft > Rainbow bridge.
+ */
+function deduplicateNearTokens(tokens: Record<string, unknown>[]): Record<string, unknown>[] {
+  const bySymbol = new Map<string, Record<string, unknown>[]>();
+
+  for (const token of tokens) {
+    const sym = ((token.symbol as string) || '').replace(/\.(omft|omdep)$/i, '');
+    if (!bySymbol.has(sym)) bySymbol.set(sym, []);
+    bySymbol.get(sym)!.push(token);
+  }
+
+  const result: Record<string, unknown>[] = [];
+  for (const [, group] of bySymbol) {
+    if (group.length === 1) { result.push(group[0]); continue; }
+
+    // Primary score: lower = more canonical
+    const score = (assetId: string): number => {
+      const id = assetId.toLowerCase();
+      // Native NEAR contracts — no bridge suffix
+      if (!id.includes('.omft.near') && !id.includes('.omdep.near') && !id.includes('.bridge.near') && !id.includes('factory.bridge')) return 0;
+      // ETH-chain ERC-20 omft (e.g. nep141:eth-0x....omft.near) — deepest liquidity
+      if (id.startsWith('nep141:eth-') && id.endsWith('.omft.near')) return 1;
+      // Chain-native omft (e.g. nep141:eth.omft.near, nep141:btc.omft.near) — no dash
+      if (/^nep141:[a-z0-9]+\.omft\.near$/.test(id)) return 2;
+      // Any other omft/omdep bridge variant
+      if (id.endsWith('.omft.near') || id.endsWith('.omdep.near')) return 3;
+      // Old Rainbow bridge (.bridge.near / factory.bridge.near)
+      return 4;
+    };
+    // Secondary: among ties, prefer Ethereum-chain variants (deepest liquidity)
+    const chainPref = (assetId: string): number => {
+      const id = assetId.toLowerCase();
+      if (id.startsWith('nep141:eth')) return 0;
+      if (id.startsWith('nep141:sol')) return 1;
+      if (id.startsWith('nep141:base')) return 2;
+      return 9;
+    };
+
+    group.sort((a, b) => {
+      const ds = score(a.assetId as string) - score(b.assetId as string);
+      return ds !== 0 ? ds : chainPref(a.assetId as string) - chainPref(b.assetId as string);
+    });
+    result.push(group[0]);
+  }
+
+  return result;
+}
+
 // Map 1Click API chain prefixes → our blockchain names
 const CHAIN_PREFIX_MAP: Record<string, string> = {
   'eth': 'ethereum', 'base': 'base', 'arb': 'arbitrum',
@@ -156,7 +207,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const allTokens = [...nearTokens, ...nativeChainTokens];
+    const allTokens = [...deduplicateNearTokens(nearTokens), ...nativeChainTokens];
 
     // Apply static icons + symbol overrides (pricing loaded separately via /api/tokens/prices)
     applyIcons(allTokens);
