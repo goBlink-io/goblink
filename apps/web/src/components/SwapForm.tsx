@@ -487,7 +487,14 @@ export default function SwapForm({ onQuoteReceived, refreshKey }: SwapFormProps)
                 <span className="font-mono">{formatAddress(fromAddress())}</span>
               </span>
             ) : (
-              <span style={{ color: 'var(--warning)' }}>Connect wallet</span>
+              <button
+                type="button"
+                onClick={() => openModal()}
+                className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 active:scale-95"
+                style={{ color: 'var(--warning)' }}
+              >
+                Connect wallet
+              </button>
             )}
           </div>
         </div>
