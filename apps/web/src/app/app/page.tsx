@@ -98,7 +98,7 @@ export default function Home() {
   const faqs = [
     { q: 'How does goBlink work?', a: 'Select your tokens, enter an amount, and confirm. goBlink uses smart routing technology to find the fastest path across chains. Your tokens arrive in seconds — no bridges, no wrapping, no complexity.' },
     { q: 'Is it safe?', a: 'We never hold your tokens. You stay in control the entire time. Transfers use automatic price guarantees — and if a transfer can\'t complete for any reason, your tokens are automatically returned to you.' },
-    { q: 'What chains are supported?', a: '26 blockchains including Ethereum, Solana, NEAR, Bitcoin, Sui, Base, Arbitrum, Polygon, Aptos, Starknet, Tron, and many more. New chains are added regularly.' },
+    { q: 'What chains are supported?', a: '12 blockchains including Ethereum, Solana, NEAR, Bitcoin, Sui, Base, Arbitrum, Polygon, Aptos, Starknet, Tron, and many more. New chains are added regularly.' },
     { q: 'What are the fees?', a: 'Transparent tiered pricing: 0.35% for transfers under $5K, 0.10% for $5K–$50K, and 0.05% for transfers over $50K. Minimum fee is $0.50. Fees are shown upfront as a dollar amount before you confirm.' },
     { q: 'Do I need an account?', a: 'No. Just connect your wallet and transfer. No sign-up, no email, no KYC. Your wallet is your identity.' },
   ];
@@ -132,7 +132,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
           >
-            Transfer tokens across 26 blockchains in seconds.
+            Transfer tokens across 12 blockchains in seconds.
             One click, any chain, no bridges.
           </motion.p>
         </section>
@@ -200,7 +200,7 @@ export default function Home() {
         <section className="mb-20 max-w-3xl mx-auto">
           <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
             {[
-              { value: '26', label: 'Chains' },
+              { value: '12', label: 'Chains' },
               { value: '65', label: 'Tokens' },
               { value: '45', label: 'Avg. Transfer (s)' },
               { value: '100', label: '% Auto-Refund on Failure' },
@@ -227,7 +227,7 @@ export default function Home() {
         <ScrollReveal>
           <section className="mb-20">
             <h2 className="text-h2 text-center mb-3" style={{ color: 'var(--text-primary)' }}>
-              26 Chains. One Interface.
+              12 Chains. One Interface.
             </h2>
             <p className="text-body-sm text-center mb-6" style={{ color: 'var(--text-muted)' }}>
               Send from any connected chain. Receive on all of them.
