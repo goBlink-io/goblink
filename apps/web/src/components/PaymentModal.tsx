@@ -400,21 +400,26 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
 
                 {hasQuote && !quoting && (
                   <div className="space-y-3">
-                    {/* Cost breakdown */}
+                    {/* Cost breakdown — Line1 = Line3 − Line2 */}
                     {(() => {
-                      const totalUsd = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
-                      const feeUsd   = quote?.feeInfo?.usd    ? parseFloat(quote.feeInfo.usd)       : null;
-                      const baseUsd  = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd   : null;
-                      const feeBps   = quote?.feeInfo?.bps || 0;
-                      // Token amounts: split sendFormatted by fee ratio
+                      const sym        = fromToken?.symbol || '';
+                      const feeBps     = quote?.feeInfo?.bps    ? parseFloat(quote.feeInfo.bps)    : 0;
+                      const feePercent = quote?.feeInfo?.percent || '0';
+                      // Line 3 (total)
                       const totalTokens = parseFloat(sendFormatted) || 0;
-                      const baseTokens  = feeBps > 0 ? totalTokens * (10000 - feeBps) / 10000 : totalTokens;
-                      const feeTokens   = feeBps > 0 ? totalTokens * feeBps / 10000          : 0;
-                      const fmt = (n: number) => n < 0.0001 ? n.toFixed(8) : n.toPrecision(6).replace(/\.?0+$/, '');
-                      const sym = fromToken?.symbol || '';
+                      const totalUsd    = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
+                      // Line 2 (fee) — direct ratio so subtraction is exact
+                      const feeTokens   = feeBps > 0 ? totalTokens * feeBps / 10000 : 0;
+                      const feeUsd      = quote?.feeInfo?.usd ? parseFloat(quote.feeInfo.usd) : null;
+                      // Line 1 (base) — Line3 − Line2 exactly
+                      const baseTokens  = totalTokens - feeTokens;
+                      const baseUsd     = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd : null;
+                      // Consistent formatting: match decimal places of sendFormatted
+                      const decimals = (sendFormatted.split('.')[1] || '').length;
+                      const fmt = (n: number) => n.toFixed(decimals);
                       return (
                         <div className="space-y-1.5">
-                          {/* Line 1: Estimated swap cost */}
+                          {/* Line 1: Estimated cost (= total − fee) */}
                           <div className="flex items-center justify-between">
                             <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Estimated cost</span>
                             <div className="text-right">
@@ -428,11 +433,11 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                               )}
                             </div>
                           </div>
-                          {/* Line 2: Fee */}
+                          {/* Line 2: goBlink fee */}
                           {feeBps > 0 && (
                             <div className="flex items-center justify-between">
                               <span className="text-caption" style={{ color: 'var(--text-faint)' }}>
-                                goBlink fee ({quote.feeInfo.percent}%)
+                                goBlink fee ({feePercent}%)
                               </span>
                               <div className="text-right">
                                 <span className="text-body-sm" style={{ color: 'var(--text-faint)' }}>
@@ -446,7 +451,7 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                               </div>
                             </div>
                           )}
-                          {/* Line 3: Total */}
+                          {/* Line 3: Total you send */}
                           <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border)' }}>
                             <span className="text-caption font-semibold" style={{ color: 'var(--text-primary)' }}>You send</span>
                             <div className="text-right">
