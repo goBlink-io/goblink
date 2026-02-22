@@ -29,7 +29,7 @@ export async function GET(
     const message = error instanceof Error ? error.message : 'Unknown error';
     // Return 200 with null balance — RPC failures are transient and shouldn't
     // surface as 500 errors. The client will treat null as "balance unavailable".
-    console.warn(`[evm-token] RPC error for ${chain}/${address}:`, message);
+    console.warn('[evm-token] RPC error:', message);
     return NextResponse.json({ balance: null, balanceRaw: null, error: message }, { status: 200 });
   }
 }
