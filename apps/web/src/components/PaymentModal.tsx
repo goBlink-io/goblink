@@ -10,6 +10,7 @@ import { useWalletContext } from '@/contexts/WalletContext';
 import type { ChainType } from '@/contexts/WalletContext';
 import { getTokenBalance } from '@/lib/balances';
 import { filterTokens } from '@/lib/token-filters';
+import { formatTokenAmount as displayAmount } from '@/lib/format';
 
 // ── Supported chains (mirrors SwapForm) ──────────────────────────────────────
 const SUPPORTED_CHAINS = [
@@ -279,9 +280,12 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
   const canPreview = hasQuote && !!fromAddress;
 
   // Use amountInFormatted (API-computed) as primary; fall back to minAmountIn
-  const sendFormatted = quoteInner?.amountInFormatted
+  // formatTokenAmount caps floating-point precision to readable sig figs
+  const sendFormatted = displayAmount(
+    quoteInner?.amountInFormatted
     || (quoteInner?.minAmountIn && fromToken ? formatTokenAmount(quoteInner.minAmountIn, fromToken.decimals) : null)
-    || '?';
+    || '?'
+  );
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -414,9 +418,7 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                       // Line 1 (base) — Line3 − Line2 exactly
                       const baseTokens  = totalTokens - feeTokens;
                       const baseUsd     = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd : null;
-                      // Consistent formatting: match decimal places of sendFormatted
-                      const decimals = (sendFormatted.split('.')[1] || '').length;
-                      const fmt = (n: number) => n.toFixed(decimals);
+                      const fmt = (n: number) => displayAmount(n);
                       return (
                         <div className="space-y-1.5">
                           {/* Line 1: Estimated cost (= total − fee) */}
@@ -436,15 +438,15 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                           {/* Line 2: goBlink fee */}
                           {feeBps > 0 && (
                             <div className="flex items-center justify-between">
-                              <span className="text-caption" style={{ color: 'var(--text-faint)' }}>
+                              <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
                                 goBlink fee ({feePercent}%)
                               </span>
                               <div className="text-right">
-                                <span className="text-body-sm" style={{ color: 'var(--text-faint)' }}>
+                                <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
                                   {fmt(feeTokens)} {sym}
                                 </span>
                                 {feeUsd !== null && feeUsd > 0 && (
-                                  <span className="text-tiny ml-1" style={{ color: 'var(--text-faint)' }}>
+                                  <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
                                     ≈ ${feeUsd.toFixed(2)}
                                   </span>
                                 )}

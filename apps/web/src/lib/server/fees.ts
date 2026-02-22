@@ -49,8 +49,16 @@ export const calculateFeeBps = (amountUsd?: number): number => {
 export const getMinFeeUsd = (): number => MIN_FEE_USD;
 
 /**
+ * Maximum fee bps we will ever charge — prevents absurd percentages on
+ * tiny transfers when the $0.50 floor is applied.
+ * 300 bps = 3%.
+ */
+const MAX_FEE_BPS = 300;
+
+/**
  * Calculate the effective fee bps, ensuring the $0.50 floor is met.
- * If the percentage-based fee would be less than $0.50, bump bps up.
+ * The floor only kicks in for amounts ≥ $10 to avoid charging 25%+ on
+ * micro-transfers. The result is always capped at MAX_FEE_BPS (3%).
  */
 export const calculateEffectiveFeeBps = (amountUsd?: number): number => {
   if (amountUsd === undefined || amountUsd <= 0) {
@@ -58,16 +66,18 @@ export const calculateEffectiveFeeBps = (amountUsd?: number): number => {
   }
 
   const tierBps = calculateFeeBps(amountUsd);
-  const feeUsd = amountUsd * (tierBps / 10000);
 
-  if (feeUsd < MIN_FEE_USD && amountUsd > 0) {
-    // Calculate bps needed to reach the $0.50 floor
-    // bps = (minFeeUsd / amountUsd) * 10000
-    const floorBps = Math.ceil((MIN_FEE_USD / amountUsd) * 10000);
-    return Math.max(tierBps, floorBps);
+  // Only apply the $0.50 minimum floor for amounts ≥ $10.
+  // Below that, the percentage alone would make the fee unreasonably large.
+  if (amountUsd >= 10) {
+    const feeUsd = amountUsd * (tierBps / 10000);
+    if (feeUsd < MIN_FEE_USD) {
+      const floorBps = Math.ceil((MIN_FEE_USD / amountUsd) * 10000);
+      return Math.min(Math.max(tierBps, floorBps), MAX_FEE_BPS);
+    }
   }
 
-  return tierBps;
+  return Math.min(tierBps, MAX_FEE_BPS);
 };
 
 /**
