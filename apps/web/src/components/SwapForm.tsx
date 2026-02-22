@@ -26,14 +26,12 @@ const SUPPORTED_CHAINS = [
   { id: 'berachain', name: 'Berachain', type: 'evm' as const },
   { id: 'bsc', name: 'BNB Chain', type: 'evm' as const },
   { id: 'ethereum', name: 'Ethereum', type: 'evm' as const },
-  { id: 'monad', name: 'Monad', type: 'evm' as const },
   { id: 'near', name: 'NEAR', type: 'near' as const },
   { id: 'optimism', name: 'Optimism', type: 'evm' as const },
   { id: 'polygon', name: 'Polygon', type: 'evm' as const },
   { id: 'solana', name: 'Solana', type: 'solana' as const },
   { id: 'starknet', name: 'Starknet', type: 'starknet' as const },
   { id: 'sui', name: 'Sui', type: 'sui' as const },
-  { id: 'ton', name: 'TON', type: 'ton' as const },
   { id: 'tron', name: 'Tron', type: 'tron' as const },
 ] as const;
 
