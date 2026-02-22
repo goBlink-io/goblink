@@ -225,7 +225,11 @@ export async function sendSuiTransaction(
 
     // Check if it's native SUI or custom token.
     // Accepts both short form (0x2::sui::SUI from token assetId) and full form (from contractAddress).
-    const isNativeSui = tokenAddress === 'native' || tokenAddress === 'sui' ||
+    // A valid Sui Move coin type always contains '::' (e.g. 0xpackage::module::Type).
+    // If tokenAddress has no '::' — e.g. it's in Defuse/NEAR Intents format like
+    // "nep141:sui.omft.near", or generic strings like "native"/"sui" — treat it as
+    // native SUI. This prevents getCoins() being called with an invalid coin type.
+    const isNativeSui = !tokenAddress.includes('::') ||
                         tokenAddress === '0x2::sui::SUI' ||
                         tokenAddress === '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
 

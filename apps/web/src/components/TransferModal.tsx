@@ -244,11 +244,12 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         setConfirmationStep('Approve in your Sui wallet...');
         // Use the native Sui coin type from token metadata — NOT quoteRequest.originAsset,
         // which is in Defuse/NEAR Intents format (e.g. "nep141:sui.omft.near") and is
-        // meaningless to the Sui wallet. originTokenMetadata.contractAddress holds the
-        // actual Sui Move coin type (e.g. "0x0000...::sui::SUI" for native SUI).
-        const suiTokenAddress = originTokenMetadata?.contractAddress ||
-                                originTokenMetadata?.address ||
-                                '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
+        // meaningless to the Sui wallet. A valid Sui coin type must contain '::'.
+        // If contractAddress is a nep141:/Defuse ID (no '::'), fall back to native SUI.
+        const rawSuiAddr = originTokenMetadata?.contractAddress || originTokenMetadata?.address || '';
+        const suiTokenAddress = (rawSuiAddr && rawSuiAddr.includes('::'))
+          ? rawSuiAddr
+          : '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI';
         const txHash = await sendSuiTransaction({
           chain: 'sui', tokenAddress: suiTokenAddress, recipientAddress: depAddr,
           amount: quoteRequest.amount, decimals: originTokenMetadata?.decimals || 9,
