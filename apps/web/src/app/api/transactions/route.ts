@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
       feeBps,
       feeAmount,
       quoteId,
+      source,
+      paymentRequestId,
     } = body;
 
     // Validate required fields
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
       feeBps,
       feeAmount,
       quoteId,
+      source,
+      paymentRequestId,
     });
 
     if (!result.success) {

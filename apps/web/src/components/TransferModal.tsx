@@ -9,6 +9,7 @@ import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
 import { formatTokenAmount } from '@/lib/format';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy, ChevronDown, HelpCircle } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
@@ -34,7 +35,8 @@ interface TransactionData {
 }
 
 export default function TransferModal({ quote, onClose, onComplete, onOutcome }: TransferModalProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo, source, paymentRequestId } = quote;
+  const { getAddressForChain } = useWalletContext();
 
   const [step, setStep] = useState<ModalStep>('preview');
   const [confirmationStep, setConfirmationStep] = useState('');
@@ -176,16 +178,30 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       const depAddr = actualQuote.depositAddress || actualQuote.quote?.depositAddress || actualQuote.address;
       if (!depAddr) throw new Error('No transfer address in response');
 
-      // For EXACT_OUTPUT swaps, the wallet must send the INPUT amount, NOT quoteRequest.amount
-      // (which is the desired output amount in the destination token's atomic units).
-      // Preference: maxAmountIn (EXACT_OUTPUT upper bound) → amountIn (always present) → fallback
-      // Both maxAmountIn and amountIn live on actualQuote.quote (QuoteResponse.quote = Quote type).
-      const sendAmount: string =
+      // For EXACT_OUTPUT swaps: the 1Click API returns amountIn as the base swap cost.
+      // The app fee (feeBps) is deducted from the deposit before the swap, so we must
+      // send amountIn × (10000 + feeBps) / 10000 to ensure the swap receives the full amount.
+      // Any overpayment beyond maxAmountIn is automatically refunded by the protocol.
+      const baseAmountIn: string =
         actualQuote.quote?.maxAmountIn ||
         actualQuote.quote?.amountIn ||
         actualQuote.maxAmountIn ||
         actualQuote.amountIn ||
         quoteRequest.amount;
+
+      let sendAmount = baseAmountIn;
+      if (quoteRequest.swapType === 'EXACT_OUTPUT' && feeInfo?.bps) {
+        try {
+          const feeBps = parseInt(String(feeInfo.bps), 10);
+          if (feeBps > 0) {
+            const base = BigInt(baseAmountIn);
+            sendAmount = ((base * BigInt(10000 + feeBps)) / BigInt(10000)).toString();
+          }
+        } catch {
+          // fallback to base if BigInt fails (e.g. non-integer string)
+          sendAmount = baseAmountIn;
+        }
+      }
 
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
@@ -196,8 +212,11 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           let walletAddress = '';
           let walletChain = originChain || '';
 
-          // Get wallet address based on chain
-          if (originChain === 'sui' && currentAccount) {
+          if (originChain === 'near') {
+            // Use wallet context to get NEAR address
+            walletAddress = getAddressForChain('near') || quoteRequest.refundTo || '';
+            walletChain = 'near';
+          } else if (originChain === 'sui' && currentAccount) {
             walletAddress = currentAccount.address;
             walletChain = 'sui';
           } else if (originChain === 'solana' && solanaProvider?.publicKey) {
@@ -210,7 +229,6 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
               walletChain = originChain || 'ethereum';
             }
           }
-          // For NEAR, we'll log without wallet address for now (can be added later)
 
           if (walletAddress) {
             await fetch('/api/transactions', {
@@ -231,6 +249,9 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 feeBps: feeInfo?.bps,
                 feeAmount: feeInfo?.amount,
                 amountUsd: feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : undefined,
+                // Payment modal metadata
+                ...(source && { source }),
+                ...(paymentRequestId && { paymentRequestId }),
               }),
             }).catch(err => console.error('Failed to log transaction:', err));
           }

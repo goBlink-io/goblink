@@ -269,6 +269,9 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
       fromChain: fromChainId,
       toChain: data.toChain,
       feeInfo: quote.feeInfo || null,
+      // Tag as payment modal transaction for logging/support
+      source: 'payment',
+      paymentRequestId: `${data.recipient}:${data.toChain}:${data.toToken}:${data.amount}`,
     });
   };
 
@@ -409,19 +412,20 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                       const sym        = fromToken?.symbol || '';
                       const feeBps     = quote?.feeInfo?.bps    ? parseFloat(quote.feeInfo.bps)    : 0;
                       const feePercent = quote?.feeInfo?.percent || '0';
-                      // Line 3 (total)
-                      const totalTokens = parseFloat(sendFormatted) || 0;
-                      const totalUsd    = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
-                      // Line 2 (fee) — direct ratio so subtraction is exact
-                      const feeTokens   = feeBps > 0 ? totalTokens * feeBps / 10000 : 0;
-                      const feeUsd      = quote?.feeInfo?.usd ? parseFloat(quote.feeInfo.usd) : null;
-                      // Line 1 (base) — Line3 − Line2 exactly
-                      const baseTokens  = totalTokens - feeTokens;
-                      const baseUsd     = (totalUsd !== null && feeUsd !== null) ? totalUsd - feeUsd : null;
+                      // amountIn from the API is the BASE swap cost (fee not yet added)
+                      // Line 1: base = amountInFormatted from the API
+                      const baseTokens = parseFloat(sendFormatted) || 0;
+                      const baseUsd    = quoteInner?.amountInUsd ? parseFloat(quoteInner.amountInUsd) : null;
+                      // Line 2: fee on top of base
+                      const feeTokens  = feeBps > 0 ? baseTokens * feeBps / 10000 : 0;
+                      const feeUsd     = quote?.feeInfo?.usd ? parseFloat(quote.feeInfo.usd) : null;
+                      // Line 3: total = base + fee (this is what goes to the wallet)
+                      const totalTokens = baseTokens + feeTokens;
+                      const totalUsd    = (baseUsd !== null && feeUsd !== null) ? baseUsd + feeUsd : baseUsd;
                       const fmt = (n: number) => displayAmount(n);
                       return (
                         <div className="space-y-1.5">
-                          {/* Line 1: Estimated cost (= total − fee) */}
+                          {/* Line 1: Estimated swap cost (API amountIn = base before fee) */}
                           <div className="flex items-center justify-between">
                             <span className="text-caption" style={{ color: 'var(--text-muted)' }}>Estimated cost</span>
                             <div className="text-right">
@@ -435,7 +439,7 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                               )}
                             </div>
                           </div>
-                          {/* Line 2: goBlink fee */}
+                          {/* Line 2: goBlink fee added on top */}
                           {feeBps > 0 && (
                             <div className="flex items-center justify-between">
                               <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
@@ -453,12 +457,12 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
                               </div>
                             </div>
                           )}
-                          {/* Line 3: Total you send */}
+                          {/* Line 3: Total = base + fee (matches what wallet will request) */}
                           <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border)' }}>
                             <span className="text-caption font-semibold" style={{ color: 'var(--text-primary)' }}>You send</span>
                             <div className="text-right">
                               <span className="font-bold text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                                {sendFormatted} {sym}
+                                {fmt(totalTokens)} {sym}
                               </span>
                               {totalUsd !== null && (
                                 <span className="text-tiny ml-1" style={{ color: 'var(--text-muted)' }}>
