@@ -21,7 +21,7 @@ interface TransferModalProps {
   quote: any;
   onClose: () => void;
   onComplete: (depositAddress: string, txHash?: string) => void;
-  onOutcome?: (success: boolean) => void;
+  onOutcome?: (result: { status: string; fulfillmentTxHash?: string }) => void;
 }
 
 interface TransactionData {
@@ -107,7 +107,10 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         if (!outcomeLogged) {
           setOutcomeLogged(true);
           const isSuccess = data.status === 'COMPLETED' || data.status === 'SUCCESS';
-          onOutcome?.(isSuccess);
+          onOutcome?.({
+            status: isSuccess ? 'success' : data.status.toLowerCase(),
+            fulfillmentTxHash: data.fulfillmentTxHash || data.destinationTxHash || undefined,
+          });
           const durationSecs = data.createdAt && data.updatedAt
             ? Math.round((new Date(data.updatedAt).getTime() - new Date(data.createdAt).getTime()) / 1000)
             : null;

@@ -387,7 +387,7 @@ export default function Home() {
             quote={quoteData}
             onClose={handleCloseModal}
             onComplete={handleTransferComplete}
-            onOutcome={(success: boolean) => updateLastRecordSuccess(success)}
+            onOutcome={(result) => updateLastRecordSuccess(result.status === 'success')}
           />
         </ErrorBoundary>
       )}

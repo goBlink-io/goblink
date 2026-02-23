@@ -46,5 +46,5 @@ export default async function PayFulfillPage({ params }: PageProps) {
   const data = decodePaymentRequest(id);
   const toLogo = data ? getChainLogo(data.toChain) : null;
 
-  return <PayFulfillClient data={data} toLogo={toLogo} />;
+  return <PayFulfillClient data={data} toLogo={toLogo} linkId={id} />;
 }
