@@ -176,10 +176,16 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       const depAddr = actualQuote.depositAddress || actualQuote.quote?.depositAddress || actualQuote.address;
       if (!depAddr) throw new Error('No transfer address in response');
 
-      // For EXACT_OUTPUT swaps, the wallet must send maxAmountIn (the input amount),
-      // NOT quoteRequest.amount (which is the desired output amount).
-      // maxAmountIn is on the nested actualQuote.quote object (QuoteResponse.quote = Quote type).
-      const sendAmount: string = actualQuote.quote?.maxAmountIn || actualQuote.maxAmountIn || quoteRequest.amount;
+      // For EXACT_OUTPUT swaps, the wallet must send the INPUT amount, NOT quoteRequest.amount
+      // (which is the desired output amount in the destination token's atomic units).
+      // Preference: maxAmountIn (EXACT_OUTPUT upper bound) → amountIn (always present) → fallback
+      // Both maxAmountIn and amountIn live on actualQuote.quote (QuoteResponse.quote = Quote type).
+      const sendAmount: string =
+        actualQuote.quote?.maxAmountIn ||
+        actualQuote.quote?.amountIn ||
+        actualQuote.maxAmountIn ||
+        actualQuote.amountIn ||
+        quoteRequest.amount;
 
       setDepositAddress(depAddr);
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
