@@ -1,31 +1,72 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SwapStatus } from '@goblink/shared';
+import { Check, X, Clock } from 'lucide-react';
 
 interface StatusTrackerProps {
   depositAddress: string;
   onReset: () => void;
 }
 
+// Cycling reassurance messages for each status phase
+const REASSURANCE_MESSAGES: Record<string, string[]> = {
+  PENDING_DEPOSIT: [
+    'Waiting for your deposit to arrive...',
+    'Monitoring the source chain for your transaction...',
+    'Your deposit address is ready — funds will be detected automatically.',
+  ],
+  PENDING_QUOTE: [
+    'Preparing the best route for your transfer...',
+    'Calculating optimal execution path...',
+    'Finding the best price across protocols...',
+  ],
+  PROCESSING: [
+    'Executing your transfer...',
+    'Bridging assets to the destination chain...',
+    'Almost there — finalizing on the destination chain...',
+    'Confirming the transaction on-chain...',
+    'Your tokens are on the way...',
+  ],
+};
+
 export default function StatusTracker({ depositAddress, onReset }: StatusTrackerProps) {
   const [status, setStatus] = useState<SwapStatus>('PENDING_DEPOSIT');
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
+  const [reassuranceIdx, setReassuranceIdx] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const startTime = useRef(Date.now());
+
+  // Elapsed time counter
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Cycle reassurance messages every 6 seconds
+  useEffect(() => {
+    const messages = REASSURANCE_MESSAGES[status];
+    if (!messages) return;
+
+    const interval = setInterval(() => {
+      setReassuranceIdx((prev) => (prev + 1) % messages.length);
+    }, 6000);
+
+    // Reset index when status changes
+    setReassuranceIdx(0);
+    return () => clearInterval(interval);
+  }, [status]);
 
   useEffect(() => {
-    if (depositAddress) {
-      // Poll for status updates every 5 seconds
-      const interval = setInterval(() => {
-        fetchStatus();
-      }, 5000);
+    if (!depositAddress) return;
 
-      // Initial fetch
-      fetchStatus();
-
-      return () => clearInterval(interval);
-    }
-  }, [depositAddress]);
+    const interval = setInterval(fetchStatus, 5000);
+    fetchStatus();
+    return () => clearInterval(interval);
+  }, [depositAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStatus = async () => {
     if (!depositAddress) return;
@@ -33,12 +74,10 @@ export default function StatusTracker({ depositAddress, onReset }: StatusTracker
     setLoading(true);
     try {
       const response = await fetch(`/api/status/${depositAddress}`);
-      
+
       if (!response.ok) {
-        // 404 = explorer hasn't indexed yet OR JWT not set — silent retry, not an error
-        if (response.status === 404 || response.status === 503) {
-          return;
-        }
+        // 404 = explorer hasn't indexed yet, 503 = service temp unavailable — silent retry
+        if (response.status === 404 || response.status === 503) return;
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch status');
       }
@@ -48,216 +87,263 @@ export default function StatusTracker({ depositAddress, onReset }: StatusTracker
       setError(null);
     } catch (err: any) {
       console.error('Status fetch error:', err);
-      setError(err.message || 'Failed to fetch status. Check your connection.');
+      setError(err.message || 'Connection issue — still tracking your transfer.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (currentStatus: SwapStatus) => {
-    switch (currentStatus) {
-      case 'PENDING_DEPOSIT':
+  const isTerminal = status === 'SUCCESS' || status === 'FAILED' || status === 'REFUNDED';
+  const reassuranceMessages = REASSURANCE_MESSAGES[status];
+  const currentReassurance = reassuranceMessages ? reassuranceMessages[reassuranceIdx] : null;
+
+  // Timeline step definitions
+  const steps = [
+    { key: 'quote', label: 'Quote received', sub: 'Deposit address generated' },
+    { key: 'deposit', label: 'Deposit detected', sub: 'Funds received on source chain' },
+    { key: 'processing', label: 'Processing transfer', sub: 'Bridging to destination chain' },
+    { key: 'complete', label: 'Complete', sub: 'Tokens delivered' },
+  ];
+
+  const getStepState = (stepKey: string): 'done' | 'active' | 'pending' => {
+    switch (status) {
       case 'PENDING_QUOTE':
-        return 'text-yellow-600 bg-yellow-100';
+        return stepKey === 'quote' ? 'active' : 'pending';
+      case 'PENDING_DEPOSIT':
+        if (stepKey === 'quote') return 'done';
+        if (stepKey === 'deposit') return 'active';
+        return 'pending';
       case 'PROCESSING':
-        return 'text-blue-600 bg-blue-100';
+        if (stepKey === 'quote' || stepKey === 'deposit') return 'done';
+        if (stepKey === 'processing') return 'active';
+        return 'pending';
       case 'SUCCESS':
-        return 'text-green-600 bg-green-100';
+        return 'done';
       case 'FAILED':
       case 'REFUNDED':
-        return 'text-red-600 bg-red-100';
+        if (stepKey === 'quote' || stepKey === 'deposit') return 'done';
+        if (stepKey === 'processing') return 'done';
+        return 'pending';
       case 'INCOMPLETE_DEPOSIT':
-        return 'text-orange-600 bg-orange-100';
+        if (stepKey === 'quote') return 'done';
+        if (stepKey === 'deposit') return 'active';
+        return 'pending';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'pending';
     }
   };
 
-  const getStatusIcon = (currentStatus: SwapStatus) => {
-    switch (currentStatus) {
-      case 'SUCCESS':
-        return (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'FAILED':
-      case 'REFUNDED':
-        return (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'PROCESSING':
-        return (
-          <svg className="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-    }
-  };
-
-  const getStatusMessage = (currentStatus: SwapStatus) => {
-    switch (currentStatus) {
-      case 'PENDING_QUOTE':
-        return 'Preparing quote...';
-      case 'PENDING_DEPOSIT':
-        return 'Waiting for deposit...';
-      case 'PROCESSING':
-        return 'Swap in progress...';
-      case 'SUCCESS':
-        return 'Swap completed successfully!';
-      case 'FAILED':
-        return 'Swap failed';
-      case 'REFUNDED':
-        return 'Swap refunded';
-      case 'INCOMPLETE_DEPOSIT':
-        return 'Incomplete deposit';
-      default:
-        return 'Unknown status';
-    }
+  const formatElapsed = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
   };
 
   return (
-    <div className="card p-6">
+    <div className="card p-5 sm:p-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold">Swap Status</h3>
+        <h3 className="text-h3">Transfer Status</h3>
         <button
           onClick={onReset}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="btn-ghost text-body-sm"
+          style={{ color: 'var(--text-muted)' }}
         >
           ← Back
         </button>
       </div>
 
-      {/* Status Display */}
-      <div className="flex flex-col items-center py-8">
-        <div className={`rounded-full p-4 ${getStatusColor(status)}`}>
-          {getStatusIcon(status)}
+      {/* Main Status Display */}
+      <div className="flex flex-col items-center py-6 mb-6">
+        {/* Status Icon */}
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+          style={{
+            background: status === 'SUCCESS'
+              ? 'var(--success-bg)'
+              : (status === 'FAILED' || status === 'REFUNDED')
+                ? 'var(--error-bg)'
+                : 'var(--info-bg)',
+          }}
+        >
+          {status === 'SUCCESS' ? (
+            <Check className="h-8 w-8" style={{ color: 'var(--success)' }} />
+          ) : status === 'FAILED' || status === 'REFUNDED' ? (
+            <X className="h-8 w-8" style={{ color: 'var(--error)' }} />
+          ) : (
+            <svg className="h-8 w-8 animate-spin" style={{ color: 'var(--brand)' }} fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          )}
         </div>
-        <h4 className="mt-4 text-2xl font-bold text-gray-900">
-          {getStatusMessage(status)}
+
+        {/* Status Title */}
+        <h4 className="text-h4 mb-1" style={{ color: 'var(--text-primary)' }}>
+          {status === 'SUCCESS' && '🎉 Transfer Complete!'}
+          {status === 'FAILED' && 'Transfer Failed'}
+          {status === 'REFUNDED' && 'Transfer Refunded'}
+          {status === 'PROCESSING' && 'Transfer in Progress'}
+          {status === 'PENDING_DEPOSIT' && 'Awaiting Deposit'}
+          {status === 'PENDING_QUOTE' && 'Preparing Transfer'}
+          {status === 'INCOMPLETE_DEPOSIT' && 'Incomplete Deposit'}
+          {!['SUCCESS', 'FAILED', 'REFUNDED', 'PROCESSING', 'PENDING_DEPOSIT', 'PENDING_QUOTE', 'INCOMPLETE_DEPOSIT'].includes(status) && 'Tracking Transfer'}
         </h4>
-        <p className="mt-2 text-gray-600">
-          {loading && 'Checking status...'}
-          {error && <span className="text-red-600">{error}</span>}
-        </p>
+
+        {/* Cycling reassurance text */}
+        {currentReassurance && (
+          <p
+            className="text-body-sm text-center transition-opacity duration-500"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {currentReassurance}
+          </p>
+        )}
+
+        {/* Elapsed time badge */}
+        {!isTerminal && (
+          <div
+            className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-tiny font-medium"
+            style={{ background: 'var(--elevated)', color: 'var(--text-muted)' }}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            {formatElapsed(elapsedSeconds)}
+          </div>
+        )}
       </div>
 
-      {/* Deposit Address */}
+      {/* Timeline Stepper */}
+      <div className="space-y-0 mb-6">
+        {steps.map((step, idx) => {
+          const state = getStepState(step.key);
+          return (
+            <div key={step.key} className="flex items-start gap-3">
+              {/* Vertical connector + dot */}
+              <div className="flex flex-col items-center">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: state === 'done'
+                      ? 'var(--success)'
+                      : state === 'active'
+                        ? 'var(--brand)'
+                        : 'var(--elevated)',
+                    border: state === 'pending' ? '2px solid var(--border)' : 'none',
+                  }}
+                >
+                  {state === 'done' ? (
+                    <Check className="h-4 w-4 text-white" />
+                  ) : state === 'active' ? (
+                    <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full" style={{ background: 'var(--text-faint)' }} />
+                  )}
+                </div>
+                {idx < steps.length - 1 && (
+                  <div
+                    className="w-0.5 h-8"
+                    style={{
+                      background: state === 'done' ? 'var(--success)' : 'var(--border)',
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Step text */}
+              <div className="pt-0.5 pb-3">
+                <p
+                  className="text-body-sm font-medium"
+                  style={{
+                    color: state === 'pending' ? 'var(--text-faint)' : 'var(--text-primary)',
+                  }}
+                >
+                  {step.label}
+                </p>
+                <p className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                  {step.sub}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Deposit Address — collapsible detail */}
       {depositAddress && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div
+          className="p-3 rounded-xl mb-5"
+          style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+        >
+          <label className="block text-tiny font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
             Deposit Address
           </label>
-          <div className="flex items-center space-x-2">
-            <code className="flex-1 text-sm bg-white p-2 rounded border break-all">
+          <div className="flex items-center gap-2">
+            <code
+              className="flex-1 text-tiny font-mono break-all"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               {depositAddress}
             </code>
             <button
               onClick={() => navigator.clipboard.writeText(depositAddress)}
-              className="btn btn-secondary px-3 py-2"
+              className="btn-ghost px-2 py-1 text-tiny flex-shrink-0"
               title="Copy to clipboard"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
+              Copy
             </button>
           </div>
         </div>
       )}
 
-      {/* Status Timeline */}
-      <div className="space-y-4">
-        <h5 className="font-semibold text-gray-900">Timeline</h5>
-        
-        {/* Quote Received */}
-        <div className="flex items-start">
-          <div className={`mt-1 rounded-full p-1 ${status === 'PENDING_QUOTE' || status === 'PENDING_DEPOSIT' || status === 'PROCESSING' || status === 'SUCCESS' ? 'bg-green-500' : 'bg-gray-300'}`}>
-            <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">Quote received</p>
-            <p className="text-xs text-gray-500">Deposit address generated</p>
-          </div>
+      {/* Error Display */}
+      {error && (
+        <div
+          className="p-3 rounded-xl mb-5 flex items-start gap-2"
+          style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning)', color: 'var(--warning-text)' }}
+        >
+          <svg className="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+          </svg>
+          <p className="text-body-sm">{error}</p>
         </div>
+      )}
 
-        {/* Deposit Pending */}
-        <div className="flex items-start">
-          <div className={`mt-1 rounded-full p-1 ${status === 'PROCESSING' || status === 'SUCCESS' ? 'bg-green-500' : status === 'PENDING_DEPOSIT' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-300'}`}>
-            {status === 'PROCESSING' || status === 'SUCCESS' ? (
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <div className="h-4 w-4" />
-            )}
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">Awaiting deposit</p>
-            <p className="text-xs text-gray-500">Send funds to the deposit address</p>
-          </div>
-        </div>
-
-        {/* Processing */}
-        <div className="flex items-start">
-          <div className={`mt-1 rounded-full p-1 ${status === 'SUCCESS' ? 'bg-green-500' : status === 'PROCESSING' ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}>
-            {status === 'SUCCESS' ? (
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <div className="h-4 w-4" />
-            )}
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">Processing swap</p>
-            <p className="text-xs text-gray-500">Executing cross-chain transfer</p>
-          </div>
-        </div>
-
-        {/* Complete */}
-        <div className="flex items-start">
-          <div className={`mt-1 rounded-full p-1 ${status === 'SUCCESS' ? 'bg-green-500' : 'bg-gray-300'}`}>
-            {status === 'SUCCESS' && (
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            )}
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">Complete</p>
-            <p className="text-xs text-gray-500">Tokens received</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Button */}
+      {/* Action Buttons */}
       {status === 'SUCCESS' && (
         <button
           onClick={onReset}
-          className="btn btn-primary w-full mt-6 py-3"
+          className="btn btn-primary w-full h-12 text-body-sm"
         >
-          Start New Swap
+          Start New Transfer
         </button>
       )}
 
       {(status === 'FAILED' || status === 'REFUNDED') && (
-        <button
-          onClick={onReset}
-          className="btn btn-secondary w-full mt-6 py-3"
-        >
-          Try Again
-        </button>
+        <div className="space-y-3">
+          {status === 'FAILED' && (
+            <div
+              className="p-3 rounded-xl text-body-sm"
+              style={{ background: 'var(--error-bg)', color: 'var(--error-text)' }}
+            >
+              The transfer could not be completed. Your funds will be refunded to your return address if they were deposited.
+            </div>
+          )}
+          {status === 'REFUNDED' && (
+            <div
+              className="p-3 rounded-xl text-body-sm"
+              style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}
+            >
+              Your funds have been refunded to your return address.
+            </div>
+          )}
+          <button
+            onClick={onReset}
+            className="btn btn-secondary w-full h-12 text-body-sm"
+          >
+            Try Again
+          </button>
+        </div>
       )}
     </div>
   );
