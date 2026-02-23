@@ -175,7 +175,9 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
   }
 
   // ── Processing ───────────────────────────────────────────────────────────────
-  if (linkStatus.status === 'processing') {
+  // Don't short-circuit while the modal is open — TransferModal needs to stay
+  // mounted so it can call onOutcome → onPaymentConfirmed → promote to 'paid'.
+  if (linkStatus.status === 'processing' && !modalOpen) {
     return (
       <StatusCard
         icon={<Loader2 className="h-12 w-12 animate-spin" style={{ color: 'var(--brand)' }} />}
