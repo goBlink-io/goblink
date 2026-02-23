@@ -111,105 +111,111 @@ export default function Home() {
              ABOVE THE FOLD: tagline + swap card + trust bar
              ═══════════════════════════════════════════════ */}
 
-        {/* ═══ Hero ═══ — compact so swap card is visible on load */}
-        <section className="text-center mb-6 sm:mb-8 pt-2">
-          <motion.h1
-            className="text-hero mb-3"
-            style={{ color: 'var(--text-primary)' }}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-          >
-            Move Value Anywhere,{' '}
-            <span className="text-gradient">Instantly</span>
-          </motion.h1>
-          <motion.p
-            className="text-body-lg max-w-xl mx-auto"
-            style={{ color: 'var(--text-secondary)' }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
-          >
-            Transfer tokens across 12 blockchains in seconds.
-            One click, any chain, no bridges.
-          </motion.p>
-        </section>
+        {/* ═══ Hero — asymmetric: copy left, swap card right ═══ */}
+        <section className="mb-12 sm:mb-16 pt-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* Left — copy block */}
+            <motion.div
+              className="pt-2 lg:pt-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+              <h1
+                className="text-hero mb-4 text-left"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Move value anywhere.{' '}
+                <span style={{ color: 'var(--brand)' }}>One click.</span>
+              </h1>
+              <p
+                className="text-body-lg mb-6 max-w-md"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                12 chains. 65+ tokens. No bridges, no wrapping, no waiting. Just transfers that work.
+              </p>
 
-        {/* ═══ Swap Card — the unmistakable focal point ═══ */}
-        <motion.section
-          className="max-w-[480px] mx-auto mb-5"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
-        >
-          <FirstVisitBanner />
-          <ErrorBoundary fallbackMessage="We couldn't load the transfer form. Please refresh the page.">
-            <SwapForm
-              onQuoteReceived={handleQuoteReceived}
-              refreshKey={balanceRefreshKey}
-              onSwapInitiated={() => {}}
-            />
-          </ErrorBoundary>
-        </motion.section>
+              {/* Trust signals — left-aligned, stacked */}
+              <div className="flex flex-col gap-3 mb-6">
+                <div className="flex items-center gap-2.5">
+                  <Shield className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Non-custodial — your keys, always</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Zap className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Avg. transfer: 45 seconds</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <DollarSign className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>100% auto-refund on failure</span>
+                </div>
+              </div>
 
-        {/* ═══ Trust Bar — right below swap card, still above fold ═══ */}
-        <motion.section
-          className="mb-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-        >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 px-4 py-3 sm:py-3 rounded-2xl sm:rounded-full mx-auto max-w-fit" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
-              <span className="text-xs sm:text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>Non-custodial — your keys, your tokens</span>
-            </div>
-            <div className="hidden sm:block w-px h-4" style={{ background: 'var(--border)' }} />
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
-              <span className="text-xs sm:text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>No bridges. No waiting.</span>
-            </div>
+              {/* Social proof — tucked under trust signals */}
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-tiny font-medium"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Active now · Last transfer: {lastTransferSecs}s ago
+              </div>
+            </motion.div>
+
+            {/* Right — swap card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+              <FirstVisitBanner />
+              <ErrorBoundary fallbackMessage="We couldn't load the transfer form. Please refresh the page.">
+                <SwapForm
+                  onQuoteReceived={handleQuoteReceived}
+                  refreshKey={balanceRefreshKey}
+                  onSwapInitiated={() => {}}
+                />
+              </ErrorBoundary>
+            </motion.div>
           </div>
-        </motion.section>
+        </section>
 
         {/* ══════════════════════════════════════
              BELOW THE FOLD
              ══════════════════════════════════════ */}
 
-        {/* ═══ Social Proof Counter ═══ */}
-        <motion.section
-          className="flex justify-center mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-            style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
-          >
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span>Active now</span>
-            <span style={{ color: 'var(--border)' }}>·</span>
-            <span>Last transfer: {lastTransferSecs}s ago</span>
-          </div>
-        </motion.section>
-
-        {/* ═══ Stats Bar ═══ */}
+        {/* ═══ Stats — varied sizes: one hero stat, three supporting ═══ */}
         <section className="mb-20 max-w-3xl mx-auto">
-          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Hero stat — larger */}
+            <StaggerItem>
+              <div
+                className="sm:row-span-2 rounded-2xl p-6 flex flex-col justify-center"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+              >
+                <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-1" style={{ color: 'var(--brand)' }}>
+                  <AnimatedCounter value="12" />
+                </div>
+                <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>Chains connected</div>
+                <div className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>Ethereum, Solana, NEAR, Sui, Base, and 7 more</div>
+              </div>
+            </StaggerItem>
+
+            {/* Supporting stats — compact row */}
             {[
-              { value: '12', label: 'Chains' },
-              { value: '65', label: 'Tokens' },
-              { value: '45', label: 'Avg. Transfer (s)' },
-              { value: '100', label: '% Auto-Refund on Failure' },
+              { value: '65', suffix: '+', label: 'Tokens', sub: 'Cross-chain, any pair' },
+              { value: '45', suffix: 's', label: 'Avg. Transfer', sub: 'Send to delivery' },
+              { value: '100', suffix: '%', label: 'Auto-Refund', sub: 'If anything fails' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
-                <div className="text-center">
-                  <div className="stat-value text-gradient">
-                    <AnimatedCounter value={stat.value} />
-                    {stat.value === '65' ? '+' : stat.value === '45' ? 's' : stat.value === '100' ? '%' : ''}
+                <div
+                  className="rounded-2xl p-5"
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+                >
+                  <div className="text-2xl font-extrabold tracking-tight mb-0.5" style={{ color: 'var(--text-primary)' }}>
+                    <AnimatedCounter value={stat.value} />{stat.suffix}
                   </div>
-                  <div className="text-caption mt-1" style={{ color: 'var(--text-muted)' }}>{stat.label}</div>
+                  <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{stat.label}</div>
+                  <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>{stat.sub}</div>
                 </div>
               </StaggerItem>
             ))}
@@ -224,40 +230,45 @@ export default function Home() {
         {/* ═══ Supported Chains — auto-scrolling ticker ═══ */}
         <ScrollReveal>
           <section className="mb-20">
-            <h2 className="text-h2 text-center mb-3" style={{ color: 'var(--text-primary)' }}>
-              12 Chains. One Interface.
+            <h2 className="text-h2 mb-3 max-w-3xl mx-auto" style={{ color: 'var(--text-primary)' }}>
+              12 chains. One interface.
             </h2>
-            <p className="text-body-sm text-center mb-6" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-body-sm mb-6 max-w-3xl mx-auto" style={{ color: 'var(--text-muted)' }}>
               Send from any connected chain. Receive on all of them.
             </p>
             <ChainTicker />
           </section>
         </ScrollReveal>
 
-        {/* ═══ How It Works ═══ */}
+        {/* ═══ How It Works — horizontal numbered steps ═══ */}
         <section className="mb-20 max-w-3xl mx-auto">
           <ScrollReveal>
-            <h2 className="text-h2 text-center mb-10" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-h2 mb-10" style={{ color: 'var(--text-primary)' }}>
               Three steps. That&apos;s it.
             </h2>
           </ScrollReveal>
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {[
-              { step: '1', title: 'Pick your tokens', desc: 'Choose what you\'re sending and what you want to receive. Any chain, any token.' },
-              { step: '2', title: 'Confirm', desc: 'Review the quote with transparent fees. Approve in your wallet.' },
-              { step: '3', title: 'Done', desc: 'Tokens arrive in seconds. Track the transfer in real-time.' },
+              { step: '1', title: 'Pick your tokens', desc: 'Choose what you\'re sending and what you want to receive. Any chain, any token. Balances show automatically when your wallet is connected.' },
+              { step: '2', title: 'Review & sign', desc: 'See the exact amount you\'ll receive, the fee in dollars, and the estimated time. One wallet signature and you\'re done.' },
+              { step: '3', title: 'Track delivery', desc: 'Watch your tokens move in real-time. Average transfer: 45 seconds. If anything fails, automatic refund — no action needed.' },
             ].map((item) => (
-              <StaggerItem key={item.step}>
-                <div className="relative card p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
-                  <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--brand)', color: 'white' }}>
+              <ScrollReveal key={item.step} delay={parseInt(item.step) * 0.08}>
+                <div className="flex items-start gap-5">
+                  <div
+                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-body-sm font-bold"
+                    style={{ background: 'var(--brand)', color: 'white' }}
+                  >
                     {item.step}
                   </div>
-                  <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
-                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
+                  <div className="flex-1 pt-1">
+                    <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
+                    <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{item.desc}</p>
+                  </div>
                 </div>
-              </StaggerItem>
+              </ScrollReveal>
             ))}
-          </StaggerContainer>
+          </div>
         </section>
 
         {/* ═══ Comparison Table ═══ */}
@@ -270,44 +281,72 @@ export default function Home() {
           <ComparisonTable />
         </section>
 
-        {/* ═══ Features ═══ */}
+        {/* ═══ Features — asymmetric: one large + two stacked ═══ */}
         <section className="mb-20 max-w-3xl mx-auto">
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Zap className="h-6 w-6" />,
-                title: 'Lightning Fast',
-                desc: 'Transfers complete in seconds, not minutes. Real-time tracking from send to receive.',
-                color: 'var(--brand)',
-                bg: 'var(--info-bg)',
-              },
-              {
-                icon: <Shield className="h-6 w-6" />,
-                title: 'You Stay in Control',
-                desc: 'Non-custodial and transparent. Your keys, your tokens. Failed transfers auto-refund.',
-                color: 'var(--brand)',
-                bg: 'rgba(124, 58, 237, 0.08)',
-              },
-              {
-                icon: <DollarSign className="h-6 w-6" />,
-                title: 'Transparent Fees',
-                desc: 'Flat dollar-amount fees shown upfront. No hidden costs. Volume discounts built in.',
-                color: 'var(--success)',
-                bg: 'var(--success-bg)',
-              },
-            ].map((feature) => (
-              <StaggerItem key={feature.title}>
-                <div className="card p-6 transition-all h-full">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
-                    style={{ background: feature.bg, color: feature.color }}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{feature.title}</h3>
-                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>{feature.desc}</p>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* Large feature card — spans 3 cols */}
+            <ScrollReveal>
+              <div
+                className="md:col-span-3 rounded-2xl p-6 sm:p-8"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+              >
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
+                  style={{ background: 'var(--info-bg)', color: 'var(--brand)' }}>
+                  <Zap className="h-6 w-6" />
                 </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+                <h3 className="text-h4 mb-2" style={{ color: 'var(--text-primary)' }}>Seconds, not minutes</h3>
+                <p className="text-body mb-4" style={{ color: 'var(--text-secondary)' }}>
+                  Most cross-chain transfers take 30-90 seconds. You get real-time tracking
+                  from the moment you sign — no refreshing, no guessing, no checking explorers.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <div className="text-h3 font-extrabold" style={{ color: 'var(--brand)' }}>45s</div>
+                    <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>avg. transfer</div>
+                  </div>
+                  <div className="w-px h-10" style={{ background: 'var(--border)' }} />
+                  <div>
+                    <div className="text-h3 font-extrabold" style={{ color: 'var(--text-primary)' }}>Live</div>
+                    <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>status tracking</div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Two stacked cards — span 2 cols */}
+            <div className="md:col-span-2 flex flex-col gap-4">
+              <ScrollReveal delay={0.1}>
+                <div
+                  className="rounded-2xl p-6 flex-1"
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+                >
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl"
+                    style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--brand)' }}>
+                    <Shield className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>You stay in control</h3>
+                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Non-custodial. Your keys, your tokens. Failed transfers auto-refund — by protocol, not by promise.
+                  </p>
+                </div>
+              </ScrollReveal>
+              <ScrollReveal delay={0.15}>
+                <div
+                  className="rounded-2xl p-6 flex-1"
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+                >
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl"
+                    style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>
+                    <DollarSign className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>Fees in dollars, upfront</h3>
+                  <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                    No hidden costs. You see the exact fee before you sign. Volume discounts at $5K and $50K.
+                  </p>
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
         </section>
 
         {/* ═══ FAQ ═══ */}
