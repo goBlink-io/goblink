@@ -78,7 +78,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="font-sans noise-overlay" suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         <ClientLayout>
           <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
             {/* ── Navbar ── */}
