@@ -11,7 +11,6 @@ import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { useSmartFirstTransaction } from '@/hooks/useSmartFirstTransaction';
 import { useSmartDefaults } from '@/hooks/useSmartDefaults';
 import { Zap, Shield, DollarSign, ArrowRight, ChevronDown } from 'lucide-react';
-import GradientMesh from '@/components/ui/GradientMesh';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import StaggerContainer, { StaggerItem } from '@/components/ui/StaggerContainer';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
@@ -106,7 +105,6 @@ export default function Home() {
   return (
     <div className="relative">
       {/* ═══ Gradient Mesh Background ═══ */}
-      <GradientMesh />
 
       <div className="relative z-10 animate-fade-up">
         {/* ═══════════════════════════════════════════════
@@ -139,7 +137,7 @@ export default function Home() {
 
         {/* ═══ Swap Card — the unmistakable focal point ═══ */}
         <motion.section
-          className="max-w-[480px] mx-auto mb-5 glow-card"
+          className="max-w-[480px] mx-auto mb-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
@@ -250,7 +248,7 @@ export default function Home() {
               { step: '3', title: 'Done', desc: 'Tokens arrive in seconds. Track the transfer in real-time.' },
             ].map((item) => (
               <StaggerItem key={item.step}>
-                <div className="relative card card-lift p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
+                <div className="relative card p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
                   <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--brand)', color: 'white' }}>
                     {item.step}
                   </div>
@@ -299,7 +297,7 @@ export default function Home() {
               },
             ].map((feature) => (
               <StaggerItem key={feature.title}>
-                <div className="card card-lift glow-card p-6 hover:glow-blue transition-all h-full">
+                <div className="card p-6 transition-all h-full">
                   <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
                     style={{ background: feature.bg, color: feature.color }}>
                     {feature.icon}

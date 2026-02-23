@@ -9,7 +9,6 @@ import {
   MessageCircle, ChevronDown, ArrowRight, Sparkles,
   LayoutGrid, Brain, Activity, Package,
 } from 'lucide-react';
-import GradientMesh from '@/components/ui/GradientMesh';
 import ChainTicker from '@/components/ui/ChainTicker';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
@@ -351,7 +350,6 @@ function CategorySection({ cat }: { cat: Category }) {
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen">
-      <GradientMesh />
 
       {/* ═══ HERO ═══ */}
       <section className="relative z-10 flex flex-col items-center justify-center text-center px-4 pb-8 pt-20">
