@@ -156,8 +156,31 @@ export default function TokenSelector({
                     ))}
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-body-sm" style={{ color: 'var(--text-muted)' }}>
-                    {search ? 'No tokens found' : (emptyMessage || 'No tokens found')}
+                  <div className="px-4 py-12 text-center">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                      style={{ background: 'var(--elevated)' }}
+                    >
+                      <Search className="w-5 h-5" style={{ color: 'var(--text-faint)' }} />
+                    </div>
+                    <p className="text-body-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+                      {search ? 'No tokens found' : (emptyMessage || 'No tokens available')}
+                    </p>
+                    <p className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                      {search
+                        ? 'Check the spelling or try a different search term.'
+                        : 'Try connecting a wallet or switching chains.'}
+                    </p>
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="mt-3 text-tiny font-semibold transition-opacity hover:opacity-70"
+                        style={{ color: 'var(--brand)' }}
+                      >
+                        Clear search
+                      </button>
+                    )}
                   </div>
                 ) : (
                   filtered.map((token) => {

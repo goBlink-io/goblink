@@ -719,16 +719,37 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
       )}
 
       {/* CTA */}
-      <button onClick={handleGetQuote}
-        disabled={loading || !originAsset || !destinationAsset || !amount || !recipient || !refundTo}
-        className="btn btn-primary w-full h-12 text-body-sm">
-        {loading ? 'Getting Preview...' : 'Preview Transfer'}
-      </button>
+      {(() => {
+        const isDisabled = loading || !originAsset || !destinationAsset || !amount || !recipient || !refundTo;
+        const disabledReason = !originAsset ? 'Select a token to send'
+          : !destinationAsset ? 'Select a token to receive'
+          : !amount ? 'Enter an amount'
+          : !recipient ? 'Enter a receiving address'
+          : !refundTo ? 'Connect wallet on sending chain'
+          : null;
 
-      {/* Tip */}
-      <div className="mt-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
-        <strong>Tip:</strong> Connect wallets on both chains to auto-fill addresses.
-      </div>
+        return (
+          <>
+            <button onClick={handleGetQuote}
+              disabled={isDisabled}
+              className="btn btn-primary w-full h-12 text-body-sm">
+              {loading ? 'Getting Preview...' : 'Preview Transfer'}
+            </button>
+            {isDisabled && !loading && disabledReason && (
+              <p className="text-center text-tiny mt-2" style={{ color: 'var(--text-faint)' }}>
+                {disabledReason}
+              </p>
+            )}
+          </>
+        );
+      })()}
+
+      {/* Tip — only show when CTA is enabled (no double messaging) */}
+      {!!(originAsset && destinationAsset && amount && recipient && refundTo) && (
+        <div className="mt-4 p-3 rounded-xl text-body-sm" style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}>
+          <strong>Tip:</strong> Connect wallets on both chains to auto-fill addresses.
+        </div>
+      )}
 
       {/* Address Book modal */}
       <AddressBook
