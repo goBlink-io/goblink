@@ -79,10 +79,10 @@ export function checkRateLimit(
  * Predefined rate limit configs for different endpoint types
  */
 export const RateLimitConfigs = {
-  // Strictest - for quote generation (expensive 1Click API calls)
+  // Quote generation - 1Click API is free, limit is just abuse protection
   quote: {
     interval: 60 * 1000, // 1 minute
-    maxRequests: 10,
+    maxRequests: 60,
   },
   
   // Strict - for deposit submission
