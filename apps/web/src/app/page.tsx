@@ -351,89 +351,90 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen">
 
-      {/* ═══ HERO ═══ */}
-      <section className="relative z-10 flex flex-col items-center justify-center text-center px-4 pb-8 pt-20">
-
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
-          style={{
-            background: 'rgba(37,99,235,0.1)',
-            border: '1px solid rgba(37,99,235,0.25)',
-            color: 'var(--brand)',
-          }}
-        >
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          Beta Live — goblink.io
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          className="text-hero mb-6 max-w-4xl"
-          style={{ color: 'var(--text-primary)' }}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.05, ease: [0.21, 0.47, 0.32, 0.98] }}
-        >
-          Move Value Anywhere,{' '}
-          <span className="text-gradient">Instantly</span>
-        </motion.h1>
-
-        {/* Subheadline */}
-        <motion.p
-          className="text-body-lg max-w-xl mb-10"
-          style={{ color: 'var(--text-secondary)' }}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
-        >
-          Cross-chain transfers across 12 chains and 65+ tokens — designed to be as simple as sending a text.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          className="flex flex-col sm:flex-row items-center gap-3 mb-10"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
-            Launch App <ArrowRight className="h-4 w-4" />
-          </Link>
-          <a
-            href="#features"
-            className="btn btn-ghost inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
-            style={{ color: 'var(--text-secondary)' }}
+      {/* ═══ HERO — left-aligned, editorial ═══ */}
+      <section className="relative z-10 px-4 pb-12 pt-20 max-w-5xl mx-auto">
+        <div className="max-w-2xl">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+            style={{
+              background: 'rgba(37,99,235,0.1)',
+              border: '1px solid rgba(37,99,235,0.25)',
+              color: 'var(--brand)',
+            }}
           >
-            See all features <ChevronDown className="h-4 w-4" />
-          </a>
-        </motion.div>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            Beta Live — goblink.io
+          </motion.div>
 
-        {/* Stats — tight to the hero */}
+          {/* Headline */}
+          <motion.h1
+            className="text-hero mb-6"
+            style={{ color: 'var(--text-primary)' }}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05, ease: [0.21, 0.47, 0.32, 0.98] }}
+          >
+            Cross-chain transfers that{' '}
+            <span style={{ color: 'var(--brand)' }}>just work.</span>
+          </motion.h1>
+
+          {/* Subheadline */}
+          <motion.p
+            className="text-body-lg mb-8 max-w-lg"
+            style={{ color: 'var(--text-secondary)' }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
+          >
+            12 chains. 65+ tokens. No bridges, no wrapping, no accounts.
+            Connect your wallet and move value in seconds.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-start gap-3 mb-10"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
+              Launch App <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#features"
+              className="btn btn-ghost inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              See all features <ChevronDown className="h-4 w-4" />
+            </a>
+          </motion.div>
+        </div>
+
+        {/* Stats — horizontal bar, left-aligned */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="w-full max-w-2xl mx-auto"
         >
           <div
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 px-6 py-5 rounded-2xl"
+            className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
             style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
           >
             {[
-              { value: '12', suffix: '', label: 'Active Chains' },
+              { value: '12', suffix: '', label: 'Chains' },
               { value: '65', suffix: '+', label: 'Tokens' },
               { value: '45', suffix: 's', label: 'Avg. Transfer' },
               { value: '100', suffix: '%', label: 'Auto-Refund' },
             ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-2xl font-extrabold text-gradient tracking-tight">
+              <div key={s.label}>
+                <div className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                   <AnimatedCounter value={s.value} />{s.suffix}
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -443,12 +444,12 @@ export default function LandingPage() {
       {/* ═══ FEATURES — front and centre ═══ */}
       <section id="features" className="relative z-10 pt-10 pb-16 px-4 max-w-5xl mx-auto">
         <ScrollReveal>
-          <div className="text-center mb-12">
-            <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-              Every feature, explained
+          <div className="mb-12">
+            <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+              Every feature, explained.
             </h2>
-            <p className="text-body-sm max-w-xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              goBlink isn&apos;t just a swap form. It&apos;s a full human experience layer — every detail designed to remove friction and build trust.
+            <p className="text-body-sm max-w-xl" style={{ color: 'var(--text-secondary)' }}>
+              goBlink isn&apos;t just a swap form. Every detail is designed to remove friction and build trust.
             </p>
           </div>
         </ScrollReveal>
