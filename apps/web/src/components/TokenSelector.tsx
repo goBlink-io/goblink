@@ -94,7 +94,7 @@ export default function TokenSelector({
               <img src={selected.icon} alt="" className="w-7 h-7 rounded-full flex-shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style={{ background: 'var(--gradient)' }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style={{ background: 'var(--brand)' }}>
                 {cleanSymbol(selected.symbol)[0]}
               </div>
             )}
@@ -197,7 +197,7 @@ export default function TokenSelector({
                           <img src={token.icon} alt="" className="w-10 h-10 rounded-full flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         ) : (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: 'var(--gradient)' }}>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: 'var(--brand)' }}>
                             {cleanSymbol(token.symbol)[0]}
                           </div>
                         )}

@@ -60,8 +60,7 @@ const config: Config = {
         'tiny': ['0.75rem', { lineHeight: '1.4', fontWeight: '500' }],
       },
       boxShadow: {
-        'glow-blue': '0 0 20px rgba(37, 99, 235, 0.15)',
-        'glow-purple': '0 0 20px rgba(124, 58, 237, 0.15)',
+        'glow-blue': '0 0 20px rgba(37, 99, 235, 0.1)',
         'glow-success': '0 0 20px rgba(16, 185, 129, 0.15)',
         'card': '0 1px 3px rgba(0, 0, 0, 0.04)',
         'card-hover': '0 4px 12px rgba(0, 0, 0, 0.06)',

@@ -34,8 +34,8 @@ export default function FirstVisitBanner({ onDismiss }: FirstVisitBannerProps) {
     <div
       className="mb-4 rounded-2xl overflow-hidden animate-fade-up"
       style={{
-        background: 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.08) 100%)',
-        border: '1px solid rgba(124,58,237,0.2)',
+        background: 'rgba(37,99,235,0.06)',
+        border: '1px solid rgba(37,99,235,0.15)',
       }}
     >
       <div className="px-4 pt-4 pb-3">
@@ -84,9 +84,9 @@ export default function FirstVisitBanner({ onDismiss }: FirstVisitBannerProps) {
           <div className="flex-1 flex flex-col items-center text-center gap-1.5">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(124,58,237,0.12)' }}
+              style={{ background: 'rgba(37,99,235,0.12)' }}
             >
-              <Eye className="h-4 w-4" style={{ color: '#7C3AED' }} />
+              <Eye className="h-4 w-4" style={{ color: 'var(--brand)' }} />
             </div>
             <div>
               <p className="text-tiny font-semibold" style={{ color: 'var(--text-primary)' }}>Preview</p>

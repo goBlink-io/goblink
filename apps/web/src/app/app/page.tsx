@@ -251,7 +251,7 @@ export default function Home() {
             ].map((item) => (
               <StaggerItem key={item.step}>
                 <div className="relative card card-lift p-6 group hover:border-brand-600/30 dark:hover:border-brand-600/20 transition-all">
-                  <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--gradient)', color: 'white' }}>
+                  <div className="text-tiny font-bold mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'var(--brand)', color: 'white' }}>
                     {item.step}
                   </div>
                   <h3 className="text-h5 mb-2" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
@@ -287,7 +287,7 @@ export default function Home() {
                 icon: <Shield className="h-6 w-6" />,
                 title: 'You Stay in Control',
                 desc: 'Non-custodial and transparent. Your keys, your tokens. Failed transfers auto-refund.',
-                color: '#7C3AED',
+                color: 'var(--brand)',
                 bg: 'rgba(124, 58, 237, 0.08)',
               },
               {

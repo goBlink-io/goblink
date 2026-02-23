@@ -79,7 +79,7 @@ const CATEGORIES: Category[] = [
     id: 'intelligence',
     label: 'Intelligence Layer',
     icon: <Brain className="h-5 w-5" />,
-    color: '#7C3AED',
+    color: 'var(--brand)',
     bg: 'rgba(124,58,237,0.08)',
     features: [
       {
@@ -473,7 +473,7 @@ export default function LandingPage() {
           <div
             className="rounded-3xl p-10"
             style={{
-              background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(124,58,237,0.08))',
+              background: 'rgba(37,99,235,0.06)',
               border: '1px solid rgba(37,99,235,0.2)',
             }}
           >

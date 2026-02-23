@@ -229,7 +229,7 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
           <div className="card p-6 mb-4" style={{ boxShadow: '0 8px 32px rgba(124,58,237,0.1), 0 2px 8px rgba(0,0,0,0.06)' }}>
             <div className="text-center mb-5">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3"
-                style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED', border: '1px solid rgba(124,58,237,0.2)' }}>
+                style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--brand)', border: '1px solid rgba(37,99,235,0.15)' }}>
                 💸 Payment Request · {date}
               </div>
               <h1 className="text-h3 mb-1" style={{ color: 'var(--text-primary)' }}>
@@ -272,7 +272,7 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
             <button
               onClick={() => setModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: 'var(--gradient)' }}
+              style={{ background: 'var(--brand)' }}
             >
               Pay with any token <ArrowRight className="h-5 w-5" />
             </button>

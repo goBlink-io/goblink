@@ -24,11 +24,13 @@
     --text-muted: #71717A;
     --text-faint: #A1A1AA;
 
-    /* Brand */
+    /* Brand — solid blue identity (no gradient) */
     --brand: #2563EB;
     --brand-hover: #1D4ED8;
-    --violet: #7C3AED;
-    --gradient: linear-gradient(135deg, #2563EB, #7C3AED);
+    --brand-light: #3B82F6;
+    --violet: #7C3AED; /* accent only — never primary */
+    --gradient: #2563EB; /* legacy compat — resolves to solid */
+    --brand-gradient: linear-gradient(135deg, #2563EB, #1D4ED8); /* subtle same-hue gradient for depth */
 
     /* Semantic */
     --success: #10B981;
@@ -169,18 +171,18 @@
     cursor: not-allowed;
   }
 
-  /* Primary — gradient */
+  /* Primary — solid brand blue */
   .btn-primary {
-    background: var(--gradient);
+    background: var(--brand);
     color: white;
     padding: 12px 24px;
     font-size: 0.875rem;
   }
   .btn-primary:hover:not(:disabled) {
-    opacity: 0.9;
+    background: var(--brand-hover);
   }
   .btn-primary:active:not(:disabled) {
-    opacity: 0.85;
+    background: #1e40af;
     transform: scale(0.98);
   }
 
@@ -244,19 +246,15 @@
   .bg-elevated { background: var(--elevated); }
   .bg-brand { background: var(--brand); }
 
-  /* Gradient text */
+  /* Brand text — solid blue (no gradient clip) */
   .text-gradient {
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--brand);
   }
 
-  /* Glow effects */
-  .glow-blue { box-shadow: 0 0 20px rgba(37, 99, 235, 0.15); }
-  .glow-purple { box-shadow: 0 0 20px rgba(124, 58, 237, 0.15); }
+  /* Subtle glow — single color only */
+  .glow-blue { box-shadow: 0 0 20px rgba(37, 99, 235, 0.1); }
 
-  /* Gradient glow behind swap card */
+  /* Clean card emphasis — border highlight on hover, no gradient glow */
   .glow-card {
     position: relative;
   }
@@ -266,7 +264,7 @@
     inset: -1px;
     border-radius: 14px;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(124, 58, 237, 0.3));
+    background: rgba(37, 99, 235, 0.25);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -276,33 +274,6 @@
   }
   .glow-card:hover::before,
   .glow-card:focus-within::before {
-    opacity: 1;
-  }
-  .glow-card::after {
-    content: '';
-    position: absolute;
-    inset: -20px;
-    border-radius: 30px;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08));
-    filter: blur(30px);
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  /* Premium button glow */
-  .btn-primary {
-    position: relative;
-    overflow: hidden;
-  }
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .btn-primary:hover::before {
     opacity: 1;
   }
 

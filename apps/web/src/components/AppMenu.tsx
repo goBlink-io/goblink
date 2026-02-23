@@ -97,7 +97,7 @@ export default function AppMenu() {
                     aria-label={label}
                     className="flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-medium transition-all"
                     style={{
-                      background: active ? 'var(--gradient)' : 'transparent',
+                      background: active ? 'var(--brand)' : 'transparent',
                       color: active ? '#fff' : 'var(--text-muted)',
                       boxShadow: active ? '0 1px 6px rgba(37,99,235,0.25)' : 'none',
                     }}

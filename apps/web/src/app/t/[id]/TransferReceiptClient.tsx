@@ -111,7 +111,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
           {/* Gradient decoration */}
           <div
             className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-10 pointer-events-none"
-            style={{ background: 'var(--gradient)' }}
+            style={{ background: 'var(--brand)' }}
           />
 
           {/* Amount hero */}
@@ -131,7 +131,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
             <div className="flex flex-col items-center gap-1">
               <div
                 className="animate-slide-arrow px-3 py-1.5 rounded-full text-xs font-bold"
-                style={{ background: 'var(--gradient)', color: 'white' }}
+                style={{ background: 'var(--brand)', color: 'white' }}
               >
                 ⚡ instant
               </div>
@@ -199,7 +199,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
           <Link
             href="/app"
             className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all btn-primary text-white"
-            style={{ background: 'var(--gradient)' }}
+            style={{ background: 'var(--brand)' }}
           >
             Try goBlink <ArrowRight className="h-4 w-4" />
           </Link>
