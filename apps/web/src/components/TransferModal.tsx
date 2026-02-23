@@ -103,10 +103,12 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
       const data = await response.json();
       setTransaction(data);
 
-      if (['COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'].includes(data.status)) {
+      // Normalize: 1Click primary path returns lowercase ('completed'), Explorer returns uppercase
+      const normalizedStatus = (data.rawStatus || data.status || '').toUpperCase();
+      if (['COMPLETED', 'SUCCESS', 'FAILED', 'REFUNDED'].includes(normalizedStatus)) {
         if (!outcomeLogged) {
           setOutcomeLogged(true);
-          const isSuccess = data.status === 'COMPLETED' || data.status === 'SUCCESS';
+          const isSuccess = normalizedStatus === 'COMPLETED' || normalizedStatus === 'SUCCESS';
           onOutcome?.({
             status: isSuccess ? 'success' : data.status.toLowerCase(),
             fulfillmentTxHash: data.fulfillmentTxHash || data.destinationTxHash || undefined,
@@ -442,7 +444,8 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     return `https://explorer.near-intents.org/`;
   };
 
-  const isComplete = transaction?.status === 'COMPLETED' || transaction?.status === 'SUCCESS';
+  const txRawStatus = (transaction?.status || '').toUpperCase();
+  const isComplete = txRawStatus === 'COMPLETED' || txRawStatus === 'SUCCESS';
   const elapsedSeconds = trackingStartedAt ? Math.floor((Date.now() - trackingStartedAt) / 1000) : 0;
   const feeUsdNum = feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) : null;
 
