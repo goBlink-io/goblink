@@ -212,9 +212,9 @@ export default function TermsPage() {
               goBlink charges service fees for facilitating cross-chain transfers. Fees are calculated based on the following tiered structure:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>Transfers under $1,000:</strong> 0.75% service fee</li>
-              <li><strong>Transfers between $1,000 and $10,000:</strong> 0.50% service fee</li>
-              <li><strong>Transfers over $10,000:</strong> 0.30% service fee</li>
+              <li><strong>Transfers under $5,000:</strong> 0.35% service fee</li>
+              <li><strong>Transfers between $5,000 and $50,000:</strong> 0.10% service fee</li>
+              <li><strong>Transfers over $50,000:</strong> 0.05% service fee</li>
             </ul>
             <p>
               <strong>Important fee information:</strong>
@@ -224,7 +224,7 @@ export default function TermsPage() {
               <li><strong>Protocol-level fees</strong> (including Solver fees and gas fees) are separate from goBlink's service fees and are paid directly to Solvers and blockchain validators. These fees are set by third parties and are beyond goBlink's control.</li>
               <li><strong>Network fees (gas fees)</strong> are paid directly to blockchain validators and vary based on network congestion.</li>
               <li>All fees are <strong>non-refundable</strong> once a transaction is submitted to the blockchain, regardless of whether the transaction succeeds or fails.</li>
-              <li><strong>Fee rounding and minimums:</strong> Fees may be subject to rounding (typically to 2-6 decimal places depending on the token) and minimum fee thresholds to ensure economic viability.</li>
+              <li><strong>Fee rounding:</strong> Fees may be subject to rounding (typically to 2-6 decimal places depending on the token).</li>
               <li><strong>Anti-circumvention:</strong> You agree not to attempt to bypass, circumvent, or manipulate goBlink's fee mechanisms through any means, including but not limited to routing transactions through multiple intermediaries, exploiting smart contract vulnerabilities, or using automated tools to avoid fee payment.</li>
               <li>goBlink reserves the right to adjust fee tiers at any time. Fee changes will be reflected in the Service, and your use of the Service after such changes constitutes acceptance of the new fees.</li>
             </ul>

@@ -377,7 +377,7 @@ export const SUPPORT_RULES: SupportRule[] = [
     proactive: false,
     condition: () => false, // Triggered by keyword matching
     response: () => ({
-      text: "goBlink charges a small service fee: 0.75% for transfers under $1,000, 0.50% for $1K-$10K, and 0.30% for transfers over $10K. Network fees are separate and depend on blockchain activity.",
+      text: "goBlink uses simple tiered pricing: 0.35% for transfers under $5,000, 0.10% for $5K–$50K, and 0.05% for transfers over $50K. No minimum fees, no hidden costs. Network fees are separate and depend on blockchain activity.",
       severity: 'info'
     })
   },

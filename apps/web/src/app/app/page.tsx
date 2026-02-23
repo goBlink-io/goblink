@@ -98,7 +98,7 @@ export default function Home() {
     { q: 'How does goBlink work?', a: 'Select your tokens, enter an amount, and confirm. goBlink uses smart routing technology to find the fastest path across chains. Your tokens arrive in seconds — no bridges, no wrapping, no complexity.' },
     { q: 'Is it safe?', a: 'We never hold your tokens. You stay in control the entire time. Transfers use automatic price guarantees — and if a transfer can\'t complete for any reason, your tokens are automatically returned to you.' },
     { q: 'What chains are supported?', a: '12 blockchains including Ethereum, Solana, NEAR, Bitcoin, Sui, Base, Arbitrum, Polygon, Aptos, Starknet, Tron, and many more. New chains are added regularly.' },
-    { q: 'What are the fees?', a: 'Transparent tiered pricing: 0.35% for transfers under $5K, 0.10% for $5K–$50K, and 0.05% for transfers over $50K. Minimum fee is $0.50. Fees are shown upfront as a dollar amount before you confirm.' },
+    { q: 'What are the fees?', a: 'Simple tiered pricing: 0.35% under $5K, 0.10% for $5K–$50K, 0.05% over $50K. No minimum fees, no hidden costs. The exact fee is shown as a dollar amount before you confirm.' },
     { q: 'Do I need an account?', a: 'No. Just connect your wallet and transfer. No sign-up, no email, no KYC. Your wallet is your identity.' },
   ];
 
