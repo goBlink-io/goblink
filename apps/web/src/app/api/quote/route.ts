@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   
   if (!rateLimit.allowed) {
     return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded. Maximum 10 quotes per minute.', 429),
+      errorResponse('Rate limit exceeded. Maximum 60 quotes per minute.', 429),
       rateLimit
     );
   }
