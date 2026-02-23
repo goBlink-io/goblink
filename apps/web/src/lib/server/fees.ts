@@ -56,9 +56,19 @@ export const getMinFeeUsd = (): number => MIN_FEE_USD;
 const MAX_FEE_BPS = 300;
 
 /**
- * Calculate the effective fee bps, ensuring the $0.50 floor is met.
- * The floor only kicks in for amounts ≥ $10 to avoid charging 25%+ on
- * micro-transfers. The result is always capped at MAX_FEE_BPS (3%).
+ * Calculate the effective fee bps, ensuring the $0.50 minimum floor is met.
+ *
+ * Floor logic: if the percentage-based fee < $0.50, bump bps up to hit the floor.
+ * Cap: effective bps is always capped at MAX_FEE_BPS (3%) so tiny transfers
+ * never see absurd percentages (e.g. 54%). For very small amounts the floor
+ * won't be fully reached but users pay at most 3%.
+ *
+ * Examples at current rates:
+ *   $1 transfer  → 300 bps (3%, capped) = $0.03  [floor unreachable]
+ *   $17 transfer → 294 bps (2.94%)       = $0.50  [floor hit]
+ *   $50 transfer → 100 bps (1.0%)        = $0.50  [floor hit]
+ *   $100 transfer→  50 bps (0.5%)        = $0.50  [floor hit]
+ *   $1K transfer →  35 bps (0.35%)       = $3.50  [above floor]
  */
 export const calculateEffectiveFeeBps = (amountUsd?: number): number => {
   if (amountUsd === undefined || amountUsd <= 0) {
@@ -66,15 +76,12 @@ export const calculateEffectiveFeeBps = (amountUsd?: number): number => {
   }
 
   const tierBps = calculateFeeBps(amountUsd);
+  const feeUsd = amountUsd * (tierBps / 10000);
 
-  // Only apply the $0.50 minimum floor for amounts ≥ $10.
-  // Below that, the percentage alone would make the fee unreasonably large.
-  if (amountUsd >= 10) {
-    const feeUsd = amountUsd * (tierBps / 10000);
-    if (feeUsd < MIN_FEE_USD) {
-      const floorBps = Math.ceil((MIN_FEE_USD / amountUsd) * 10000);
-      return Math.min(Math.max(tierBps, floorBps), MAX_FEE_BPS);
-    }
+  if (feeUsd < MIN_FEE_USD) {
+    // bps needed to hit the $0.50 floor, capped at MAX_FEE_BPS
+    const floorBps = Math.ceil((MIN_FEE_USD / amountUsd) * 10000);
+    return Math.min(Math.max(tierBps, floorBps), MAX_FEE_BPS);
   }
 
   return Math.min(tierBps, MAX_FEE_BPS);
