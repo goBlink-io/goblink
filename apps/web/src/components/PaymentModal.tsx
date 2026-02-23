@@ -56,10 +56,14 @@ interface PaymentModalProps {
   data: PaymentRequestData;
   toLogo: ChainLogo | null;
   onClose: () => void;
+  /** Called when user signs the tx — mark link as processing */
+  onPaymentSent?: (sendTxHash: string | undefined, depositAddress: string, payerAddress: string, payerChain: string) => void;
+  /** Called when 1Click confirms on-chain success — mark link as paid */
+  onPaymentConfirmed?: (fulfillmentTxHash: string | undefined) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProps) {
+export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onPaymentConfirmed }: PaymentModalProps) {
   const { getAddressForChain, openModal } = useWalletContext();
 
   // Token list (all chains)
@@ -541,9 +545,19 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
             setTransferQuote(null);
             onClose();
           }}
-          onComplete={() => {
-            // Don't close — let TransferModal show its tracking/success UI.
-            // User dismisses via the modal's own close button when done.
+          onComplete={(depositAddress, txHash) => {
+            // Don't close — let TransferModal show tracking/success UI.
+            // Fire the "payment sent" callback so the link is marked processing.
+            if (onPaymentSent && depositAddress) {
+              const payerAddress = fromAddress || '';
+              const payerChain = fromChainId || '';
+              onPaymentSent(txHash, depositAddress, payerAddress, payerChain);
+            }
+          }}
+          onOutcome={(outcome: { status: string; fulfillmentTxHash?: string }) => {
+            if (outcome?.status === 'success' && onPaymentConfirmed) {
+              onPaymentConfirmed(outcome.fulfillmentTxHash);
+            }
           }}
         />
       )}
