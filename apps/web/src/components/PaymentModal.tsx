@@ -537,10 +537,13 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
       {transferQuote && (
         <TransferModal
           quote={transferQuote}
-          onClose={() => setTransferQuote(null)}
-          onComplete={() => {
+          onClose={() => {
             setTransferQuote(null);
             onClose();
+          }}
+          onComplete={() => {
+            // Don't close — let TransferModal show its tracking/success UI.
+            // User dismisses via the modal's own close button when done.
           }}
         />
       )}
