@@ -444,7 +444,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     return `https://explorer.near-intents.org/`;
   };
 
-  const txRawStatus = (transaction?.rawStatus || transaction?.status || '').toUpperCase();
+  const txRawStatus = (transaction?.status || '').toUpperCase();
   const isComplete = txRawStatus === 'COMPLETED' || txRawStatus === 'SUCCESS';
   const elapsedSeconds = trackingStartedAt ? Math.floor((Date.now() - trackingStartedAt) / 1000) : 0;
   const feeUsdNum = feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) : null;
