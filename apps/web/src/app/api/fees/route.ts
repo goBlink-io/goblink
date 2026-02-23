@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getFeeTiers, getMinFeeUsd } from '@/lib/server/fees';
+import { getFeeTiers } from '@/lib/server/fees';
 
 export const revalidate = 3600; // Cache for 1 hour
 
 export async function GET() {
   const tiers = getFeeTiers();
-  const minFeeUsd = getMinFeeUsd();
 
   return NextResponse.json({
     tiers: tiers.map(t => ({
@@ -18,7 +17,6 @@ export async function GET() {
           ? 'Standard'
           : 'Pro',
     })),
-    minFeeUsd,
     summary: [
       { range: 'Under $5,000', rate: '0.35%' },
       { range: '$5,000 – $50,000', rate: '0.10%' },

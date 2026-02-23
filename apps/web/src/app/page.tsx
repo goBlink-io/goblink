@@ -79,7 +79,7 @@ const CATEGORIES: Category[] = [
     label: 'Intelligence Layer',
     icon: <Brain className="h-5 w-5" />,
     color: 'var(--brand)',
-    bg: 'rgba(124,58,237,0.08)',
+    bg: 'rgba(37,99,235,0.08)',
     features: [
       {
         icon: <Brain className="h-5 w-5" />,
@@ -439,6 +439,81 @@ export default function LandingPage() {
             ))}
           </div>
         </motion.div>
+      </section>
+
+      {/* ═══ FEES — prominent, above features ═══ */}
+      <section className="relative z-10 py-16 px-4 max-w-5xl mx-auto">
+        <ScrollReveal>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* Left — messaging */}
+            <div>
+              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+                Fees so low, we put them on the homepage.
+              </h2>
+              <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+                No minimum fees. No hidden charges. No subscription.
+                Just a flat percentage based on your transfer size — shown
+                as a dollar amount before you sign.
+              </p>
+              <div className="flex flex-col gap-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  Fee shown upfront in dollars before you confirm
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  No minimum fee — pay exactly the tier rate
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  Volume discounts kick in automatically
+                </div>
+              </div>
+            </div>
+
+            {/* Right — fee table */}
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              {/* Header */}
+              <div className="px-6 py-4" style={{ background: 'var(--brand)', color: 'white' }}>
+                <div className="text-sm font-bold">Tiered Pricing</div>
+                <div className="text-xs opacity-80">The more you move, the less you pay</div>
+              </div>
+
+              {/* Tiers */}
+              <div style={{ background: 'var(--elevated)' }}>
+                {[
+                  { range: 'Under $5,000', rate: '0.35%', example: '$100 transfer = $0.35 fee' },
+                  { range: '$5,000 – $50,000', rate: '0.10%', example: '$10,000 transfer = $10 fee' },
+                  { range: 'Over $50,000', rate: '0.05%', example: '$100,000 transfer = $50 fee' },
+                ].map((tier, i) => (
+                  <div
+                    key={tier.range}
+                    className="flex items-center justify-between px-6 py-4"
+                    style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}
+                  >
+                    <div>
+                      <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {tier.range}
+                      </div>
+                      <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                        {tier.example}
+                      </div>
+                    </div>
+                    <div
+                      className="text-h4 font-extrabold tabular-nums"
+                      style={{ color: 'var(--brand)' }}
+                    >
+                      {tier.rate}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* ═══ FEATURES — front and centre ═══ */}
