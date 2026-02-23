@@ -28,6 +28,8 @@ export interface TransactionRecord {
   fee_bps?: number | null;
   fee_amount?: string | null;
   quote_id?: string | null;
+  source?: string | null;
+  payment_request_id?: string | null;
   error_message?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -51,6 +53,8 @@ export interface CreateTransactionData {
   feeBps?: number;
   feeAmount?: string;
   quoteId?: string;
+  source?: string;
+  paymentRequestId?: string;
 }
 
 export interface UpdateTransactionData {
@@ -93,6 +97,8 @@ export async function createTransaction(
       fee_bps: data.feeBps || null,
       fee_amount: data.feeAmount || null,
       quote_id: data.quoteId || null,
+      source: data.source || 'swap',
+      payment_request_id: data.paymentRequestId || null,
     };
 
     const { data: inserted, error } = await supabase

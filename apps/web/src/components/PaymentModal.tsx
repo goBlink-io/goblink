@@ -269,6 +269,9 @@ export default function PaymentModal({ data, toLogo, onClose }: PaymentModalProp
       fromChain: fromChainId,
       toChain: data.toChain,
       feeInfo: quote.feeInfo || null,
+      // Tag as payment modal transaction for logging/support
+      source: 'payment',
+      paymentRequestId: `${data.recipient}:${data.toChain}:${data.toToken}:${data.amount}`,
     });
   };
 

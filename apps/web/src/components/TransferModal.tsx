@@ -9,6 +9,7 @@ import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
 import { formatTokenAmount } from '@/lib/format';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy, ChevronDown, HelpCircle } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
@@ -34,7 +35,8 @@ interface TransactionData {
 }
 
 export default function TransferModal({ quote, onClose, onComplete, onOutcome }: TransferModalProps) {
-  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo } = quote;
+  const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo, source, paymentRequestId } = quote;
+  const { getAddressForChain } = useWalletContext();
 
   const [step, setStep] = useState<ModalStep>('preview');
   const [confirmationStep, setConfirmationStep] = useState('');
@@ -196,8 +198,11 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           let walletAddress = '';
           let walletChain = originChain || '';
 
-          // Get wallet address based on chain
-          if (originChain === 'sui' && currentAccount) {
+          if (originChain === 'near') {
+            // Use wallet context to get NEAR address
+            walletAddress = getAddressForChain('near') || quoteRequest.refundTo || '';
+            walletChain = 'near';
+          } else if (originChain === 'sui' && currentAccount) {
             walletAddress = currentAccount.address;
             walletChain = 'sui';
           } else if (originChain === 'solana' && solanaProvider?.publicKey) {
@@ -210,7 +215,6 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
               walletChain = originChain || 'ethereum';
             }
           }
-          // For NEAR, we'll log without wallet address for now (can be added later)
 
           if (walletAddress) {
             await fetch('/api/transactions', {
@@ -231,6 +235,9 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 feeBps: feeInfo?.bps,
                 feeAmount: feeInfo?.amount,
                 amountUsd: feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : undefined,
+                // Payment modal metadata
+                ...(source && { source }),
+                ...(paymentRequestId && { paymentRequestId }),
               }),
             }).catch(err => console.error('Failed to log transaction:', err));
           }
