@@ -118,7 +118,7 @@ export default function ConnectWalletModal() {
       <div className="space-y-3">
         <p className="text-sm text-gray-600 dark:text-gray-400">{chain.description}</p>
         <button onClick={() => handleConnect(selectedChain)}
-          className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r ${chain.color} text-white font-semibold hover:opacity-90 transition-opacity`}>
+          className="btn btn-primary w-full py-3">
           Connect Wallet
         </button>
         {(selectedChain === 'evm' || selectedChain === 'solana' || selectedChain === 'bitcoin') && (
@@ -172,7 +172,7 @@ export default function ConnectWalletModal() {
                     {...(!connected ? { onClick: () => setSelectedChain(chain.id), role: 'button' } : {})}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${chain.color} flex items-center justify-center overflow-hidden`}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: "var(--brand)" }}>
                           {logo ? (
                             <img src={logo.icon} alt="" className="w-6 h-6 rounded-full"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />

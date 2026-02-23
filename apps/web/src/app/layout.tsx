@@ -92,7 +92,7 @@ export default function RootLayout({
                       <span className="text-h5 flex items-center">
                         <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
                         <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
-                        <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--gradient)' }} />
+                        <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--brand)' }} />
                       </span>
                     </a>
                     <a href="/history" className="text-body-sm font-medium hover:opacity-70 transition-opacity hidden sm:block" style={{ color: 'var(--text-secondary)' }}>

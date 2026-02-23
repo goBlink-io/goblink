@@ -558,7 +558,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                   className="flex items-start gap-3 p-3.5 rounded-xl"
                   style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}
                 >
-                  <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: '#7C3AED' }} />
+                  <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--brand)' }} />
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                     <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Safety guarantee: </span>
                     If anything goes wrong, your {originTokenMetadata?.symbol || 'tokens'} are automatically returned to you.
@@ -673,7 +673,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 {/* Confirm button */}
                 {!showManualDeposit && (
                   <button onClick={handleConfirm}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold hover:opacity-90 transition-all text-base shadow-lg">
+                    className="btn btn-primary w-full py-3.5 text-base shadow-lg">
                     Confirm Transfer
                   </button>
                 )}

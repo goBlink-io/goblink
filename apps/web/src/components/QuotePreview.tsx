@@ -389,114 +389,138 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
     return address;
   };
 
+  const fromChainName = fromChain ? fromChain.charAt(0).toUpperCase() + fromChain.slice(1) : '';
+  const toChainName = _toChain ? _toChain.charAt(0).toUpperCase() + _toChain.slice(1) : '';
+
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">Transfer Preview</h3>
+    <div className="card p-5 sm:p-6">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-h3">Transfer Preview</h3>
         <button
           onClick={onReset}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="btn-ghost text-body-sm"
+          style={{ color: 'var(--text-muted)' }}
         >
-          ✕ Reset
+          ✕ Cancel
         </button>
       </div>
 
-      {/* Quote Details */}
-      <div className="space-y-4">
-        {/* Input Amount */}
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">You send</span>
+      {/* Human-readable confirmation summary */}
+      <div
+        className="rounded-xl p-4 mb-5 space-y-3"
+        style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+      >
+        {/* You Send */}
+        <div className="flex items-center justify-between">
+          <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>You send</span>
           <div className="text-right">
-            <div className="font-semibold text-lg">{quoteData.amountInFormatted}</div>
-            <div className="text-sm text-gray-500">${quoteData.amountInUsd}</div>
+            <div className="text-h4 font-bold" style={{ color: 'var(--text-primary)' }}>
+              {quoteData.amountInFormatted}
+            </div>
+            {quoteData.amountInUsd && (
+              <div className="text-tiny" style={{ color: 'var(--text-faint)' }}>≈ ${quoteData.amountInUsd}</div>
+            )}
           </div>
         </div>
 
-        {/* Arrow */}
-        <div className="flex justify-center">
-          <div className="rounded-full bg-gray-100 p-2">
-            <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
+        {/* Route Arrow */}
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-tiny font-medium"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          >
+            {fromChainName} → {toChainName}
           </div>
+          <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
         </div>
 
-        {/* Output Amount */}
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">You receive</span>
+        {/* You Receive */}
+        <div className="flex items-center justify-between">
+          <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>You receive</span>
           <div className="text-right">
-            <div className="font-semibold text-lg text-green-600">{formatTokenAmount(quoteData.amountOutFormatted)}</div>
-            <div className="text-sm text-gray-500">${quoteData.amountOutUsd}</div>
-          </div>
-        </div>
-
-        <div className="border-t pt-4 space-y-2">
-          {/* Minimum Output */}
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Minimum received</span>
-            <span className="font-medium">
-              {destinationTokenMetadata
-                ? formatAtomicAmount(quoteData.minAmountOut, destinationTokenMetadata.decimals)
-                : formatAmount(quoteData.minAmountOut)}
-            </span>
-          </div>
-
-          {/* Time Estimate */}
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Estimated time</span>
-            <span className="font-medium">{Math.max(60, quoteData.timeEstimate ?? 60)} seconds</span>
-          </div>
-
-          {/* Fees */}
-          {/* Fee display — show dollar amount (behavioral: absolute feels smaller) */}
-          {feeInfo && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">
-                Platform fee
-                {feeInfo.tier && feeInfo.tier !== 'Standard' && (
-                  <span className="ml-1 text-xs text-green-600 font-medium">
-                    ({feeInfo.tier} rate)
-                  </span>
-                )}
-              </span>
-              <span className="font-medium">
-                {feeInfo.estimatedUsd
-                  ? `$${feeInfo.estimatedUsd}`
-                  : `${feeInfo.percent}%`}
-              </span>
+            <div className="text-h4 font-bold" style={{ color: 'var(--success)' }}>
+              {formatTokenAmount(quoteData.amountOutFormatted)}
             </div>
-          )}
-          {!feeInfo && quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Platform fee</span>
-              <span className="font-medium">
-                {quoteRequest.appFees.map((f: any) => `${f.fee / 100}%`).join(' + ')}
-              </span>
-            </div>
-          )}
-
-          {/* Slippage */}
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Price protection</span>
-            <span className="font-medium">{(quoteRequest.slippageTolerance / 100)}%</span>
+            {quoteData.amountOutUsd && (
+              <div className="text-tiny" style={{ color: 'var(--text-faint)' }}>≈ ${quoteData.amountOutUsd}</div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Deposit Address Info (shown after getting deposit address for non-NEAR or on error) */}
+      {/* Fee breakdown — trust shield */}
+      <div className="space-y-2 mb-5">
+        <div className="flex justify-between text-body-sm">
+          <span style={{ color: 'var(--text-muted)' }}>Minimum received</span>
+          <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+            {destinationTokenMetadata
+              ? formatAtomicAmount(quoteData.minAmountOut, destinationTokenMetadata.decimals)
+              : formatAmount(quoteData.minAmountOut)}
+          </span>
+        </div>
+
+        <div className="flex justify-between text-body-sm">
+          <span style={{ color: 'var(--text-muted)' }}>Estimated time</span>
+          <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+            ~{Math.max(60, quoteData.timeEstimate ?? 60)}s
+          </span>
+        </div>
+
+        {feeInfo && (
+          <div className="flex justify-between text-body-sm">
+            <span style={{ color: 'var(--text-muted)' }}>
+              Platform fee
+              {feeInfo.tier && feeInfo.tier !== 'Standard' && (
+                <span className="ml-1 text-tiny font-medium" style={{ color: 'var(--success)' }}>
+                  ({feeInfo.tier} rate)
+                </span>
+              )}
+            </span>
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+              {feeInfo.estimatedUsd
+                ? `$${feeInfo.estimatedUsd}`
+                : `${feeInfo.percent}%`}
+            </span>
+          </div>
+        )}
+        {!feeInfo && quoteRequest.appFees && quoteRequest.appFees.length > 0 && (
+          <div className="flex justify-between text-body-sm">
+            <span style={{ color: 'var(--text-muted)' }}>Platform fee</span>
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+              {quoteRequest.appFees.map((f: any) => `${f.fee / 100}%`).join(' + ')}
+            </span>
+          </div>
+        )}
+
+        <div className="flex justify-between text-body-sm">
+          <span style={{ color: 'var(--text-muted)' }}>Price protection</span>
+          <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+            {(quoteRequest.slippageTolerance / 100)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Deposit Address Info (shown for manual transfer or on error) */}
       {showDepositInfo && depositAddress && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">Transfer Address</h4>
-          <p className="text-sm text-blue-800 mb-3">
+        <div
+          className="mt-5 p-4 rounded-xl"
+          style={{ background: 'var(--info-bg)', border: '1px solid var(--border)' }}
+        >
+          <h4 className="font-semibold text-body-sm mb-2" style={{ color: 'var(--info-text)' }}>Transfer Address</h4>
+          <p className="text-body-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
             Send {quoteData.amountInFormatted} to the address below to complete the transfer:
           </p>
-          <div className="flex items-center space-x-2">
-            <code className="flex-1 px-3 py-2 bg-white rounded border border-blue-300 text-sm break-all">
+          <div className="flex items-center gap-2">
+            <code
+              className="flex-1 px-3 py-2 rounded-lg text-body-sm font-mono break-all"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+            >
               {depositAddress}
             </code>
             <button
               onClick={() => copyToClipboard(depositAddress)}
-              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              className="btn-secondary px-3 py-2 text-body-sm flex-shrink-0"
             >
               {copied ? '✓ Copied' : 'Copy'}
             </button>
@@ -510,51 +534,49 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
         </div>
       )}
 
-      {/* Confirm Swap Button */}
-      {!showDepositInfo && (
-        <button
-          onClick={handleConfirmSwap}
-          disabled={isConfirming}
-          className="btn btn-primary w-full mt-6 py-3"
+      {/* Confirmation step status — shown outside the button for readability */}
+      {isConfirming && confirmationStep && (
+        <div
+          className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg text-body-sm"
+          style={{ background: 'var(--info-bg)', color: 'var(--info-text)' }}
         >
-          {isConfirming ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {confirmationStep || 'Processing...'}
-            </span>
-          ) : (
-            'Confirm Transfer'
+          <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          {confirmationStep}
+        </div>
+      )}
+
+      {/* Confirm Button */}
+      {!showDepositInfo && (
+        <>
+          <button
+            onClick={handleConfirmSwap}
+            disabled={isConfirming}
+            className="btn btn-primary w-full h-12 text-body-sm"
+          >
+            {isConfirming ? 'Signing...' : 'Confirm & Sign'}
+          </button>
+          {/* Trust shield microcopy */}
+          {!isConfirming && (
+            <p className="text-center text-tiny mt-2" style={{ color: 'var(--text-faint)' }}>
+              You&apos;ll approve this in your wallet. Transfer is irreversible once signed.
+            </p>
           )}
-        </button>
+        </>
       )}
 
       {/* Error Display */}
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start">
-            <svg className="h-5 w-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p className="text-sm text-red-900">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Info */}
-      {!error && !showDepositInfo && (
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-900">
-            <strong>Next steps:</strong>
-          </p>
-          <ol className="mt-2 text-sm text-blue-800 list-decimal list-inside space-y-1">
-            <li>Review the transfer details above</li>
-            <li>Click &quot;Confirm Transfer&quot; to proceed</li>
-            <li>Approve the transaction in your wallet</li>
-            <li>Track the transfer status in real-time</li>
-          </ol>
+        <div
+          className="mt-4 p-4 rounded-xl flex items-start gap-2"
+          style={{ background: 'var(--error-bg)', border: '1px solid var(--error)', color: 'var(--error-text)' }}
+        >
+          <svg className="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="text-body-sm">{error}</p>
         </div>
       )}
     </div>

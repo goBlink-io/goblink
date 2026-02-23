@@ -5,7 +5,7 @@ import { useAppKitAccount } from '@reown/appkit/react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useAccount } from 'wagmi';
 import { useWalletContext } from '@/contexts/WalletContext';
-import { Clock, ExternalLink, ChevronRight, Wallet, Search } from 'lucide-react';
+import { Clock, ExternalLink, ChevronDown, Wallet, Search, ArrowRight } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -39,13 +39,11 @@ export default function HistoryPage() {
   const [total, setTotal] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  // Wallet connections
   const { address: evmAddress } = useAccount();
   const suiAccount = useCurrentAccount();
   const { caipAddress } = useAppKitAccount();
   const { getAddressForChain } = useWalletContext();
 
-  // Collect ALL connected wallet addresses (EVM + Sui + Solana + NEAR)
   const allWalletAddresses = [
     evmAddress,
     suiAccount?.address,
@@ -69,9 +67,7 @@ export default function HistoryPage() {
         const walletsParam = allWalletAddresses.join(',');
         const response = await fetch(`/api/transactions?wallet=${encodeURIComponent(walletsParam)}&page=${page}&limit=${limit}`);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch transaction history');
-        }
+        if (!response.ok) throw new Error('Failed to fetch transaction history');
 
         const data = await response.json();
         
@@ -91,7 +87,7 @@ export default function HistoryPage() {
     fetchTransactions();
   }, [allWalletAddresses.join(','), page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // After transactions load, refresh real status for any non-terminal tx from 1Click API
+  // Refresh real status for non-terminal transactions from 1Click API
   useEffect(() => {
     if (loading || transactions.length === 0) return;
 
@@ -101,23 +97,20 @@ export default function HistoryPage() {
     );
     if (pending.length === 0) return;
 
-    // Stagger requests — 300ms apart to avoid hammering the API
     pending.forEach((tx, i) => {
       setTimeout(async () => {
         try {
           const res = await fetch(`/api/status/${tx.deposit_address}`);
-          if (!res.ok) return; // 404 = not yet indexed, 429 = rate limited — both ok to skip
+          if (!res.ok) return;
 
           const data = await res.json();
           const newStatus: string = data.status;
           if (!newStatus || newStatus === tx.status) return;
 
-          // Update local state immediately for instant UI feedback
           setTransactions(prev =>
             prev.map(t => t.id === tx.id ? { ...t, status: newStatus } : t)
           );
 
-          // Persist to DB — fire and forget
           fetch(`/api/transactions/${tx.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -128,7 +121,7 @@ export default function HistoryPage() {
               ...(data.fulfillmentTxHash && { fulfillmentTxHash: data.fulfillmentTxHash }),
               ...(data.refundTxHash && { refundTxHash: data.refundTxHash }),
             }),
-          }).catch(() => {}); // DB sync is best-effort — UI already updated
+          }).catch(() => {});
         } catch {
           // Network error — skip silently
         }
@@ -136,70 +129,47 @@ export default function HistoryPage() {
     });
   }, [loading, transactions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // --- Status badge using design system tokens ---
   const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    
-    if (statusLower === 'completed' || statusLower === 'success') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800">
-          Completed
-        </span>
-      );
-    }
-    
-    if (statusLower === 'processing') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-          Processing
-        </span>
-      );
+    const s = status.toLowerCase();
+    let bg: string, color: string, label: string;
+
+    if (s === 'completed' || s === 'success') {
+      bg = 'var(--success-bg)'; color = 'var(--success-text)'; label = 'Completed';
+    } else if (s === 'processing') {
+      bg = 'var(--info-bg)'; color = 'var(--info-text)'; label = 'Processing';
+    } else if (s === 'pending' || s === 'pending_deposit') {
+      bg = 'var(--warning-bg)'; color = 'var(--warning-text)'; label = 'Pending';
+    } else if (s === 'failed') {
+      bg = 'var(--error-bg)'; color = 'var(--error-text)'; label = 'Failed';
+    } else if (s === 'refunded') {
+      bg = 'var(--info-bg)'; color = 'var(--info-text)'; label = 'Refunded';
+    } else {
+      bg = 'var(--elevated)'; color = 'var(--text-secondary)'; label = status;
     }
 
-    if (statusLower === 'pending' || statusLower === 'pending_deposit') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800">
-          Pending
-        </span>
-      );
-    }
-    
-    if (statusLower === 'failed') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">
-          Failed
-        </span>
-      );
-    }
-    
-    if (statusLower === 'refunded') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-          Refunded
-        </span>
-      );
-    }
-    
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-        {status}
+      <span
+        className="badge text-tiny font-medium"
+        style={{ background: bg, color }}
+      >
+        {label}
       </span>
     );
   };
 
   const getExplorerUrl = (chain: string, txHash: string) => {
-    const cleanChain = chain.toLowerCase();
-    
-    if (cleanChain === 'ethereum') return `https://etherscan.io/tx/${txHash}`;
-    if (cleanChain === 'polygon') return `https://polygonscan.com/tx/${txHash}`;
-    if (cleanChain === 'bsc' || cleanChain === 'binance') return `https://bscscan.com/tx/${txHash}`;
-    if (cleanChain === 'arbitrum') return `https://arbiscan.io/tx/${txHash}`;
-    if (cleanChain === 'optimism') return `https://optimistic.etherscan.io/tx/${txHash}`;
-    if (cleanChain === 'base') return `https://basescan.org/tx/${txHash}`;
-    if (cleanChain === 'avalanche' || cleanChain === 'avax') return `https://snowtrace.io/tx/${txHash}`;
-    if (cleanChain === 'solana') return `https://solscan.io/tx/${txHash}`;
-    if (cleanChain === 'near') return `https://nearblocks.io/txns/${txHash}`;
-    if (cleanChain === 'sui') return `https://suiscan.xyz/mainnet/tx/${txHash}`;
-    
+    const c = chain.toLowerCase();
+    if (c === 'ethereum') return `https://etherscan.io/tx/${txHash}`;
+    if (c === 'polygon') return `https://polygonscan.com/tx/${txHash}`;
+    if (c === 'bsc' || c === 'binance') return `https://bscscan.com/tx/${txHash}`;
+    if (c === 'arbitrum') return `https://arbiscan.io/tx/${txHash}`;
+    if (c === 'optimism') return `https://optimistic.etherscan.io/tx/${txHash}`;
+    if (c === 'base') return `https://basescan.org/tx/${txHash}`;
+    if (c === 'avalanche' || c === 'avax') return `https://snowtrace.io/tx/${txHash}`;
+    if (c === 'solana') return `https://solscan.io/tx/${txHash}`;
+    if (c === 'near') return `https://nearblocks.io/txns/${txHash}`;
+    if (c === 'sui') return `https://suiscan.xyz/mainnet/tx/${txHash}`;
     return `https://explorer.near-intents.org/`;
   };
 
@@ -215,7 +185,6 @@ export default function HistoryPage() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
   };
 
@@ -232,40 +201,54 @@ export default function HistoryPage() {
     }
   };
 
-  const toggleExpanded = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+  // --- No wallet connected ---
   if (allWalletAddresses.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto">
-          <Wallet className="w-16 h-16 mx-auto mb-4 opacity-50" style={{ color: 'var(--text-muted)' }} />
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'var(--elevated)' }}
+          >
+            <Wallet className="w-8 h-8" style={{ color: 'var(--text-muted)' }} />
+          </div>
           <h1 className="text-h3 mb-2" style={{ color: 'var(--text-primary)' }}>Connect Your Wallet</h1>
-          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
-            Connect your wallet to view your transaction history
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Connect a wallet to view your cross-chain transfer history across all connected chains.
           </p>
         </div>
       </div>
     );
   }
 
+  // --- Loading ---
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" style={{ color: 'var(--text-muted)' }} />
-          <p className="mt-4 text-body" style={{ color: 'var(--text-secondary)' }}>Loading your transactions...</p>
+          <svg className="animate-spin h-8 w-8 mx-auto mb-4" style={{ color: 'var(--brand)' }} fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>Loading your transactions...</p>
         </div>
       </div>
     );
   }
 
+  // --- Error ---
   if (error) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto">
-          <p className="text-body text-red-600 dark:text-red-400">{error}</p>
+          <div
+            className="p-4 rounded-xl"
+            style={{ background: 'var(--error-bg)', color: 'var(--error-text)' }}
+          >
+            <p className="text-body">{error}</p>
+          </div>
         </div>
       </div>
     );
@@ -274,179 +257,203 @@ export default function HistoryPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-h2 mb-2" style={{ color: 'var(--text-primary)' }}>Transaction History</h1>
-        <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+      <div className="mb-6">
+        <h1 className="text-h2 mb-1" style={{ color: 'var(--text-primary)' }}>Transaction History</h1>
+        <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
           {total > 0 ? `${total} transaction${total === 1 ? '' : 's'} found` : 'No transactions yet'}
         </p>
       </div>
 
       {transactions.length === 0 ? (
-        <div className="text-center py-16 rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <Search className="w-12 h-12 mx-auto mb-4 opacity-50" style={{ color: 'var(--text-muted)' }} />
+        /* --- Empty state --- */
+        <div
+          className="text-center py-16 rounded-xl"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+        >
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'var(--elevated)' }}
+          >
+            <Search className="w-6 h-6" style={{ color: 'var(--text-muted)' }} />
+          </div>
           <h3 className="text-h4 mb-2" style={{ color: 'var(--text-primary)' }}>No transactions yet</h3>
-          <p className="text-body max-w-sm mx-auto mb-6" style={{ color: 'var(--text-secondary)' }}>
-            When you make transfers with goBlink, they'll appear here
+          <p className="text-body-sm max-w-sm mx-auto mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Once you make your first cross-chain transfer, it&apos;ll show up here with full status tracking.
           </p>
-          <a href="/app" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all" style={{ background: 'var(--gradient)', color: 'white' }}>
+          <a
+            href="/app"
+            className="btn btn-primary inline-flex items-center gap-2 px-6 py-3"
+          >
             Make Your First Transfer
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
       ) : (
         <>
-          {/* Transactions List */}
+          {/* --- Transaction Cards --- */}
           <div className="space-y-3">
-            {transactions.map((tx) => (
-              <div key={tx.id} className="rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                {/* Main Row */}
-                <button
-                  onClick={() => toggleExpanded(tx.id)}
-                  className="w-full p-4 flex items-center justify-between hover:opacity-80 transition-opacity"
+            {transactions.map((tx) => {
+              const isExpanded = expandedId === tx.id;
+
+              return (
+                <div
+                  key={tx.id}
+                  className="rounded-xl overflow-hidden transition-shadow"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
-                  <div className="flex items-center gap-4 flex-1 text-left">
-                    {/* Date */}
-                    <div className="flex items-center gap-2 min-w-[100px]">
-                      <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                      <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                        {formatDate(tx.created_at)}
-                      </span>
-                    </div>
-
-                    {/* Route */}
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-body font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                        {tx.from_chain}
-                      </span>
-                      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                      <span className="text-body font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                        {tx.to_chain}
-                      </span>
-                    </div>
-
-                    {/* Amount */}
-                    <div className="text-right min-w-[120px]">
-                      <div className="text-body font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {formatAmount(tx.amount_in)} {tx.from_token}
+                  {/* Card header — responsive: stacked on mobile, row on desktop */}
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : tx.id)}
+                    className="w-full p-4 text-left transition-colors"
+                    style={{ background: isExpanded ? 'var(--elevated)' : 'transparent' }}
+                  >
+                    {/* Desktop layout (hidden on mobile) */}
+                    <div className="hidden sm:flex items-center gap-4">
+                      {/* Date */}
+                      <div className="flex items-center gap-1.5 min-w-[90px]">
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-faint)' }} />
+                        <span className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                          {formatDate(tx.created_at)}
+                        </span>
                       </div>
-                      {tx.amount_usd && (
-                        <div className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                          ${tx.amount_usd.toFixed(2)}
+
+                      {/* Route */}
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {capitalize(tx.from_chain)}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-faint)' }} />
+                        <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {capitalize(tx.to_chain)}
+                        </span>
+                      </div>
+
+                      {/* Amount — right-aligned, monospaced for scanability */}
+                      <div className="text-right min-w-[140px]">
+                        <div className="text-body-sm font-semibold font-mono tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                          {formatAmount(tx.amount_in)} {tx.from_token}
                         </div>
+                        {tx.amount_usd && (
+                          <div className="text-tiny font-mono tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                            ${tx.amount_usd.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Status */}
+                      <div className="min-w-[90px] flex justify-end">
+                        {getStatusBadge(tx.status)}
+                      </div>
+
+                      {/* Expand */}
+                      <ChevronDown
+                        className={`w-4 h-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        style={{ color: 'var(--text-faint)' }}
+                      />
+                    </div>
+
+                    {/* Mobile layout (hidden on desktop) — stacked card */}
+                    <div className="sm:hidden space-y-2.5">
+                      {/* Top row: route + status */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {capitalize(tx.from_chain)}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5" style={{ color: 'var(--text-faint)' }} />
+                          <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {capitalize(tx.to_chain)}
+                          </span>
+                        </div>
+                        {getStatusBadge(tx.status)}
+                      </div>
+
+                      {/* Bottom row: amount + date */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-body-sm font-semibold font-mono tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                            {formatAmount(tx.amount_in)} {tx.from_token}
+                          </span>
+                          {tx.amount_usd && (
+                            <span className="text-tiny font-mono ml-1.5" style={{ color: 'var(--text-muted)' }}>
+                              (${tx.amount_usd.toFixed(2)})
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" style={{ color: 'var(--text-faint)' }} />
+                          <span className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                            {formatDate(tx.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded details */}
+                  {isExpanded && (
+                    <div
+                      className="border-t px-4 py-4 space-y-3"
+                      style={{ borderColor: 'var(--border)', background: 'var(--elevated)' }}
+                    >
+                      {/* Detail rows */}
+                      <DetailRow label="Recipient" value={tx.recipient} mono />
+
+                      {tx.deposit_address && (
+                        <DetailRow label="Deposit Address" value={tx.deposit_address} mono />
+                      )}
+
+                      {tx.amount_out && (
+                        <DetailRow
+                          label="Amount Received"
+                          value={`${formatAmount(tx.amount_out)} ${tx.to_token}`}
+                          bold
+                        />
+                      )}
+
+                      {tx.fee_bps && (
+                        <DetailRow
+                          label="Fee"
+                          value={
+                            tx.amount_usd
+                              ? `~$${(tx.amount_usd * tx.fee_bps / 10000).toFixed(2)}`
+                              : tx.fee_amount
+                                ? formatAmount(tx.fee_amount)
+                                : `${(Math.min(tx.fee_bps, 75) / 100).toFixed(2)}%`
+                          }
+                        />
+                      )}
+
+                      {tx.deposit_tx_hash && (
+                        <TxHashRow
+                          label="Deposit Tx"
+                          hash={tx.deposit_tx_hash}
+                          url={getExplorerUrl(tx.from_chain, tx.deposit_tx_hash)}
+                        />
+                      )}
+
+                      {tx.fulfillment_tx_hash && (
+                        <TxHashRow
+                          label="Fulfillment Tx"
+                          hash={tx.fulfillment_tx_hash}
+                          url={getExplorerUrl(tx.to_chain, tx.fulfillment_tx_hash)}
+                        />
+                      )}
+
+                      {tx.refund_tx_hash && (
+                        <TxHashRow
+                          label="Refund Tx"
+                          hash={tx.refund_tx_hash}
+                          url={getExplorerUrl(tx.from_chain, tx.refund_tx_hash)}
+                        />
                       )}
                     </div>
-
-                    {/* Status */}
-                    <div className="min-w-[100px] flex justify-end">
-                      {getStatusBadge(tx.status)}
-                    </div>
-                  </div>
-
-                  {/* Expand Icon */}
-                  <ChevronRight 
-                    className={`w-5 h-5 ml-4 flex-shrink-0 transition-transform ${expandedId === tx.id ? 'rotate-90' : ''}`} 
-                    style={{ color: 'var(--text-muted)' }} 
-                  />
-                </button>
-
-                {/* Expanded Details */}
-                {expandedId === tx.id && (
-                  <div className="border-t px-4 py-4 space-y-3" style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--surface) 95%, var(--text-primary) 5%)' }}>
-                    {/* Recipient */}
-                    <div className="flex justify-between items-start">
-                      <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Recipient:</span>
-                      <span className="text-body-sm font-mono text-right break-all max-w-[60%]" style={{ color: 'var(--text-secondary)' }}>
-                        {tx.recipient}
-                      </span>
-                    </div>
-
-                    {/* Deposit Address */}
-                    {tx.deposit_address && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Deposit Address:</span>
-                        <span className="text-body-sm font-mono text-right break-all max-w-[60%]" style={{ color: 'var(--text-secondary)' }}>
-                          {tx.deposit_address}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Amount Out */}
-                    {tx.amount_out && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Amount Received:</span>
-                        <span className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {formatAmount(tx.amount_out)} {tx.to_token}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Fee — show USD amount (never %, which is misleading due to min-fee floor) */}
-                    {tx.fee_bps && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Fee:</span>
-                        <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {tx.amount_usd
-                            ? `~$${(tx.amount_usd * tx.fee_bps / 10000).toFixed(2)}`
-                            : tx.fee_amount
-                              ? formatAmount(tx.fee_amount)
-                              : `${(Math.min(tx.fee_bps, 75) / 100).toFixed(2)}%`}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Transaction Hashes */}
-                    {tx.deposit_tx_hash && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Deposit Tx:</span>
-                        <a 
-                          href={getExplorerUrl(tx.from_chain, tx.deposit_tx_hash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-body-sm font-mono hover:opacity-70 transition-opacity"
-                          style={{ color: 'var(--accent)' }}
-                        >
-                          {tx.deposit_tx_hash.substring(0, 8)}...{tx.deposit_tx_hash.substring(tx.deposit_tx_hash.length - 6)}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-
-                    {tx.fulfillment_tx_hash && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Fulfillment Tx:</span>
-                        <a 
-                          href={getExplorerUrl(tx.to_chain, tx.fulfillment_tx_hash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-body-sm font-mono hover:opacity-70 transition-opacity"
-                          style={{ color: 'var(--accent)' }}
-                        >
-                          {tx.fulfillment_tx_hash.substring(0, 8)}...{tx.fulfillment_tx_hash.substring(tx.fulfillment_tx_hash.length - 6)}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-
-                    {tx.refund_tx_hash && (
-                      <div className="flex justify-between items-start">
-                        <span className="text-body-sm" style={{ color: 'var(--text-muted)' }}>Refund Tx:</span>
-                        <a 
-                          href={getExplorerUrl(tx.from_chain, tx.refund_tx_hash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-body-sm font-mono hover:opacity-70 transition-opacity"
-                          style={{ color: 'var(--accent)' }}
-                        >
-                          {tx.refund_tx_hash.substring(0, 8)}...{tx.refund_tx_hash.substring(tx.refund_tx_hash.length - 6)}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Pagination */}
@@ -455,8 +462,7 @@ export default function HistoryPage() {
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-70 transition-opacity"
-                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                className="btn btn-secondary px-4 py-2 text-body-sm"
               >
                 Previous
               </button>
@@ -466,8 +472,7 @@ export default function HistoryPage() {
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-70 transition-opacity"
-                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                className="btn btn-secondary px-4 py-2 text-body-sm"
               >
                 Next
               </button>
@@ -475,6 +480,40 @@ export default function HistoryPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// --- Reusable sub-components ---
+
+function DetailRow({ label, value, mono, bold }: { label: string; value: string; mono?: boolean; bold?: boolean }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-0.5 sm:gap-4">
+      <span className="text-tiny font-medium flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span
+        className={`text-body-sm text-right break-all ${mono ? 'font-mono' : ''} ${bold ? 'font-semibold' : ''}`}
+        style={{ color: bold ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function TxHashRow({ label, hash, url }: { label: string; hash: string; url: string }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-0.5 sm:gap-4">
+      <span className="text-tiny font-medium flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-body-sm font-mono transition-opacity hover:opacity-70"
+        style={{ color: 'var(--brand)' }}
+      >
+        {hash.substring(0, 8)}...{hash.substring(hash.length - 6)}
+        <ExternalLink className="w-3 h-3" />
+      </a>
     </div>
   );
 }
