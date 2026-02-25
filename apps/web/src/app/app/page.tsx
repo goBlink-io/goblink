@@ -16,6 +16,7 @@ import StaggerContainer, { StaggerItem } from '@/components/ui/StaggerContainer'
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import ChainTicker from '@/components/ui/ChainTicker';
 import ComparisonTable from '@/components/ui/ComparisonTable';
+import TerminalTransfer from '@/components/ui/TerminalTransfer';
 
 export default function Home() {
   const [quoteData, setQuoteData] = useState<any>(null);
@@ -95,11 +96,11 @@ export default function Home() {
   };
 
   const faqs = [
-    { q: 'How does goBlink work?', a: 'Select your tokens, enter an amount, and confirm. goBlink uses smart routing technology to find the fastest path across chains. Your tokens arrive in seconds — no bridges, no wrapping, no complexity.' },
-    { q: 'Is it safe?', a: 'We never hold your tokens. You stay in control the entire time. Transfers use automatic price guarantees — and if a transfer can\'t complete for any reason, your tokens are automatically returned to you.' },
-    { q: 'What chains are supported?', a: '12 blockchains including Ethereum, Solana, NEAR, Bitcoin, Sui, Base, Arbitrum, Polygon, Aptos, Starknet, Tron, and many more. New chains are added regularly.' },
-    { q: 'What are the fees?', a: 'Simple tiered pricing: 0.35% under $5K, 0.10% for $5K–$50K, 0.05% over $50K. No minimum fees, no hidden costs. The exact fee is shown as a dollar amount before you confirm.' },
-    { q: 'Do I need an account?', a: 'No. Just connect your wallet and transfer. No sign-up, no email, no KYC. Your wallet is your identity.' },
+    { q: 'How does this actually work?', a: 'You pick tokens, enter an amount, and sign one transaction. Under the hood, goBlink routes through a network of solvers who compete to fill your transfer at the best rate. Your tokens arrive in ~45 seconds. No bridges, no wrapping, no complexity.' },
+    { q: 'Can I lose my tokens?', a: 'No. goBlink is non-custodial — we never hold your funds. Every transfer has a protocol-level guarantee: if it can\'t complete, your tokens are returned automatically. No support tickets, no waiting.' },
+    { q: 'What chains work?', a: 'Ethereum, Solana, NEAR, Sui, Base, Arbitrum, Polygon, Optimism, BNB, Aptos, Starknet, and Tron. More coming. You can send from any to any.' },
+    { q: 'How much does it cost?', a: '0.35% under $5K. 0.10% from $5K–$50K. 0.05% above $50K. Shown in dollars before you sign — a $500 transfer costs $1.75. No minimum fees, no hidden spread, no gas surprises.' },
+    { q: 'Do I need to sign up?', a: 'No account, no email, no KYC. Connect a wallet and go. Your wallet is your identity.' },
   ];
 
   return (
@@ -125,29 +126,29 @@ export default function Home() {
                 className="text-hero mb-4 text-left"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Move value anywhere.{' '}
-                <span style={{ color: 'var(--brand)' }}>One click.</span>
+                Skip the bridge.{' '}
+                <span style={{ color: 'var(--brand)' }}>Just send it.</span>
               </h1>
               <p
                 className="text-body-lg mb-6 max-w-md"
                 style={{ color: 'var(--text-secondary)' }}
               >
-                12 chains. 65+ tokens. No bridges, no wrapping, no waiting. Just transfers that work.
+                You shouldn&apos;t need a tutorial to move your own money. Pick tokens, sign once, done. Works across 12 chains.
               </p>
 
               {/* Trust signals — left-aligned, stacked */}
               <div className="flex flex-col gap-3 mb-6">
                 <div className="flex items-center gap-2.5">
                   <Shield className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
-                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Non-custodial — your keys, always</span>
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>We never touch your tokens</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Zap className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
-                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Avg. transfer: 45 seconds</span>
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>45 seconds, not 10 minutes</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <DollarSign className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--success)' }} />
-                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>100% auto-refund on failure</span>
+                  <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Transfer fails? You get every cent back.</span>
                 </div>
               </div>
 
@@ -195,16 +196,16 @@ export default function Home() {
                 <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-1" style={{ color: 'var(--brand)' }}>
                   <AnimatedCounter value="12" />
                 </div>
-                <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>Chains connected</div>
-                <div className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>Ethereum, Solana, NEAR, Sui, Base, and 7 more</div>
+                <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>Chains</div>
+                <div className="text-tiny mt-1" style={{ color: 'var(--text-muted)' }}>ETH, SOL, NEAR, SUI, Base — you name it</div>
               </div>
             </StaggerItem>
 
             {/* Supporting stats — compact row */}
             {[
-              { value: '65', suffix: '+', label: 'Tokens', sub: 'Cross-chain, any pair' },
-              { value: '45', suffix: 's', label: 'Avg. Transfer', sub: 'Send to delivery' },
-              { value: '100', suffix: '%', label: 'Auto-Refund', sub: 'If anything fails' },
+              { value: '65', suffix: '+', label: 'Tokens', sub: 'USDC, ETH, SOL — the ones you actually use' },
+              { value: '45', suffix: 's', label: 'Avg. Transfer', sub: 'Signed to delivered' },
+              { value: '100', suffix: '%', label: 'Auto-Refund', sub: 'Protocol-enforced, not a pinky promise' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
                 <div
@@ -222,6 +223,13 @@ export default function Home() {
           </StaggerContainer>
         </section>
 
+        {/* ═══ Terminal Transfer — Concept E custom element ═══ */}
+        <section className="mb-20 max-w-xl mx-auto">
+          <ScrollReveal>
+            <TerminalTransfer />
+          </ScrollReveal>
+        </section>
+
         {/* ═══ Recent Transfers ═══ */}
         <section className="max-w-[480px] mx-auto mb-16">
           <RecentTransfers history={history} onSelect={() => {}} />
@@ -231,10 +239,10 @@ export default function Home() {
         <ScrollReveal>
           <section className="mb-20">
             <h2 className="text-h2 mb-3 max-w-3xl mx-auto" style={{ color: 'var(--text-primary)' }}>
-              12 chains. One interface.
+              Your tokens live on different chains. So what.
             </h2>
             <p className="text-body-sm mb-6 max-w-3xl mx-auto" style={{ color: 'var(--text-muted)' }}>
-              Send from any connected chain. Receive on all of them.
+              Pick a source. Pick a destination. We handle the rest.
             </p>
             <ChainTicker />
           </section>
@@ -244,14 +252,14 @@ export default function Home() {
         <section className="mb-20 max-w-3xl mx-auto">
           <ScrollReveal>
             <h2 className="text-h2 mb-10" style={{ color: 'var(--text-primary)' }}>
-              Three steps. That&apos;s it.
+              If you can send an email, you can use this.
             </h2>
           </ScrollReveal>
           <div className="space-y-6">
             {[
-              { step: '1', title: 'Pick your tokens', desc: 'Choose what you\'re sending and what you want to receive. Any chain, any token. Balances show automatically when your wallet is connected.' },
-              { step: '2', title: 'Review & sign', desc: 'See the exact amount you\'ll receive, the fee in dollars, and the estimated time. One wallet signature and you\'re done.' },
-              { step: '3', title: 'Track delivery', desc: 'Watch your tokens move in real-time. Average transfer: 45 seconds. If anything fails, automatic refund — no action needed.' },
+              { step: '1', title: 'Pick your tokens', desc: 'SOL on Solana → USDC on Base? ETH on Arbitrum → NEAR? Whatever. Connect your wallet and your balances show up automatically.' },
+              { step: '2', title: 'Check the math, sign once', desc: 'You see the exact amount arriving, the fee in actual dollars (not some opaque percentage), and how long it\'ll take. One signature. That\'s it.' },
+              { step: '3', title: 'Watch it land', desc: 'Real-time tracking. No refreshing, no guessing, no block explorer tabs. Average: 45 seconds. If something goes wrong, you get refunded automatically.' },
             ].map((item) => (
               <ScrollReveal key={item.step} delay={parseInt(item.step) * 0.08}>
                 <div className="flex items-start gap-5">
@@ -275,7 +283,7 @@ export default function Home() {
         <section className="mb-20 max-w-2xl mx-auto">
           <ScrollReveal>
             <h2 className="text-h2 text-center mb-8" style={{ color: 'var(--text-primary)' }}>
-              Why not just use a bridge?
+              Bridges were a workaround. This is the fix.
             </h2>
           </ScrollReveal>
           <ComparisonTable />
@@ -294,10 +302,10 @@ export default function Home() {
                   style={{ background: 'var(--info-bg)', color: 'var(--brand)' }}>
                   <Zap className="h-6 w-6" />
                 </div>
-                <h3 className="text-h4 mb-2" style={{ color: 'var(--text-primary)' }}>Seconds, not minutes</h3>
+                <h3 className="text-h4 mb-2" style={{ color: 'var(--text-primary)' }}>45 seconds. Seriously.</h3>
                 <p className="text-body mb-4" style={{ color: 'var(--text-secondary)' }}>
-                  Most cross-chain transfers take 30-90 seconds. You get real-time tracking
-                  from the moment you sign — no refreshing, no guessing, no checking explorers.
+                  Traditional bridges: 10-30 minutes, multiple transactions, wrapped tokens nobody asked for. 
+                  goBlink: sign once, watch it land. Real-time tracking the whole way.
                 </p>
                 <div className="flex items-center gap-4">
                   <div>
@@ -324,9 +332,9 @@ export default function Home() {
                     style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--brand)' }}>
                     <Shield className="h-5 w-5" />
                   </div>
-                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>You stay in control</h3>
+                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>Your keys. Period.</h3>
                   <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                    Non-custodial. Your keys, your tokens. Failed transfers auto-refund — by protocol, not by promise.
+                    We never custody your tokens. Not for a second. If a transfer fails, the protocol refunds you automatically — no support tickets.
                   </p>
                 </div>
               </ScrollReveal>
@@ -339,9 +347,9 @@ export default function Home() {
                     style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>
                     <DollarSign className="h-5 w-5" />
                   </div>
-                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>Fees in dollars, upfront</h3>
+                  <h3 className="text-h5 mb-1" style={{ color: 'var(--text-primary)' }}>$1.75, not &quot;~0.3%&quot;</h3>
                   <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                    No hidden costs. You see the exact fee before you sign. Volume discounts at $5K and $50K.
+                    You see the fee in dollars before you sign. No hidden spread, no surprise gas. Moving serious volume? Fees drop at $5K and $50K.
                   </p>
                 </div>
               </ScrollReveal>
@@ -401,17 +409,17 @@ export default function Home() {
         <ScrollReveal>
           <section className="text-center mb-20">
             <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-              Ready to move?
+              Stop reading. Start sending.
             </h2>
             <p className="text-body-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-              Connect your wallet and make your first transfer in under a minute.
+              First transfer takes about 60 seconds. Including connecting your wallet.
             </p>
             <a
               href="#"
               onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               className="btn btn-primary inline-flex items-center gap-2"
             >
-              Start Transferring <ArrowRight className="h-4 w-4" />
+              Try it now <ArrowRight className="h-4 w-4" />
             </a>
           </section>
         </ScrollReveal>
