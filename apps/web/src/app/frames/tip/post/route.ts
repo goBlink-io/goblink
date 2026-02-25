@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBaseUrl } from '../utils/frame-helpers';
+import { getBaseUrl } from '../../utils/frame-helpers';
 
 /**
  * POST /frames/tip — Farcaster frame post_url handler.
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   <meta property="fc:frame:button:1" content="Send $${inputText} ${token}" />
   <meta property="fc:frame:button:1:action" content="tx" />
   <meta property="fc:frame:button:1:target" content="${txTarget}" />
-  <meta property="fc:frame:post_url" content="${base}/frames/tip?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}" />
+  <meta property="fc:frame:post_url" content="${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}" />
 </head>
 </html>`;
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // No amount yet — show input prompt
-    const customPostUrl = `${base}/frames/tip?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`;
+    const customPostUrl = `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`;
 
     const html = `<!DOCTYPE html>
 <html>

@@ -16,7 +16,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const shortTo = shortAddress(to);
 
   const imageUrl = `${base}/frames/image?type=pay&to=${encodeURIComponent(to)}&amount=${amount}&token=${token}&chain=${chain}`;
-  const postUrl = `${base}/frames/pay?to=${encodeURIComponent(to)}&amount=${amount}&token=${token}&chain=${chain}`;
+  const postUrl = `${base}/frames/pay/post?to=${encodeURIComponent(to)}&amount=${amount}&token=${token}&chain=${chain}`;
 
   const title = `Pay ${amount} ${token} to ${shortTo} on ${chainName}`;
 

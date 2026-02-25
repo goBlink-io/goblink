@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const imageUrl = `${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
   const txTarget = (amt: string) =>
     `${base}/frames/tip/tx?to=${encodeURIComponent(to)}&amount=${amt}&token=${token}&chain=${chain}`;
-  const postUrl = `${base}/frames/tip?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
+  const postUrl = `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
 
   const title = `Tip ${shortTo} in ${token} on ${chainName}`;
 
@@ -42,7 +42,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       'fc:frame:button:3:target': txTarget('10'),
       'fc:frame:button:4': 'Custom',
       'fc:frame:button:4:action': 'post',
-      'fc:frame:button:4:target': `${base}/frames/tip?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`,
+      'fc:frame:button:4:target': `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`,
       'fc:frame:input:text': '',
       'fc:frame:post_url': postUrl,
     },

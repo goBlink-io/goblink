@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBaseUrl } from '../utils/frame-helpers';
+import { getBaseUrl } from '../../utils/frame-helpers';
 
 /**
  * POST /frames/pay — Farcaster frame post_url handler.
