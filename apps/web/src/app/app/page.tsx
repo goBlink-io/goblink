@@ -285,9 +285,9 @@ export default function Home() {
         <section className="mb-20 max-w-3xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Large feature card — spans 3 cols */}
-            <ScrollReveal>
+            <ScrollReveal className="md:col-span-3">
               <div
-                className="md:col-span-3 rounded-2xl p-6 sm:p-8"
+                className="rounded-2xl p-6 sm:p-8 h-full"
                 style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
               >
                 <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl"
