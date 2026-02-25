@@ -12,7 +12,14 @@ import { getBaseUrl, getChainDisplayName } from '../../utils/frame-helpers';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CHAIN_PAGES = [
+// Source chains: EVM only (Farcaster Frames v1 = eth_sendTransaction)
+const SOURCE_CHAIN_PAGES = [
+  ['base', 'ethereum', 'arbitrum'],
+  ['optimism', 'polygon', 'bsc'],
+];
+
+// Dest chains: anything goBlink supports (1Click handles delivery)
+const DEST_CHAIN_PAGES = [
   ['base', 'ethereum', 'solana'],
   ['arbitrum', 'near', 'sui'],
   ['optimism', 'polygon', 'bsc'],
@@ -83,8 +90,8 @@ function buildFrameHtml(opts: {
 }
 
 // Chain picker: 3 buttons + More→
-function chainPickerFrame(base: string, state: URLSearchParams, step: string, paramKey: string, nextStep: string, page: number): string {
-  const chains = CHAIN_PAGES[page] || CHAIN_PAGES[0];
+function chainPickerFrame(base: string, state: URLSearchParams, step: string, paramKey: string, nextStep: string, page: number, pages: string[][]): string {
+  const chains = pages[page] || pages[0];
   const imageUrl = buildImageUrl(base, { step, ...stateToObj(state) });
 
   const buttons = chains.map(chain => {
@@ -94,11 +101,14 @@ function chainPickerFrame(base: string, state: URLSearchParams, step: string, pa
     return { label: getChainDisplayName(chain), action: 'post' as const, target: `${base}/frames/send/post?${p.toString()}` };
   });
 
-  const nextPage = (page + 1) % CHAIN_PAGES.length;
-  const moreParams = new URLSearchParams(state);
-  moreParams.set('step', step);
-  moreParams.set('page', String(nextPage));
-  buttons.push({ label: 'More →', action: 'post', target: `${base}/frames/send/post?${moreParams.toString()}` });
+  // Only show More→ if there are multiple pages
+  if (pages.length > 1) {
+    const nextPage = (page + 1) % pages.length;
+    const moreParams = new URLSearchParams(state);
+    moreParams.set('step', step);
+    moreParams.set('page', String(nextPage));
+    buttons.push({ label: 'More →', action: 'post', target: `${base}/frames/send/post?${moreParams.toString()}` });
+  }
 
   return buildFrameHtml({ imageUrl, buttons });
 }
@@ -167,7 +177,7 @@ export async function POST(request: NextRequest) {
       const nextParams = new URLSearchParams(state);
       nextParams.set('step', nextStep);
       // Move to dest chain picker
-      return html(chainPickerFrame(base, nextParams, nextStep, 'destChain', 'dest-token', 0));
+      return html(chainPickerFrame(base, nextParams, nextStep, 'destChain', 'dest-token', 0, DEST_CHAIN_PAGES));
     }
 
     const imageUrl = buildImageUrl(base, { step: 'recipient', mode, ...stateToObj(state) });
@@ -190,7 +200,7 @@ export async function POST(request: NextRequest) {
   // SOURCE CHAIN — Send mode starts here
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'source-chain') {
-    return html(chainPickerFrame(base, state, 'source-chain', 'sourceChain', 'source-token', page));
+    return html(chainPickerFrame(base, state, 'source-chain', 'sourceChain', 'source-token', page, SOURCE_CHAIN_PAGES));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -209,7 +219,7 @@ export async function POST(request: NextRequest) {
   // DEST CHAIN
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'dest-chain') {
-    return html(chainPickerFrame(base, state, 'dest-chain', 'destChain', 'dest-token', page));
+    return html(chainPickerFrame(base, state, 'dest-chain', 'destChain', 'dest-token', page, DEST_CHAIN_PAGES));
   }
 
   // ═══════════════════════════════════════════════════════════════════

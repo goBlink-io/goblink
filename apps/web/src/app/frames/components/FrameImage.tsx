@@ -167,8 +167,8 @@ export function TipFrameImage({
 
 const STEP_TITLES: Record<string, string> = {
   'start': 'Send, pay, or tip — any chain',
-  'source-chain': 'Where are you sending from?',
-  'source-token': 'What token are you sending?',
+  'source-chain': 'Which chain are you paying from?',
+  'source-token': 'Which token are you paying with?',
   'dest-chain': 'Where should it go?',
   'dest-token': 'What token should they get?',
   'amount': 'How much?',
