@@ -12,6 +12,8 @@ import {
 import ChainTicker from '@/components/ui/ChainTicker';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
+import TerminalTransfer from '@/components/ui/TerminalTransfer';
+import { getChainLogo } from '@/lib/chain-logos';
 
 // ── Feature Data ──────────────────────────────────────────────────────────────
 
@@ -351,109 +353,160 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen">
 
-      {/* ═══ HERO — left-aligned, editorial ═══ */}
-      <section className="relative z-10 px-4 pb-12 pt-20 max-w-5xl mx-auto">
-        <div className="max-w-2xl">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
-            style={{
-              background: 'rgba(37,99,235,0.1)',
-              border: '1px solid rgba(37,99,235,0.25)',
-              color: 'var(--brand)',
-            }}
-          >
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Beta Live — goblink.io
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            className="text-hero mb-6"
-            style={{ color: 'var(--text-primary)' }}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05, ease: [0.21, 0.47, 0.32, 0.98] }}
-          >
-            Cross-chain transfers that{' '}
-            <span style={{ color: 'var(--brand)' }}>just work.</span>
-          </motion.h1>
-
-          {/* Subheadline */}
-          <motion.p
-            className="text-body-lg mb-8 max-w-lg"
-            style={{ color: 'var(--text-secondary)' }}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
-          >
-            12 chains. 65+ tokens. No bridges, no wrapping, no accounts.
-            Connect your wallet and move value in seconds.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            className="flex flex-col sm:flex-row items-start gap-3 mb-10"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
-              Launch App <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="#features"
-              className="btn btn-ghost inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
+      {/* ═══ HERO — two-column: copy left, terminal right ═══ */}
+      <section className="relative z-10 px-4 pb-16 pt-20 sm:pt-24 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left — copy */}
+          <div>
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+              style={{
+                background: 'rgba(37,99,235,0.1)',
+                border: '1px solid rgba(37,99,235,0.25)',
+                color: 'var(--brand)',
+              }}
             >
-              See all features <ChevronDown className="h-4 w-4" />
-            </a>
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Live on 12 chains
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h1
+              className="text-hero mb-6"
+              style={{ color: 'var(--text-primary)' }}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.05, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+              Skip the bridge.{' '}
+              <span style={{ color: 'var(--brand)' }}>Just send it.</span>
+            </motion.h1>
+
+            {/* Subheadline */}
+            <motion.p
+              className="text-body-lg mb-8 max-w-lg"
+              style={{ color: 'var(--text-secondary)' }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+              You shouldn&apos;t need a tutorial to move your own money.
+              Pick tokens, sign once, done. 65+ tokens across 12 chains.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              className="flex flex-col sm:flex-row items-start gap-3 mb-10"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
+                Launch App <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#features"
+                className="btn btn-ghost inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                See all features <ChevronDown className="h-4 w-4" />
+              </a>
+            </motion.div>
+
+            {/* Stats — horizontal */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div
+                className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+              >
+                {[
+                  { value: '12', suffix: '', label: 'Chains' },
+                  { value: '65', suffix: '+', label: 'Tokens' },
+                  { value: '45', suffix: 's', label: 'Avg. Transfer' },
+                  { value: '100', suffix: '%', label: 'Auto-Refund' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <div className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                      <AnimatedCounter value={s.value} />{s.suffix}
+                    </div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right — terminal visual */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
+            className="hidden lg:block"
+          >
+            <TerminalTransfer />
           </motion.div>
         </div>
-
-        {/* Stats — horizontal bar, left-aligned */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <div
-            className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
-            style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
-          >
-            {[
-              { value: '12', suffix: '', label: 'Chains' },
-              { value: '65', suffix: '+', label: 'Tokens' },
-              { value: '45', suffix: 's', label: 'Avg. Transfer' },
-              { value: '100', suffix: '%', label: 'Auto-Refund' },
-            ].map((s) => (
-              <div key={s.label}>
-                <div className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                  <AnimatedCounter value={s.value} />{s.suffix}
-                </div>
-                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </section>
 
-      {/* ═══ FEES — prominent, above features ═══ */}
+      {/* ═══ CHAIN TRUST GRID ═══ */}
       <section className="relative z-10 py-16 px-4 max-w-5xl mx-auto">
+        <ScrollReveal>
+          <div className="text-center mb-10">
+            <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+              Your tokens live on different chains. So what.
+            </h2>
+            <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
+              Pick a source. Pick a destination. We handle the rest.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-w-2xl mx-auto">
+            {['ethereum', 'solana', 'base', 'arbitrum', 'sui', 'polygon'].map((chainId) => {
+              const logo = getChainLogo(chainId);
+              if (!logo) return null;
+              return (
+                <div
+                  key={chainId}
+                  className="flex flex-col items-center gap-2 py-4 px-3 rounded-xl transition-all hover:scale-105"
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+                >
+                  <img
+                    src={logo.icon}
+                    alt={logo.name}
+                    className="h-10 w-10 rounded-full"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{logo.name}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-center mt-4 text-tiny" style={{ color: 'var(--text-faint)' }}>
+            + NEAR, BNB, Optimism, Aptos, Starknet, Tron
+          </p>
+        </ScrollReveal>
+      </section>
+
+      {/* ═══ FEES — prominent, tinted background ═══ */}
+      <section className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
+        <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {/* Left — messaging */}
             <div>
               <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-                Fees so low, we put them on the homepage.
+                $1.75, not &quot;~0.3%.&quot;
               </h2>
               <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
-                No minimum fees. No hidden charges. No subscription.
-                Just a flat percentage based on your transfer size — shown
-                as a dollar amount before you sign.
+                You see the fee in dollars before you sign. No hidden spread,
+                no surprise gas, no subscription. Moving serious volume? Fees drop automatically.
               </p>
               <div className="flex flex-col gap-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 <div className="flex items-center gap-2">
@@ -514,17 +567,18 @@ export default function LandingPage() {
             </div>
           </div>
         </ScrollReveal>
+        </div>
       </section>
 
       {/* ═══ FEATURES — front and centre ═══ */}
-      <section id="features" className="relative z-10 pt-10 pb-16 px-4 max-w-5xl mx-auto">
+      <section id="features" className="relative z-10 pt-20 pb-20 px-4 max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="mb-12">
             <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-              Every feature, explained.
+              Not just a swap form.
             </h2>
             <p className="text-body-sm max-w-xl" style={{ color: 'var(--text-secondary)' }}>
-              goBlink isn&apos;t just a swap form. Every detail is designed to remove friction and build trust.
+              Every detail is designed to remove friction and build trust. Click any feature to see how it works.
             </p>
           </div>
         </ScrollReveal>
@@ -552,16 +606,16 @@ export default function LandingPage() {
             }}
           >
             <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-              Ready to move?
+              Stop reading. Start sending.
             </h2>
             <p className="text-body-sm mb-8" style={{ color: 'var(--text-secondary)' }}>
-              Connect your wallet and make your first cross-chain transfer in under a minute.
+              First transfer takes about 60 seconds. Including connecting your wallet.
             </p>
             <Link
               href="/app"
               className="btn btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold"
             >
-              Launch goBlink <ArrowRight className="h-4 w-4" />
+              Try it now <ArrowRight className="h-4 w-4" />
             </Link>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
               {['Non-custodial', 'No account needed', 'Auto-refund on failure'].map((t) => (
