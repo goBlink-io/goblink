@@ -61,7 +61,7 @@ export const viewport: Viewport = {
 const themeScript = `
   (function() {
     try {
-      var mode = localStorage.getItem('theme') || 'auto';
+      var mode = localStorage.getItem('theme') || 'dark';
       var dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       if (dark) document.documentElement.classList.add('dark');
     } catch(e) {}
@@ -116,28 +116,56 @@ export default function RootLayout({
 
             {/* ── Footer ── */}
             <footer className="border-t mt-16 sm:mt-24" style={{ borderColor: 'var(--border)' }}>
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
-                <div className="flex flex-col items-center gap-6 text-center sm:text-left sm:flex-row sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
-                    <span className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <a href="/terms" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Terms
-                    </a>
-                    <a href="/privacy" className="text-caption py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
-                      Privacy
-                    </a>
-                    <a href="https://x.com/goBlink_io" target="_blank" rel="noopener noreferrer" className="py-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }} aria-label="Follow goBlink on X">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                    </a>
-                  </div>
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-12 sm:py-16">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
+                  {/* Product */}
                   <div>
-                    <p className="text-tiny" style={{ color: 'var(--text-faint)' }}>
-                      &copy; 2026 goBlink
-                    </p>
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Product</h4>
+                    <div className="flex flex-col gap-2.5">
+                      <a href="/app" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Launch App</a>
+                      <a href="/#features" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Features</a>
+                      <a href="/pay" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Payment Links</a>
+                      <a href="/history" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>History</a>
+                      <a href="/api-docs" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>API Docs</a>
+                    </div>
                   </div>
+                  {/* Resources */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Resources</h4>
+                    <div className="flex flex-col gap-2.5">
+                      <a href="/widget" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Widget</a>
+                      <a href="/embed" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Embed</a>
+                    </div>
+                  </div>
+                  {/* Legal */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Legal</h4>
+                    <div className="flex flex-col gap-2.5">
+                      <a href="/terms" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Terms of Service</a>
+                      <a href="/privacy" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Privacy Policy</a>
+                    </div>
+                  </div>
+                  {/* Social */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-muted)' }}>Connect</h4>
+                    <div className="flex flex-col gap-2.5">
+                      <a href="https://x.com/goBlink_io" target="_blank" rel="noopener noreferrer" className="text-sm hover:opacity-70 transition-opacity inline-flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        X / Twitter
+                      </a>
+                      <a href="mailto:admin@goblink.io" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--text-secondary)' }}>Contact</a>
+                    </div>
+                  </div>
+                </div>
+                {/* Bottom bar */}
+                <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div className="flex items-center gap-2.5">
+                    <img src="/icon-192.png" alt="goBlink" className="h-6 w-6 rounded-md" />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>goBlink</span>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                    &copy; 2026 goBlink. All rights reserved.
+                  </p>
                 </div>
               </div>
             </footer>
