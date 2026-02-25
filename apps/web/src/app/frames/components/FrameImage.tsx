@@ -166,14 +166,18 @@ export function TipFrameImage({
 // ─── Send Frame (Multi-step wizard) ───────────────────────────────────────────
 
 const STEP_TITLES: Record<string, string> = {
+  'start': 'Send, pay, or tip — any chain',
   'source-chain': 'Where are you sending from?',
   'source-token': 'What token are you sending?',
-  'dest-chain': 'Where is it going?',
-  'dest-token': 'What should they receive?',
+  'dest-chain': 'Where should it go?',
+  'dest-token': 'What token should they get?',
   'amount': 'How much?',
-  'recipient': 'Who are you sending to?',
+  'recipient': 'Who are you paying?',
+  'send-recipient': 'Who are you sending to?',
+  'tip-presets': 'How much do you want to tip?',
+  'tip-custom': 'Enter a custom tip amount',
   'confirm': 'Review your transfer',
-  'success': 'Transaction sent!',
+  'success': 'Sent!',
 };
 
 export function SendFrameImage({
@@ -196,9 +200,11 @@ export function SendFrameImage({
   const shortTo = to && to.length > 12 ? `${to.slice(0, 6)}\u2026${to.slice(-4)}` : to;
   const title = STEP_TITLES[step] || 'Send crypto anywhere';
 
-  const allSteps = ['source-chain', 'source-token', 'dest-chain', 'dest-token', 'amount', 'recipient', 'confirm'];
-  const currentIdx = allSteps.indexOf(step);
+  // Dynamic progress based on what's filled — simple: count completed selections
+  const filled = [sourceChain, sourceToken, destChain, destToken, amount, to].filter(Boolean).length;
+  const totalDots = 7;
   const isConfirmOrSuccess = step === 'confirm' || step === 'success';
+  const isStart = step === 'start';
 
   return (
     <div
@@ -218,19 +224,21 @@ export function SendFrameImage({
       <Logo />
 
       {/* Progress dots */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
-        {allSteps.map((s, i) => (
-          <div
-            key={s}
-            style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: i < currentIdx ? ACCENT : i === currentIdx ? BLUE : 'rgba(255,255,255,0.15)',
-            }}
-          />
-        ))}
-      </div>
+      {!isStart && (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
+          {Array.from({ length: totalDots }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: i < filled ? ACCENT : i === filled ? BLUE : 'rgba(255,255,255,0.15)',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Title */}
       <div style={{ fontSize: isConfirmOrSuccess ? '28px' : '36px', fontWeight: 700, marginBottom: '20px', display: 'flex', textAlign: 'center' }}>
