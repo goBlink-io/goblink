@@ -135,9 +135,13 @@ export default function FarcasterFrameBuilder() {
 
     if (frameType === 'pay') {
       params.set('amount', amount.trim());
-      setGeneratedUrl(`${base}/frames/pay?${params.toString()}`);
+      params.set('mode', 'pay');
+      params.set('step', 'confirm');
+      setGeneratedUrl(`${base}/frames/send?${params.toString()}`);
     } else {
-      setGeneratedUrl(`${base}/frames/tip?${params.toString()}`);
+      params.set('mode', 'tip');
+      params.set('step', 'tip-presets');
+      setGeneratedUrl(`${base}/frames/send?${params.toString()}`);
     }
   };
 

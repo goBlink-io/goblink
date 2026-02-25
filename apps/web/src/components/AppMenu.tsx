@@ -135,6 +135,18 @@ export default function AppMenu() {
             </span>
           </Link>
 
+          {/* Farcaster Frames */}
+          <Link
+            href="/farcaster"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+              Farcaster Frames
+            </span>
+            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(37,99,235,0.15)', color: 'var(--brand)' }}>NEW</span>
+          </Link>
+
           {/* Developers (expandable) */}
           <div>
             <button

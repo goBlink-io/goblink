@@ -1,15 +1,13 @@
 import { Metadata } from 'next';
-import { getBaseUrl } from '../utils/frame-helpers';
+import { getBaseUrl, getChainDisplayName, shortAddress } from '../utils/frame-helpers';
 
 /**
  * /frames/send — Unified goBlink Farcaster Frame entry point.
  *
- * Landing frame presents three paths:
- *   Send — full swap wizard (pick chains, tokens, amount, recipient)
- *   Pay  — payment wizard (recipient → chain/token → amount → confirm)
- *   Tip  — tip wizard (recipient → chain/token → preset/$1/$5/$10/custom)
- *
- * Each path is a multi-step wizard handled by /frames/send/post
+ * Three modes:
+ *   - No params → landing with Send/Pay/Tip buttons
+ *   - Pre-filled params (from Frame Builder) → jump straight into the wizard
+ *   - Each step handled by /frames/send/post
  */
 
 type Props = {
@@ -19,9 +17,17 @@ type Props = {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const p = await searchParams;
   const base = getBaseUrl();
-  const mode = p.mode; // send | pay | tip — if set, we're mid-wizard
+  const mode = p.mode;
+  const step = p.step;
 
-  const imageUrl = `${base}/frames/image?type=send&step=start`;
+  // Build image URL with all available state
+  const imageParams = new URLSearchParams();
+  imageParams.set('type', 'send');
+  imageParams.set('step', step || 'start');
+  for (const [k, v] of Object.entries(p)) {
+    if (v && k !== 'step') imageParams.set(k, v);
+  }
+  const imageUrl = `${base}/frames/image?${imageParams.toString()}`;
 
   const meta: Record<string, string> = {
     'fc:frame': 'vNext',
@@ -29,8 +35,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     'fc:frame:image:aspect_ratio': '1.91:1',
   };
 
+  // Build state passthrough for buttons
+  const allParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(p)) { if (v) allParams.set(k, v); }
+
   if (!mode) {
-    // Landing — 3 buttons
+    // ─── Landing — 3 buttons ──────────────────────────────────────
     meta['fc:frame:button:1'] = '🔄 Send';
     meta['fc:frame:button:1:action'] = 'post';
     meta['fc:frame:button:1:target'] = `${base}/frames/send/post?mode=send&step=source-chain`;
@@ -42,9 +52,63 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     meta['fc:frame:button:3'] = '🎁 Tip';
     meta['fc:frame:button:3:action'] = 'post';
     meta['fc:frame:button:3:target'] = `${base}/frames/send/post?mode=tip&step=recipient`;
+  } else if (step === 'confirm' && p.amount && p.to) {
+    // ─── Pre-filled Pay confirm ───────────────────────────────────
+    const txParams = new URLSearchParams(allParams);
+    txParams.set('crossChain', 'true');
+    const sourceToken = p.sourceToken || '?';
+    const destToken = p.destToken || '?';
+    const label = mode === 'pay' ? `Pay ${p.amount} ${destToken}` : `Send ${p.amount} ${sourceToken} → ${destToken}`;
+
+    meta['fc:frame:button:1'] = label.length > 36 ? 'Confirm & Send' : label;
+    meta['fc:frame:button:1:action'] = 'tx';
+    meta['fc:frame:button:1:target'] = `${base}/frames/send/tx?${txParams.toString()}`;
+
+    const editParams = new URLSearchParams(allParams);
+    editParams.set('step', 'amount');
+    meta['fc:frame:button:2'] = '← Edit';
+    meta['fc:frame:button:2:action'] = 'post';
+    meta['fc:frame:button:2:target'] = `${base}/frames/send/post?${editParams.toString()}`;
+
+    const successParams = new URLSearchParams(allParams);
+    successParams.set('step', 'success');
+    meta['fc:frame:post_url'] = `${base}/frames/send/post?${successParams.toString()}`;
+  } else if (step === 'tip-presets' && p.to) {
+    // ─── Pre-filled Tip presets ───────────────────────────────────
+    const tipButton = (amt: string, n: number) => {
+      const tp = new URLSearchParams(allParams);
+      tp.set('amount', amt);
+      tp.set('step', 'confirm');
+      meta[`fc:frame:button:${n}`] = `$${amt}`;
+      meta[`fc:frame:button:${n}:action`] = 'post';
+      meta[`fc:frame:button:${n}:target`] = `${base}/frames/send/post?${tp.toString()}`;
+    };
+    tipButton('1', 1);
+    tipButton('5', 2);
+    tipButton('10', 3);
+    const customParams = new URLSearchParams(allParams);
+    customParams.set('step', 'tip-custom');
+    meta['fc:frame:button:4'] = 'Custom';
+    meta['fc:frame:button:4:action'] = 'post';
+    meta['fc:frame:button:4:target'] = `${base}/frames/send/post?${customParams.toString()}`;
+  } else {
+    // ─── Mid-wizard with mode set — redirect to post handler ──────
+    meta['fc:frame:button:1'] = 'Continue →';
+    meta['fc:frame:button:1:action'] = 'post';
+    meta['fc:frame:button:1:target'] = `${base}/frames/send/post?${allParams.toString()}`;
   }
 
-  const title = 'goBlink · Send crypto anywhere';
+  const destToken = p.destToken || '';
+  const shortTo = p.to ? shortAddress(p.to) : '';
+  const destChainName = p.destChain ? getChainDisplayName(p.destChain) : '';
+
+  let title = 'goBlink · Send crypto anywhere';
+  if (mode === 'pay' && p.amount && shortTo) {
+    title = `Pay ${p.amount} ${destToken} to ${shortTo} on ${destChainName} · goBlink`;
+  } else if (mode === 'tip' && shortTo) {
+    title = `Tip ${shortTo} in ${destToken} on ${destChainName} · goBlink`;
+  }
+
   return {
     title,
     openGraph: { title, images: [{ url: imageUrl, width: 1200, height: 630 }] },
@@ -52,8 +116,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   };
 }
 
-export default async function SendFramePage({ searchParams: _searchParams }: Props) {
-
+export default async function SendFramePage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 20px' }}>

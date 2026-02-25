@@ -309,3 +309,32 @@ export function SendFrameImage({
     </div>
   );
 }
+
+// ─── Error Frame ──────────────────────────────────────────────────────────────
+
+export function ErrorFrameImage({ message }: { message: string }) {
+  return (
+    <div style={{
+      width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      background: BG_GRADIENT, color: WHITE, fontFamily: 'sans-serif', padding: '60px',
+    }}>
+      <Logo />
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: '64px', height: '64px', borderRadius: '50%',
+        background: 'rgba(239, 68, 68, 0.12)', marginBottom: '24px',
+        fontSize: '32px',
+      }}>
+        ✕
+      </div>
+      <div style={{ fontSize: '32px', fontWeight: 700, marginBottom: '12px', display: 'flex' }}>
+        Something went wrong
+      </div>
+      <div style={{ fontSize: '20px', color: MUTED, display: 'flex', textAlign: 'center', maxWidth: '500px' }}>
+        {message}
+      </div>
+      <Footer />
+    </div>
+  );
+}

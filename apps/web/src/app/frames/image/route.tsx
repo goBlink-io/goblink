@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { PayFrameImage, TipFrameImage, SendFrameImage } from '../components/FrameImage';
+import { PayFrameImage, TipFrameImage, SendFrameImage, ErrorFrameImage } from '../components/FrameImage';
 import { getChainDisplayName } from '../utils/frame-helpers';
 
 export const runtime = 'edge';
@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
 
   let element;
 
-  if (type === 'tip') {
+  if (type === 'send' && searchParams.get('step') === 'error') {
+    const message = searchParams.get('message') || 'Something went wrong';
+    element = <ErrorFrameImage message={message} />;
+  } else if (type === 'tip') {
     element = <TipFrameImage to={to} token={token} chain={chainName} />;
   } else if (type === 'send') {
     const step = searchParams.get('step') || 'source-chain';

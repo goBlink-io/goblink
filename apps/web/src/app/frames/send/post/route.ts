@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl, getChainDisplayName } from '../../utils/frame-helpers';
+import { errorFrame } from '../../utils/error-frame';
 
 /**
  * POST /frames/send/post — Unified multi-step wizard for Send, Pay, and Tip frames.
@@ -171,8 +172,15 @@ export async function POST(request: NextRequest) {
   // RECIPIENT — text input for Pay & Tip (they need address first)
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'recipient') {
-    if (inputText && inputText.length > 5) {
-      state.set('to', inputText);
+    if (inputText && inputText.trim().length > 5) {
+      const addr = inputText.trim();
+      // Basic address validation
+      if (addr.length < 6 || addr.includes(' ')) {
+        const retryParams = new URLSearchParams(state);
+        retryParams.set('step', 'recipient');
+        return errorFrame("That doesn't look like a valid wallet address. Please try again.", `${base}/frames/send/post?${retryParams.toString()}`);
+      }
+      state.set('to', addr);
       const nextStep = 'dest-chain';
       const nextParams = new URLSearchParams(state);
       nextParams.set('step', nextStep);
@@ -237,7 +245,15 @@ export async function POST(request: NextRequest) {
   // AMOUNT — text input (Send & Pay)
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'amount') {
-    if (inputText && !isNaN(Number(inputText)) && Number(inputText) > 0) {
+    if (inputText && inputText.trim()) {
+      const num = Number(inputText.trim());
+      if (isNaN(num) || num <= 0) {
+        const retryParams = new URLSearchParams(state);
+        retryParams.set('step', 'amount');
+        return errorFrame('Please enter a valid amount greater than 0.', `${base}/frames/send/post?${retryParams.toString()}`);
+      }
+    }
+    if (inputText && !isNaN(Number(inputText.trim())) && Number(inputText.trim()) > 0) {
       state.set('amount', inputText);
 
       // Send mode: next is recipient. Pay mode: next is confirm.
@@ -286,8 +302,14 @@ export async function POST(request: NextRequest) {
   // SEND-RECIPIENT — recipient for Send mode (after amount)
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'send-recipient') {
-    if (inputText && inputText.length > 5) {
-      state.set('to', inputText);
+    if (inputText && inputText.trim().length > 5) {
+      const addr = inputText.trim();
+      if (addr.length < 6 || addr.includes(' ')) {
+        const retryParams = new URLSearchParams(state);
+        retryParams.set('step', 'send-recipient');
+        return errorFrame("That doesn't look like a valid wallet address. Please try again.", `${base}/frames/send/post?${retryParams.toString()}`);
+      }
+      state.set('to', addr);
       const confirmParams = new URLSearchParams(state);
       confirmParams.set('step', 'confirm');
       return html(confirmFrame(base, confirmParams));
@@ -342,7 +364,15 @@ export async function POST(request: NextRequest) {
   // TIP CUSTOM — text input for custom tip amount
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'tip-custom') {
-    if (inputText && !isNaN(Number(inputText)) && Number(inputText) > 0) {
+    if (inputText && inputText.trim()) {
+      const num = Number(inputText.trim());
+      if (isNaN(num) || num <= 0) {
+        const retryParams = new URLSearchParams(state);
+        retryParams.set('step', 'tip-custom');
+        return errorFrame('Please enter a valid tip amount greater than 0.', `${base}/frames/send/post?${retryParams.toString()}`);
+      }
+    }
+    if (inputText && !isNaN(Number(inputText.trim())) && Number(inputText.trim()) > 0) {
       state.set('amount', inputText);
       const confirmParams = new URLSearchParams(state);
       confirmParams.set('step', 'confirm');
