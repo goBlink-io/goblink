@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { PayFrameImage, TipFrameImage } from '../components/FrameImage';
+import { PayFrameImage, TipFrameImage, SendFrameImage } from '../components/FrameImage';
 import { getChainDisplayName } from '../utils/frame-helpers';
 
 export const runtime = 'edge';
@@ -14,12 +14,33 @@ export async function GET(request: NextRequest) {
   const chain = searchParams.get('chain') || 'base';
   const chainName = getChainDisplayName(chain);
 
-  const element =
-    type === 'tip' ? (
-      <TipFrameImage to={to} token={token} chain={chainName} />
-    ) : (
-      <PayFrameImage to={to} amount={amount} token={token} chain={chainName} />
+  let element;
+
+  if (type === 'tip') {
+    element = <TipFrameImage to={to} token={token} chain={chainName} />;
+  } else if (type === 'send') {
+    const step = searchParams.get('step') || 'source-chain';
+    const sourceChain = searchParams.get('sourceChain') || '';
+    const sourceToken = searchParams.get('sourceToken') || '';
+    const destChain = searchParams.get('destChain') || '';
+    const destToken = searchParams.get('destToken') || '';
+    const sendAmount = searchParams.get('amount') || '';
+    const sendTo = searchParams.get('to') || '';
+
+    element = (
+      <SendFrameImage
+        step={step}
+        sourceChain={sourceChain ? getChainDisplayName(sourceChain) : ''}
+        sourceToken={sourceToken}
+        destChain={destChain ? getChainDisplayName(destChain) : ''}
+        destToken={destToken}
+        amount={sendAmount}
+        to={sendTo}
+      />
     );
+  } else {
+    element = <PayFrameImage to={to} amount={amount} token={token} chain={chainName} />;
+  }
 
   return new ImageResponse(element, {
     width: 1200,

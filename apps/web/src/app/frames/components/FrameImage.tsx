@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable react/no-unescaped-entities */
 /**
  * FrameImage — JSX components for Satori/ImageResponse OG image generation.
  * These return React elements compatible with next/og's ImageResponse.
@@ -157,6 +158,127 @@ export function TipFrameImage({
         <span>on</span>
         <span style={{ color: BLUE }}>{chain}</span>
       </div>
+      <PoweredBy />
+    </div>
+  );
+}
+
+// ─── Send Frame (Multi-step wizard) ───────────────────────────────────────────
+
+const STEP_TITLES: Record<string, string> = {
+  'source-chain': 'Where are you sending from?',
+  'source-token': 'What token are you sending?',
+  'dest-chain': 'Where is it going?',
+  'dest-token': 'What should they receive?',
+  'amount': 'How much?',
+  'recipient': 'Who are you sending to?',
+  'confirm': 'Review your transfer',
+  'success': 'Transaction sent!',
+};
+
+export function SendFrameImage({
+  step,
+  sourceChain,
+  sourceToken,
+  destChain,
+  destToken,
+  amount,
+  to,
+}: {
+  step: string;
+  sourceChain: string;
+  sourceToken: string;
+  destChain: string;
+  destToken: string;
+  amount: string;
+  to: string;
+}) {
+  const shortTo = to && to.length > 12 ? `${to.slice(0, 6)}\u2026${to.slice(-4)}` : to;
+  const title = STEP_TITLES[step] || 'Send crypto anywhere';
+
+  const allSteps = ['source-chain', 'source-token', 'dest-chain', 'dest-token', 'amount', 'recipient', 'confirm'];
+  const currentIdx = allSteps.indexOf(step);
+  const isConfirmOrSuccess = step === 'confirm' || step === 'success';
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: BG_GRADIENT,
+        color: WHITE,
+        fontFamily: 'sans-serif',
+        padding: '60px',
+      }}
+    >
+      <Logo />
+
+      {/* Progress dots */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
+        {allSteps.map((s, i) => (
+          <div
+            key={s}
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: i < currentIdx ? ACCENT : i === currentIdx ? BLUE : 'rgba(255,255,255,0.15)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Title */}
+      <div style={{ fontSize: isConfirmOrSuccess ? '28px' : '36px', fontWeight: 700, marginBottom: '20px', display: 'flex', textAlign: 'center' }}>
+        {title}
+      </div>
+
+      {/* Route summary */}
+      {(sourceChain || destChain) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '24px', marginBottom: '12px' }}>
+          {sourceChain && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {sourceToken && <span style={{ color: WHITE, fontWeight: 600 }}>{sourceToken}</span>}
+              <span style={{ color: MUTED }}>on</span>
+              <span style={{ color: BLUE, fontWeight: 600 }}>{sourceChain}</span>
+            </span>
+          )}
+          {sourceChain && destChain && (
+            <span style={{ color: ACCENT, fontSize: '28px', display: 'flex' }}>→</span>
+          )}
+          {destChain && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {destToken && <span style={{ color: WHITE, fontWeight: 600 }}>{destToken}</span>}
+              <span style={{ color: MUTED }}>on</span>
+              <span style={{ color: BLUE, fontWeight: 600 }}>{destChain}</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Amount + recipient on confirm/success */}
+      {isConfirmOrSuccess && amount && (
+        <div style={{ fontSize: '56px', fontWeight: 800, marginTop: '8px', display: 'flex' }}>
+          {amount} {sourceToken || destToken}
+        </div>
+      )}
+      {isConfirmOrSuccess && to && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '22px', color: MUTED, marginTop: '12px' }}>
+          <span>to</span>
+          <span style={{ color: WHITE, fontWeight: 600 }}>{shortTo}</span>
+        </div>
+      )}
+
+      {step === 'success' && (
+        <div style={{ display: 'flex', marginTop: '16px', fontSize: '20px', color: ACCENT }}>
+          Cross-chain transfer initiated
+        </div>
+      )}
+
       <PoweredBy />
     </div>
   );

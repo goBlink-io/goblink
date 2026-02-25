@@ -31,7 +31,7 @@ interface Token {
   decimals?: number;
 }
 
-type FrameType = 'pay' | 'tip';
+type FrameType = 'pay' | 'tip' | 'send';
 
 export default function FarcasterFrameBuilder() {
   const [frameType, setFrameType] = useState<FrameType>('pay');
@@ -197,7 +197,7 @@ export default function FarcasterFrameBuilder() {
     <div className="card p-6 space-y-5">
       {/* Frame type toggle */}
       <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-        {(['pay', 'tip'] as FrameType[]).map((type) => (
+        {(['pay', 'tip', 'send'] as FrameType[]).map((type) => (
           <button
             key={type}
             onClick={() => { setFrameType(type); setGeneratedUrl(''); }}
@@ -207,7 +207,7 @@ export default function FarcasterFrameBuilder() {
               color: frameType === type ? 'white' : 'var(--text-muted)',
             }}
           >
-            {type === 'pay' ? '💸 Pay Frame' : '🎁 Tip Frame'}
+            {type === 'pay' ? '💸 Pay' : type === 'tip' ? '🎁 Tip' : '🔄 Send'}
           </button>
         ))}
       </div>
@@ -216,8 +216,51 @@ export default function FarcasterFrameBuilder() {
       <p className="text-xs" style={{ color: 'var(--text-faint)', lineHeight: '1.5' }}>
         {frameType === 'pay'
           ? 'Set a fixed amount — like sending an invoice. The person taps one button and it\'s done.'
-          : 'Let the person choose how much to send — they\'ll see $1, $5, $10 presets or can type a custom amount.'}
+          : frameType === 'tip'
+          ? 'Let the person choose how much to send — they\'ll see $1, $5, $10 presets or can type a custom amount.'
+          : 'Full swap experience inside Farcaster. The person picks their chain, token, amount, and recipient — all without leaving Warpcast.'}
       </p>
+
+      {/* Send frame — no additional config needed, it's a wizard */}
+      {frameType === 'send' && (
+        <div className="space-y-3">
+          <div
+            className="p-4 rounded-xl space-y-2"
+            style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)' }}
+          >
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              How the Send frame works
+            </p>
+            <div className="space-y-1.5">
+              {[
+                'The person picks which chain and token to send from',
+                'Then picks where it should go and what token to receive',
+                'Types the amount and the recipient address',
+                'Reviews everything and signs — one transaction, done',
+              ].map((text, i) => (
+                <p key={i} className="text-xs flex items-start gap-2" style={{ color: 'var(--text-secondary)' }}>
+                  <span className="font-bold" style={{ color: 'var(--brand)' }}>{i + 1}.</span>
+                  {text}
+                </p>
+              ))}
+            </div>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-faint)' }}>
+              No pre-configuration needed — the frame walks them through everything step by step.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setGeneratedUrl('https://goblink.io/frames/send')}
+            className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all"
+            style={{ background: 'var(--gradient)', cursor: 'pointer' }}
+          >
+            Generate Send Frame Link
+          </button>
+        </div>
+      )}
+
+      {/* Pay/Tip-specific fields */}
+      {frameType !== 'send' && <>
 
       {/* Recipient */}
       <div>
@@ -360,8 +403,10 @@ export default function FarcasterFrameBuilder() {
         </div>
       )}
 
+      </>}
+
       {/* Generate / Result */}
-      {!generatedUrl ? (
+      {!generatedUrl && frameType !== 'send' && (
         <button
           onClick={handleGenerate}
           disabled={!isValid}
@@ -374,7 +419,8 @@ export default function FarcasterFrameBuilder() {
         >
           Generate Frame Link
         </button>
-      ) : (
+      )}
+      {generatedUrl && (
         <div className="space-y-3">
           <div
             className="p-4 rounded-xl space-y-2"
