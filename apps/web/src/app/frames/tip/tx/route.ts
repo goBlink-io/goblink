@@ -11,19 +11,19 @@ import {
 
 /**
  * POST /frames/tip/tx — Farcaster transaction endpoint for tips.
- * Supports same-chain and cross-chain (via 1Click) transfers.
+ * Same logic as pay/tx — routes through 1Click for cross-chain.
  */
 export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const to = searchParams.get('to') || '';
   const amount = searchParams.get('amount') || '0';
-  const token = (searchParams.get('token') || 'USDC').toUpperCase();
-  const chain = searchParams.get('chain') || 'base';
 
-  const sourceChain = searchParams.get('sourceChain') || 'base';
-  const sourceToken = (searchParams.get('sourceToken') || token).toUpperCase();
-  const destChain = searchParams.get('destChain') || chain;
-  const destToken = (searchParams.get('destToken') || token).toUpperCase();
+  const sourceChain = searchParams.get('sourceChain') || searchParams.get('chain') || 'base';
+  const sourceToken = searchParams.get('sourceToken') || searchParams.get('token') || 'USDC';
+  const destChain = searchParams.get('destChain') || searchParams.get('chain') || 'base';
+  const destToken = searchParams.get('destToken') || searchParams.get('token') || 'USDC';
+  const sourceAssetId = searchParams.get('sourceAssetId') || '';
+  const destAssetId = searchParams.get('destAssetId') || '';
   const crossChain = searchParams.get('crossChain') === 'true';
 
   const isCrossChain = crossChain || sourceChain !== destChain || sourceToken !== destToken;
@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
   }
 
+  // ─── Cross-chain via 1Click ─────────────────────────────────────
   if (isCrossChain) {
-    // Parse refund address from Farcaster frame message
     let refundAddress = '';
     try {
       const body = await request.json();
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     } catch { /* */ }
 
     if (!refundAddress) {
-      return NextResponse.json({ error: 'Could not determine wallet address for refund' }, { status: 400 });
+      return NextResponse.json({ error: 'Could not determine wallet address' }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://goblink.io';
@@ -49,24 +49,34 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sourceChain, sourceToken, destChain, destToken,
-        amount, recipient: to, refundTo: refundAddress,
+        sourceChain, sourceToken, sourceAssetId,
+        destChain, destToken, destAssetId,
+        sourceDecimals: searchParams.get('sourceDecimals'),
+        destDecimals: searchParams.get('destDecimals'),
+        amount,
+        recipient: to,
+        refundTo: refundAddress,
       }),
     });
 
     if (!quoteRes.ok) {
       const err = await quoteRes.json().catch(() => ({}));
-      return NextResponse.json({ error: err.error || 'Failed to get cross-chain quote' }, { status: 502 });
+      return NextResponse.json({ error: err.error || 'Cross-chain quote failed' }, { status: 502 });
     }
 
     const quote = await quoteRes.json();
-    const { depositAddress, sendAmount, sourceChainId } = quote;
+    const { depositAddress, sendAmount } = quote;
 
     if (!depositAddress || !sendAmount) {
-      return NextResponse.json({ error: 'Invalid quote response' }, { status: 502 });
+      return NextResponse.json({ error: 'Invalid quote — no deposit address' }, { status: 502 });
     }
 
-    const chainIdHex = `eip155:${sourceChainId}`;
+    const chainId = getChainId(sourceChain);
+    if (!chainId) {
+      return NextResponse.json({ error: `Source chain ${sourceChain} not supported in Farcaster Frames (EVM only)` }, { status: 400 });
+    }
+
+    const chainIdHex = `eip155:${chainId}`;
 
     if (isNativeToken(sourceChain, sourceToken)) {
       return NextResponse.json({
@@ -76,9 +86,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const sourceTokenInfo = TOKEN_ADDRESSES[sourceChain]?.[sourceToken];
-    if (!sourceTokenInfo) {
-      return NextResponse.json({ error: `Token ${sourceToken} not found on ${sourceChain}` }, { status: 400 });
+    const tokenInfo = TOKEN_ADDRESSES[sourceChain]?.[sourceToken.toUpperCase()];
+    if (!tokenInfo) {
+      return NextResponse.json({ error: `Token ${sourceToken} address unknown on ${sourceChain}` }, { status: 400 });
     }
 
     const data = encodeErc20Transfer(depositAddress, BigInt(sendAmount));
@@ -86,31 +96,26 @@ export async function POST(request: NextRequest) {
       chainId: chainIdHex,
       method: 'eth_sendTransaction',
       params: {
-        abi: [{
-          type: 'function', name: 'transfer',
-          inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }],
-          outputs: [{ name: '', type: 'bool' }],
-          stateMutability: 'nonpayable',
-        }],
-        to: sourceTokenInfo.address, data, value: '0x0',
+        abi: [{ type: 'function', name: 'transfer', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' }],
+        to: tokenInfo.address, data, value: '0x0',
       },
     });
   }
 
-  // ─── Same-chain direct transfer ───────────────────────────────────
+  // ─── Same-chain direct transfer ─────────────────────────────────
   if (!to || !to.startsWith('0x')) {
     return NextResponse.json({ error: 'Invalid recipient address' }, { status: 400 });
   }
 
-  const chainId = getChainId(chain);
+  const chainId = getChainId(sourceChain);
   if (!chainId) {
-    return NextResponse.json({ error: `Unsupported chain: ${chain}` }, { status: 400 });
+    return NextResponse.json({ error: `Unsupported chain: ${sourceChain}` }, { status: 400 });
   }
 
   const chainIdHex = `eip155:${chainId}`;
 
-  if (isNativeToken(chain, token)) {
-    const native = getNativeToken(chain)!;
+  if (isNativeToken(sourceChain, sourceToken)) {
+    const native = getNativeToken(sourceChain)!;
     const value = parseAmount(amount, native.decimals);
     return NextResponse.json({
       chainId: chainIdHex,
@@ -119,9 +124,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const tokenInfo = getTokenInfo(chain, token);
+  const tokenInfo = getTokenInfo(sourceChain, sourceToken);
   if (!tokenInfo) {
-    return NextResponse.json({ error: `Token ${token} not supported on ${chain}` }, { status: 400 });
+    return NextResponse.json({ error: `Token ${sourceToken} not supported on ${sourceChain}` }, { status: 400 });
   }
 
   const atomicAmount = parseAmount(amount, tokenInfo.decimals);
@@ -131,12 +136,7 @@ export async function POST(request: NextRequest) {
     chainId: chainIdHex,
     method: 'eth_sendTransaction',
     params: {
-      abi: [{
-        type: 'function', name: 'transfer',
-        inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }],
-        outputs: [{ name: '', type: 'bool' }],
-        stateMutability: 'nonpayable',
-      }],
+      abi: [{ type: 'function', name: 'transfer', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' }],
       to: tokenInfo.address, data, value: '0x0',
     },
   });
