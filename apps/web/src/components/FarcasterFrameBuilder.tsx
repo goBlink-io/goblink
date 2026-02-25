@@ -213,15 +213,15 @@ export default function FarcasterFrameBuilder() {
       </div>
 
       {/* Description */}
-      <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+      <p className="text-xs" style={{ color: 'var(--text-faint)', lineHeight: '1.5' }}>
         {frameType === 'pay'
-          ? 'Create a payment frame — one button, one signature, done. Any chain to any chain.'
-          : 'Create a tip frame — $1, $5, $10, or custom. Any chain to any chain.'}
+          ? 'Set a fixed amount — like sending an invoice. The person taps one button and it\'s done.'
+          : 'Let the person choose how much to send — they\'ll see $1, $5, $10 presets or can type a custom amount.'}
       </p>
 
       {/* Recipient */}
       <div>
-        <label style={labelStyle}>Recipient address <span style={{ color: 'var(--error)' }}>*</span></label>
+        <label style={labelStyle}>Your wallet address <span style={{ color: 'var(--error)' }}>*</span></label>
         <input
           type="text"
           placeholder={addressPlaceholder}
@@ -230,16 +230,21 @@ export default function FarcasterFrameBuilder() {
           style={inputStyle}
           className="font-mono"
         />
+        {!recipient && (
+          <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
+            This is where the money goes. Paste the wallet address you want to receive funds on.
+          </p>
+        )}
         {recipient && !isValidAddress && (
           <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>
-            Invalid address for {SUPPORTED_CHAINS.find(c => c.id === destChain)?.name || destChain}
+            This doesn&apos;t look like a valid {SUPPORTED_CHAINS.find(c => c.id === destChain)?.name || destChain} address. Double-check and try again.
           </p>
         )}
       </div>
 
       {/* Destination: where funds arrive */}
       <div>
-        <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>Receive on</label>
+        <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>What do you want to receive?</label>
         <div className="grid grid-cols-2 gap-3">
           <div className="relative">
             <select
@@ -275,7 +280,7 @@ export default function FarcasterFrameBuilder() {
       {/* Source: what the payer sends */}
       <div>
         <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>
-          Payer sends from
+          What does the payer send?
           {isCrossChain && (
             <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: 'rgba(37,99,235,0.1)', color: 'var(--brand)' }}>
               CROSS-CHAIN
@@ -350,7 +355,7 @@ export default function FarcasterFrameBuilder() {
             </span>
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
-            Amount in {selectedDestToken?.symbol || 'tokens'} the recipient receives
+            This is the exact amount you&apos;ll receive. goBlink handles the conversion if the payer sends a different token.
           </p>
         </div>
       )}
@@ -376,14 +381,13 @@ export default function FarcasterFrameBuilder() {
             style={{ background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.2)' }}
           >
             <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-              Your Farcaster Frame link
+              Your link is ready 🎉
             </p>
             <p className="text-xs font-mono break-all" style={{ color: 'var(--brand)' }}>
               {generatedUrl}
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-              Paste this in a Farcaster cast. Warpcast renders it as an interactive card.
-              {isCrossChain && ' Cross-chain routing handled by goBlink.'}
+            <p className="text-xs" style={{ color: 'var(--text-faint)', lineHeight: '1.5' }}>
+              Copy this link and paste it into a Farcaster cast. When someone sees your post, they&apos;ll get a card with a pay button — one tap and it&apos;s done.
             </p>
           </div>
 
