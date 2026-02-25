@@ -32,25 +32,59 @@ export default function PaymentRequestForm({ onGenerated }: Props) {
   const [memo, setMemo] = useState('');
   const [copied, setCopied] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   const chainLogo = getChainLogo(toChain);
 
   const isValid = toChain && toToken && amount && parseFloat(amount) > 0 && recipient.trim().length > 5;
 
-  const handleGenerate = () => {
-    if (!isValid) return;
-    const data: PaymentRequestData = {
-      recipient: recipient.trim(),
-      toChain,
-      toToken,
-      amount: amount.trim(),
-      memo: memo.trim() || undefined,
-      name: name.trim() || undefined,
-      createdAt: Date.now(),
-    };
-    const url = generatePaymentUrl(data);
-    setGeneratedUrl(url);
-    onGenerated?.(url, data);
+  const handleGenerate = async () => {
+    if (!isValid || generating) return;
+    setGenerating(true);
+    try {
+      const data: PaymentRequestData = {
+        recipient: recipient.trim(),
+        toChain,
+        toToken,
+        amount: amount.trim(),
+        memo: memo.trim() || undefined,
+        name: name.trim() || undefined,
+        createdAt: Date.now(),
+      };
+
+      const res = await fetch('/api/pay/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const { url } = await res.json();
+        setGeneratedUrl(url);
+        onGenerated?.(url, data);
+      } else {
+        // Fallback to client-side base64 URL if API fails
+        const url = generatePaymentUrl(data);
+        setGeneratedUrl(url);
+        onGenerated?.(url, data);
+      }
+    } catch {
+      // Fallback to client-side base64 URL
+      const data: PaymentRequestData = {
+        recipient: recipient.trim(),
+        toChain,
+        toToken,
+        amount: amount.trim(),
+        memo: memo.trim() || undefined,
+        name: name.trim() || undefined,
+        createdAt: Date.now(),
+      };
+      const url = generatePaymentUrl(data);
+      setGeneratedUrl(url);
+      onGenerated?.(url, data);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleCopy = () => {
@@ -177,15 +211,15 @@ export default function PaymentRequestForm({ onGenerated }: Props) {
       {!generatedUrl ? (
         <button
           onClick={handleGenerate}
-          disabled={!isValid}
+          disabled={!isValid || generating}
           className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all"
           style={{
-            background: isValid ? 'var(--gradient)' : 'var(--elevated)',
-            color: isValid ? 'white' : 'var(--text-muted)',
-            cursor: isValid ? 'pointer' : 'not-allowed',
+            background: isValid && !generating ? 'var(--gradient)' : 'var(--elevated)',
+            color: isValid && !generating ? 'white' : 'var(--text-muted)',
+            cursor: isValid && !generating ? 'pointer' : 'not-allowed',
           }}
         >
-          Generate Payment Link <ArrowRight className="h-4 w-4" />
+          {generating ? 'Generating…' : 'Generate Payment Link'} {!generating && <ArrowRight className="h-4 w-4" />}
         </button>
       ) : (
         <div className="space-y-3">
