@@ -2,24 +2,52 @@ import { Metadata } from 'next';
 import { getBaseUrl, getChainDisplayName, shortAddress } from '../utils/frame-helpers';
 
 type Props = {
-  searchParams: Promise<{ to?: string; token?: string; chain?: string }>;
+  searchParams: Promise<{
+    to?: string; token?: string; chain?: string;
+    sourceChain?: string; sourceToken?: string;
+    destChain?: string; destToken?: string;
+    crossChain?: string;
+  }>;
 };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const params = await searchParams;
   const to = params.to || '';
-  const token = (params.token || 'USDC').toUpperCase();
-  const chain = params.chain || 'base';
   const base = getBaseUrl();
-  const chainName = getChainDisplayName(chain);
+
+  const sourceChain = params.sourceChain || params.chain || 'base';
+  const sourceToken = (params.sourceToken || params.token || 'USDC').toUpperCase();
+  const destChain = params.destChain || params.chain || 'base';
+  const destToken = (params.destToken || params.token || 'USDC').toUpperCase();
+  const isCrossChain = params.crossChain === 'true' || sourceChain !== destChain || sourceToken !== destToken;
+
+  const destChainName = getChainDisplayName(destChain);
   const shortTo = shortAddress(to);
 
-  const imageUrl = `${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
-  const txTarget = (amt: string) =>
-    `${base}/frames/tip/tx?to=${encodeURIComponent(to)}&amount=${amt}&token=${token}&chain=${chain}`;
-  const postUrl = `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
+  const imageUrl = `${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${destToken}&chain=${destChain}${isCrossChain ? `&sourceChain=${sourceChain}&sourceToken=${sourceToken}` : ''}`;
 
-  const title = `Tip ${shortTo} in ${token} on ${chainName}`;
+  const txParams = (amt: string) => {
+    const p = new URLSearchParams({
+      to, amount: amt, token: destToken, chain: destChain,
+      sourceChain, sourceToken, destChain, destToken,
+      ...(isCrossChain ? { crossChain: 'true' } : {}),
+    });
+    return `${base}/frames/tip/tx?${p.toString()}`;
+  };
+
+  const postParams = new URLSearchParams({
+    to, token: destToken, chain: destChain,
+    ...(isCrossChain ? { sourceChain, sourceToken, destChain, destToken, crossChain: 'true' } : {}),
+  });
+  const postUrl = `${base}/frames/tip/post?${postParams.toString()}`;
+
+  const customParams = new URLSearchParams({
+    to, token: destToken, chain: destChain,
+    ...(isCrossChain ? { sourceChain, sourceToken, destChain, destToken, crossChain: 'true' } : {}),
+    step: 'custom',
+  });
+
+  const title = `Tip ${shortTo} in ${destToken} on ${destChainName}`;
 
   return {
     title,
@@ -33,16 +61,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       'fc:frame:image:aspect_ratio': '1.91:1',
       'fc:frame:button:1': '$1',
       'fc:frame:button:1:action': 'tx',
-      'fc:frame:button:1:target': txTarget('1'),
+      'fc:frame:button:1:target': txParams('1'),
       'fc:frame:button:2': '$5',
       'fc:frame:button:2:action': 'tx',
-      'fc:frame:button:2:target': txTarget('5'),
+      'fc:frame:button:2:target': txParams('5'),
       'fc:frame:button:3': '$10',
       'fc:frame:button:3:action': 'tx',
-      'fc:frame:button:3:target': txTarget('10'),
+      'fc:frame:button:3:target': txParams('10'),
       'fc:frame:button:4': 'Custom',
       'fc:frame:button:4:action': 'post',
-      'fc:frame:button:4:target': `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`,
+      'fc:frame:button:4:target': `${base}/frames/tip/post?${customParams.toString()}`,
       'fc:frame:input:text': '',
       'fc:frame:post_url': postUrl,
     },
@@ -52,9 +80,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function TipFramePage({ searchParams }: Props) {
   const params = await searchParams;
   const to = params.to || '';
-  const token = (params.token || 'USDC').toUpperCase();
-  const chain = params.chain || 'base';
-  const chainName = getChainDisplayName(chain);
+  const destChain = params.destChain || params.chain || 'base';
+  const destToken = (params.destToken || params.token || 'USDC').toUpperCase();
+  const sourceChain = params.sourceChain || destChain;
+  const sourceToken = (params.sourceToken || destToken).toUpperCase();
+  const isCrossChain = sourceChain !== destChain || sourceToken !== destToken;
+  const destChainName = getChainDisplayName(destChain);
+  const sourceChainName = getChainDisplayName(sourceChain);
 
   return (
     <div
@@ -73,8 +105,13 @@ export default async function TipFramePage({ searchParams }: Props) {
           Tip {shortAddress(to)}
         </h1>
         <p style={{ color: '#a1a1aa' }}>
-          {token} on {chainName} &mdash; $1, $5, $10, or custom amount
+          {destToken} on {destChainName} &mdash; $1, $5, $10, or custom amount
         </p>
+        {isCrossChain && (
+          <p style={{ color: '#71717a', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+            Paid with {sourceToken} on {sourceChainName} · Cross-chain via goBlink
+          </p>
+        )}
         <p style={{ color: '#a1a1aa', marginTop: '1rem', fontSize: '0.875rem' }}>
           Open this link in Farcaster to tip via Frame.
         </p>

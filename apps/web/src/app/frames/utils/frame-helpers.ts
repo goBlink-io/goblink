@@ -82,6 +82,11 @@ export const CHAIN_DISPLAY_NAMES: Record<string, string> = {
   gnosis:    'Gnosis',
   berachain: 'Berachain',
   monad:     'Monad',
+  solana:    'Solana',
+  near:      'NEAR',
+  sui:       'Sui',
+  aptos:     'Aptos',
+  tron:      'Tron',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

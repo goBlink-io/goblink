@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl } from '../../utils/frame-helpers';
 
 /**
- * POST /frames/tip — Farcaster frame post_url handler.
+ * POST /frames/tip/post — Farcaster frame post_url handler.
  * Handles two flows:
  * 1. step=custom — show text input for custom amount, then redirect to tx
  * 2. default — post-transaction success confirmation
+ * 
+ * Supports cross-chain params (sourceChain, sourceToken, destChain, destToken, crossChain).
  */
 export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -15,22 +17,29 @@ export async function POST(request: NextRequest) {
   const step = searchParams.get('step') || '';
   const base = getBaseUrl();
 
+  // Cross-chain params (pass-through)
+  const sourceChain = searchParams.get('sourceChain') || '';
+  const sourceToken = searchParams.get('sourceToken') || '';
+  const destChain = searchParams.get('destChain') || '';
+  const destToken = searchParams.get('destToken') || '';
+  const crossChain = searchParams.get('crossChain') || '';
+
+  // Build cross-chain suffix for URLs
+  const ccParams = crossChain === 'true'
+    ? `&sourceChain=${sourceChain}&sourceToken=${sourceToken}&destChain=${destChain}&destToken=${destToken}&crossChain=true`
+    : '';
+
   const imageUrl = `${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
 
-  // Custom amount flow: show input field, then send tx
   if (step === 'custom') {
-    // Parse the frame message to get input text
     let inputText = '';
     try {
       const body = await request.json();
       inputText = body?.untrustedData?.inputText || '';
-    } catch {
-      // no body or invalid JSON
-    }
+    } catch { /* */ }
 
     if (inputText && !isNaN(Number(inputText)) && Number(inputText) > 0) {
-      // User entered a valid amount — redirect to tx endpoint
-      const txTarget = `${base}/frames/tip/tx?to=${encodeURIComponent(to)}&amount=${inputText}&token=${token}&chain=${chain}`;
+      const txTarget = `${base}/frames/tip/tx?to=${encodeURIComponent(to)}&amount=${inputText}&token=${token}&chain=${chain}${ccParams}`;
 
       const html = `<!DOCTYPE html>
 <html>
@@ -41,18 +50,13 @@ export async function POST(request: NextRequest) {
   <meta property="fc:frame:button:1" content="Send $${inputText} ${token}" />
   <meta property="fc:frame:button:1:action" content="tx" />
   <meta property="fc:frame:button:1:target" content="${txTarget}" />
-  <meta property="fc:frame:post_url" content="${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}" />
+  <meta property="fc:frame:post_url" content="${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}${ccParams}" />
 </head>
 </html>`;
-
-      return new NextResponse(html, {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
+      return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
     }
 
-    // No amount yet — show input prompt
-    const customPostUrl = `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom`;
+    const customPostUrl = `${base}/frames/tip/post?to=${encodeURIComponent(to)}&token=${token}&chain=${chain}&step=custom${ccParams}`;
 
     const html = `<!DOCTYPE html>
 <html>
@@ -67,14 +71,10 @@ export async function POST(request: NextRequest) {
   <meta property="fc:frame:post_url" content="${customPostUrl}" />
 </head>
 </html>`;
-
-    return new NextResponse(html, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
+    return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
   }
 
-  // Default: post-transaction success
+  // Default: success confirmation
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -86,9 +86,5 @@ export async function POST(request: NextRequest) {
   <meta property="fc:frame:button:1:target" content="${base}" />
 </head>
 </html>`;
-
-  return new NextResponse(html, {
-    status: 200,
-    headers: { 'Content-Type': 'text/html' },
-  });
+  return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
