@@ -135,6 +135,20 @@ export default function AppMenu() {
             </span>
           </Link>
 
+          {/* Telegram Bot */}
+          <a
+            href="https://t.me/goBlinkBot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center px-4 py-3 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+              Telegram Bot
+            </span>
+            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(37,99,235,0.15)', color: 'var(--brand)' }}>NEW</span>
+          </a>
+
           {/* Farcaster Frames */}
           <Link
             href="/farcaster"
@@ -144,7 +158,6 @@ export default function AppMenu() {
             <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
               Farcaster Frames
             </span>
-            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(37,99,235,0.15)', color: 'var(--brand)' }}>NEW</span>
           </Link>
 
           {/* Developers (expandable) */}
