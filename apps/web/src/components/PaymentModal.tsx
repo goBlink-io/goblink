@@ -102,9 +102,18 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
         setAllTokens(filterTokens(tokens));
         setTokensLoading(false);
 
-        // Resolve destination token
+        // Resolve destination token (with fallback for wrapped aliases like wNEAR→NEAR)
+        const ALIASES: Record<string, string[]> = {
+          'WNEAR': ['NEAR'],
+          'NEAR': ['WNEAR'],
+          'WETH': ['ETH'],
+          'ETH': ['WETH'],
+          'WBTC': ['BTC'],
+        };
+        const toUpper = (data.toToken || '').toUpperCase();
+        const candidates = [toUpper, ...(ALIASES[toUpper] || [])];
         const dest = tokens.find(t =>
-          t.symbol?.toUpperCase() === data.toToken?.toUpperCase() &&
+          candidates.includes((t.symbol || '').toUpperCase()) &&
           (t.blockchain || 'near').toLowerCase() === data.toChain.toLowerCase()
         );
         setDestToken(dest || null);
