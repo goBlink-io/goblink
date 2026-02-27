@@ -77,6 +77,44 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "goBlink",
+              "url": "https://goblink.io",
+              "description": "Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure.",
+              "applicationCategory": "DeFi",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "featureList": ["Cross-chain transfers", "65+ tokens", "12 blockchains", "Non-custodial", "Auto-refund", "Payment requests", "Embeddable widget"]
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "goBlink",
+              "url": "https://goblink.io",
+              "logo": "https://goblink.io/icon-512.png",
+              "sameAs": ["https://x.com/goBlink_io"],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "admin@goblink.io",
+                "contactType": "customer support"
+              }
+            }),
+          }}
+        />
       </head>
       <body className="font-sans" suppressHydrationWarning>
         <ClientLayout>
