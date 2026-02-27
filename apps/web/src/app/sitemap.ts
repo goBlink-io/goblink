@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${baseUrl}/app`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/embed`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -28,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/history`,
       lastModified: new Date(),
       changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/pay`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
@@ -53,6 +65,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/api-docs`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
     },
   ];
 }

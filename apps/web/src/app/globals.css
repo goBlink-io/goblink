@@ -366,11 +366,36 @@
   animation-play-state: paused;
 }
 
+/* Hero entrance — no inline opacity:0, content visible to crawlers */
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+}
+@keyframes hero-fade-up-md {
+  from { opacity: 0; transform: translateY(16px); }
+}
+@keyframes hero-fade-up-sm {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes hero-fade-up-xs {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@keyframes hero-fade-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+}
+
+.animate-hero-badge    { animation: hero-fade-up-sm    0.5s cubic-bezier(0.21,0.47,0.32,0.98) both; }
+.animate-hero-h1       { animation: hero-fade-up       0.6s cubic-bezier(0.21,0.47,0.32,0.98) 0.05s both; }
+.animate-hero-sub      { animation: hero-fade-up-md    0.6s cubic-bezier(0.21,0.47,0.32,0.98) 0.12s both; }
+.animate-hero-cta      { animation: hero-fade-up-sm    0.6s cubic-bezier(0.21,0.47,0.32,0.98) 0.2s both; }
+.animate-hero-stats    { animation: hero-fade-up-xs    0.6s cubic-bezier(0.21,0.47,0.32,0.98) 0.3s both; }
+.animate-hero-terminal { animation: hero-fade-in-right 0.6s cubic-bezier(0.21,0.47,0.32,0.98) 0.2s both; }
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker,
   .animate-cursor-blink,
-  .animate-fade-up {
+  .animate-fade-up,
+  [class^="animate-hero-"] {
     animation: none !important;
   }
 }
