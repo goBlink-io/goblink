@@ -640,7 +640,10 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
                 chainName={SUPPORTED_CHAINS.find(c => c.id === toChain)?.name || toChain}
                 connectedChains={connectedChainOptions}
                 onEnterManually={() => {
-                  setTimeout(() => recipientRef.current?.focus(), 100);
+                  setTimeout(() => {
+                    recipientRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => recipientRef.current?.focus(), 300);
+                  }, 100);
                 }}
                 onSwitchChain={(chainId) => setToChain(chainId)}
                 onConnectWallet={() => openModal()}
