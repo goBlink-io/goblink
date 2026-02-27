@@ -359,11 +359,8 @@ export default function LandingPage() {
           {/* Left — copy */}
           <div>
             {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+            <div
+              className="animate-hero-badge mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
               style={{
                 background: 'rgba(37,99,235,0.1)',
                 border: '1px solid rgba(37,99,235,0.25)',
@@ -372,38 +369,29 @@ export default function LandingPage() {
             >
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               Live on 12 chains
-            </motion.div>
+            </div>
 
             {/* Headline */}
-            <motion.h1
-              className="text-hero mb-6"
+            <h1
+              className="animate-hero-h1 text-hero mb-6"
               style={{ color: 'var(--text-primary)' }}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.05, ease: [0.21, 0.47, 0.32, 0.98] }}
             >
               Skip the bridge.{' '}
               <span style={{ color: 'var(--brand)' }}>Just send it.</span>
-            </motion.h1>
+            </h1>
 
             {/* Subheadline */}
-            <motion.p
-              className="text-body-lg mb-8 max-w-lg"
+            <p
+              className="animate-hero-sub text-body-lg mb-8 max-w-lg"
               style={{ color: 'var(--text-secondary)' }}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.12, ease: [0.21, 0.47, 0.32, 0.98] }}
             >
               You shouldn&apos;t need a tutorial to move your own money.
               Pick tokens, sign once, done. 65+ tokens across 12 chains.
-            </motion.p>
+            </p>
 
             {/* CTAs */}
-            <motion.div
-              className="flex flex-col sm:flex-row items-start gap-3 mb-10"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+            <div
+              className="animate-hero-cta flex flex-col sm:flex-row items-start gap-3 mb-10"
             >
               <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
                 Launch App <ArrowRight className="h-4 w-4" />
@@ -415,14 +403,10 @@ export default function LandingPage() {
               >
                 See all features <ChevronDown className="h-4 w-4" />
               </a>
-            </motion.div>
+            </div>
 
             {/* Stats — horizontal */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
+            <div className="animate-hero-stats">
               <div
                 className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
                 style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
@@ -441,18 +425,13 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Right — terminal visual */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="hidden lg:block"
-          >
+          <div className="animate-hero-terminal hidden lg:block">
             <TerminalTransfer />
-          </motion.div>
+          </div>
         </div>
       </section>
 

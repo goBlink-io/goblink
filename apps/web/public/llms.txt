@@ -1,0 +1,48 @@
+# goBlink
+
+> Cross-chain token transfers. One click, any chain, no bridges.
+
+goBlink is a non-custodial cross-chain token transfer platform. Users pick a source token and destination token on any supported chain, sign one transaction, and receive tokens on the other side — typically in under 60 seconds.
+
+## Supported Chains (12)
+- Ethereum
+- Solana
+- Base
+- Arbitrum
+- Sui
+- Polygon
+- BNB Chain
+- Optimism
+- Aptos
+- Starknet
+- Tron
+- NEAR
+
+## Tokens
+65+ tokens supported across all chains, including native tokens and major stablecoins (USDC, USDT).
+
+## Key Features
+- Non-custodial: goBlink never holds user funds
+- Auto-refund: failed transfers are automatically refunded to the sender
+- No account required: connect a wallet and go
+- Tiered pricing: 0.35% under $5k, 0.10% $5k–$50k, 0.05% over $50k
+- Embeddable widget for third-party dApps
+
+## Pages
+- / — Landing page
+- /app — Swap / transfer interface
+- /history — Transaction history (multi-wallet)
+- /pay — Create cross-chain payment request links
+- /widget — Embeddable widget info
+- /embed — Embeddable transfer iframe
+- /api-docs — API documentation
+- /terms — Terms of Service
+- /privacy — Privacy Policy
+
+## API
+REST API for programmatic cross-chain transfers. See /api-docs for endpoints, authentication, and usage.
+
+## Contact
+- Email: admin@goblink.io
+- X: https://x.com/goBlink_io
+- Website: https://goblink.io
