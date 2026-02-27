@@ -5,13 +5,44 @@ import SwapForm from '@/components/SwapForm';
 import TransferModal from '@/components/TransferModal';
 import { useState } from 'react';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
 
+/** Post a message to the parent window (for SDK widget integration) */
+function postToParent(event: Record<string, unknown>) {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(event, '*');
+    }
+  } catch {
+    // Cross-origin restriction — silently ignore
+  }
+}
+
 function EmbedInner() {
+  const searchParams = useSearchParams();
   const [quoteData, setQuoteData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const { addEntry } = useTransactionHistory();
+
+  // Read URL params for pre-filling the form
+  const toChain = searchParams.get('chain') || searchParams.get('toChain') || undefined;
+  const toToken = searchParams.get('token') || searchParams.get('toToken') || undefined;
+  const recipient = searchParams.get('to') || searchParams.get('toAddress') || undefined;
+  const amount = searchParams.get('amount') || undefined;
+  const fromChain = searchParams.get('fromChain') || undefined;
+  const theme = searchParams.get('theme') || undefined;
+
+  // Build initial values for SwapForm
+  const initialValues = (toChain || toToken || recipient || amount) ? {
+    toChain: toChain || undefined,
+    toToken: toToken || undefined,
+    recipient: recipient || undefined,
+    amount: amount || undefined,
+    fromChain: fromChain || undefined,
+    lockDest: !!(recipient && toChain && toToken), // Lock if merchant pre-filled everything
+  } : undefined;
 
   const handleQuoteReceived = (quote: any) => {
     setQuoteData(quote);
@@ -30,6 +61,22 @@ function EmbedInner() {
         status: 'PENDING_DEPOSIT',
       });
     }
+
+    // Notify parent window (SDK widget)
+    postToParent({
+      type: 'goblink:success',
+      transfer: {
+        depositAddress,
+        txHash: txHash || null,
+        fromChain: quoteData?.fromChain,
+        toChain: quoteData?.toChain,
+        fromToken: quoteData?.originTokenMetadata?.symbol,
+        toToken: quoteData?.destinationTokenMetadata?.symbol,
+        amountIn: quoteData?.quote?.amountInFormatted,
+        amountOut: quoteData?.quote?.amountOutFormatted,
+      },
+    });
+
     if (txHash) {
       fetch('/api/deposit/submit', {
         method: 'POST',
@@ -37,6 +84,16 @@ function EmbedInner() {
         body: JSON.stringify({ txHash, depositAddress }),
       }).catch(err => console.error('Error submitting tx:', err));
     }
+  };
+
+  const handleOutcome = (result: { status: string; fulfillmentTxHash?: string }) => {
+    const isPaid = result.status === 'SUCCESS' || result.status === 'COMPLETED' || result.status === 'paid';
+    postToParent({
+      type: isPaid ? 'goblink:success' : 'goblink:error',
+      ...(isPaid
+        ? { transfer: { status: 'paid', fulfillmentTxHash: result.fulfillmentTxHash } }
+        : { error: { message: 'Transfer failed', code: 'TRANSFER_FAILED' } }),
+    });
   };
 
   const handleCloseModal = () => {
@@ -47,13 +104,17 @@ function EmbedInner() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: 'var(--bg-primary)' }}
+      style={{
+        background: theme === 'light' ? '#ffffff' : 'var(--bg-primary)',
+        ...(theme === 'light' ? { colorScheme: 'light' as any } : {}),
+      }}
     >
       {/* Swap card */}
       <div className="w-full max-w-[480px]">
         <SwapForm
           onQuoteReceived={handleQuoteReceived}
           onSwapInitiated={() => {}}
+          initialValues={initialValues}
         />
       </div>
 
@@ -77,7 +138,7 @@ function EmbedInner() {
           quote={quoteData}
           onClose={handleCloseModal}
           onComplete={handleTransferComplete}
-          onOutcome={() => {}}
+          onOutcome={handleOutcome}
         />
       )}
     </div>
