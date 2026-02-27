@@ -1,7 +1,10 @@
 import { OpenAPI, OneClickService, QuoteRequest } from '@defuse-protocol/one-click-sdk-typescript';
 
 // Initialize the API client
-OpenAPI.BASE = process.env.ONE_CLICK_BASE_URL || 'https://1click.chaindefuser.com';
+if (!process.env.ONE_CLICK_BASE_URL) {
+  throw new Error('ONE_CLICK_BASE_URL environment variable is required');
+}
+OpenAPI.BASE = process.env.ONE_CLICK_BASE_URL;
 if (process.env.ONE_CLICK_JWT) {
   OpenAPI.TOKEN = process.env.ONE_CLICK_JWT.trim();
 }
