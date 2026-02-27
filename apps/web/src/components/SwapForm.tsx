@@ -17,6 +17,8 @@ export interface SwapFormInitialValues {
   toChain?: string;
   toToken?: string;   // symbol, e.g. 'SUI'
   recipient?: string;
+  amount?: string;
+  fromChain?: string;
   lockDest?: boolean; // when true, lock the TO chain/token/recipient fields
 }
 
@@ -130,10 +132,12 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
         if (near) setOriginAsset(near.assetId);
         if (usdc) setDestinationAsset(usdc.assetId);
 
-        // Override with initialValues (payment request pre-fill)
+        // Override with initialValues (payment request / embed pre-fill)
         if (initialValues) {
           if (initialValues.toChain) setToChain(initialValues.toChain);
+          if (initialValues.fromChain) setFromChain(initialValues.fromChain);
           if (initialValues.recipient) setRecipient(initialValues.recipient);
+          if (initialValues.amount) setAmount(initialValues.amount);
           if (initialValues.toToken) {
             const destChain = (initialValues.toChain || 'near').toLowerCase();
             const match = tokensData.find((t: Token) =>
