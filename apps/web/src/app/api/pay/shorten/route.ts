@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { supabase } from '@/lib/server/db';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { addRateLimitHeaders } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.tokens);
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      NextResponse.json({ error: 'Rate limited' }, { status: 429 }),
-      rateLimit,
-    );
-  }
-
   try {
     const body = await request.json();
     const { recipient, toChain, toToken, amount, memo, name } = body;
@@ -42,10 +31,7 @@ export async function POST(request: NextRequest) {
     const origin = request.nextUrl.origin;
     const shortUrl = `${origin}/pay/${id}`;
 
-    return addRateLimitHeaders(
-      NextResponse.json({ id, url: shortUrl }),
-      rateLimit,
-    );
+    return NextResponse.json({ id, url: shortUrl });
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }

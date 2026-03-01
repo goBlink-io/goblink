@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { providers } from 'near-api-js';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { errorResponse, successResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { errorResponse, successResponse } from '@/lib/api-response';
 import { isValidNearAccount } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 
@@ -11,51 +10,31 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ accountId: string }> }
 ) {
-  // Rate limiting
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.balance);
-  
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded', 429),
-      rateLimit
-    );
-  }
-  
   try {
     const { accountId } = await params;
-    
+
     // Validate NEAR account ID
     if (!isValidNearAccount(accountId)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid NEAR account ID format', 400, { code: 'INVALID_ACCOUNT_ID' }),
-        rateLimit
-      );
+      return errorResponse('Invalid NEAR account ID format', 400, { code: 'INVALID_ACCOUNT_ID' });
     }
-    
+
     const { searchParams } = new URL(request.url);
     const contractAddress = searchParams.get('contractAddress');
     const decimals = searchParams.get('decimals');
 
     if (!contractAddress || !decimals) {
-      return addRateLimitHeaders(
-        errorResponse('contractAddress and decimals are required', 400),
-        rateLimit
-      );
+      return errorResponse('contractAddress and decimals are required', 400);
     }
 
     // Validate contract address is a NEAR account
     if (!isValidNearAccount(contractAddress)) {
       // Skip non-NEAR addresses (return 0 balance instead of error for compatibility)
-      return addRateLimitHeaders(
-        successResponse({
-          balance: '0.00',
-          balanceRaw: '0',
-          accountId,
-          contractAddress,
-        }),
-        rateLimit
-      );
+      return successResponse({
+        balance: '0.00',
+        balanceRaw: '0',
+        accountId,
+        contractAddress,
+      });
     }
 
     const provider = new providers.JsonRpcProvider({ url: NEAR_RPC_URL });
@@ -71,21 +50,15 @@ export async function GET(
     const decimalsNum = parseInt(decimals);
     const balanceInTokens = String(Number(balance) / Math.pow(10, decimalsNum));
 
-    return addRateLimitHeaders(
-      successResponse({
-        balance: balanceInTokens,
-        balanceRaw: balance,
-        accountId,
-        contractAddress,
-      }),
-      rateLimit
-    );
+    return successResponse({
+      balance: balanceInTokens,
+      balanceRaw: balance,
+      accountId,
+      contractAddress,
+    });
   } catch (error: unknown) {
     logger.error('[NEAR_TOKEN_BALANCE_ERROR]', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return addRateLimitHeaders(
-      errorResponse('Failed to fetch token balance', 500, { details: message }),
-      rateLimit
-    );
+    return errorResponse('Failed to fetch token balance', 500, { details: message });
   }
 }

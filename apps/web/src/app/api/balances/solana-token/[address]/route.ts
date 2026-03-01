@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import axios from 'axios';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { errorResponse, successResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { errorResponse, successResponse } from '@/lib/api-response';
 import { isValidSolanaAddress } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 
@@ -12,39 +11,20 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ address: string }> }
 ) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.balance);
-
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded', 429),
-      rateLimit
-    );
-  }
-
   try {
     const { address } = await params;
     const mint = new URL(request.url).searchParams.get('mint');
 
     if (!isValidSolanaAddress(address)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid Solana address format', 400, { code: 'INVALID_ADDRESS' }),
-        rateLimit
-      );
+      return errorResponse('Invalid Solana address format', 400, { code: 'INVALID_ADDRESS' });
     }
 
     if (!mint) {
-      return addRateLimitHeaders(
-        errorResponse('mint query parameter is required', 400, { code: 'MISSING_MINT' }),
-        rateLimit
-      );
+      return errorResponse('mint query parameter is required', 400, { code: 'MISSING_MINT' });
     }
 
     if (!isValidSolanaAddress(mint)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid mint address format', 400, { code: 'INVALID_MINT' }),
-        rateLimit
-      );
+      return errorResponse('Invalid mint address format', 400, { code: 'INVALID_MINT' });
     }
 
     const response = await axios.post(
@@ -68,10 +48,7 @@ export async function GET(
     const accounts = response.data?.result?.value ?? [];
 
     if (accounts.length === 0) {
-      return addRateLimitHeaders(
-        successResponse({ balance: '0.00', address, mint }),
-        rateLimit
-      );
+      return successResponse({ balance: '0.00', address, mint });
     }
 
     // Sum across all token accounts for this mint (wallet may have multiple)
@@ -89,17 +66,11 @@ export async function GET(
       ? String(totalRaw / Math.pow(10, decimals))
       : String(totalRaw);
 
-    return addRateLimitHeaders(
-      successResponse({ balance, address, mint }),
-      rateLimit
-    );
+    return successResponse({ balance, address, mint });
   } catch (error: unknown) {
     logger.error('[SOLANA_TOKEN_BALANCE_ERROR]', error);
     // Return 0.00 gracefully on RPC failures (rate limits, timeouts, etc.)
     // SPL tokens route to manual deposit anyway, so a 0 balance is safe for UI
-    return addRateLimitHeaders(
-      successResponse({ balance: '0.00', address: '', mint: '' }),
-      rateLimit
-    );
+    return successResponse({ balance: '0.00', address: '', mint: '' });
   }
 }
