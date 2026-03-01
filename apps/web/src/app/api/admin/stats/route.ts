@@ -15,13 +15,13 @@ export async function GET() {
   const [{ count: totalCount }, { count: linkCount }, { data: txns }] =
     await Promise.all([
       supabase
-        .from('transactions')
+        .from('transaction_history')
         .select('*', { count: 'exact', head: true }),
       supabase
         .from('payment_links')
         .select('*', { count: 'exact', head: true }),
       supabase
-        .from('transactions')
+        .from('transaction_history')
         .select('amount_usd, fee_amount, status, created_at')
         .limit(50000),
     ]);
