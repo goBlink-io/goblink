@@ -8,11 +8,11 @@ import {
   Share2, Link2, CreditCard, Code2, Star, History,
   MessageCircle, ChevronDown, ArrowRight, Sparkles,
   LayoutGrid, Brain, Activity, Package,
+  Globe, FileText, Palette, Lock, Store,
 } from 'lucide-react';
 import ChainTicker from '@/components/ui/ChainTicker';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
-import TerminalTransfer from '@/components/ui/TerminalTransfer';
 import { getChainLogo } from '@/lib/chain-logos';
 
 // ── Feature Data ──────────────────────────────────────────────────────────────
@@ -234,6 +234,47 @@ const CATEGORIES: Category[] = [
   },
 ];
 
+// ── Merchant Feature Data ─────────────────────────────────────────────────────
+
+interface MerchantFeature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+const MERCHANT_FEATURES: MerchantFeature[] = [
+  {
+    icon: <Zap className="h-5 w-5" />,
+    title: 'Instant Settlement',
+    description: 'Payments go directly to your wallet. No holds, no delays, no intermediaries.',
+  },
+  {
+    icon: <Lock className="h-5 w-5" />,
+    title: 'Non-Custodial',
+    description: 'We never touch your funds. Your keys, your revenue, always.',
+  },
+  {
+    icon: <Globe className="h-5 w-5" />,
+    title: 'Any Token, Any Chain',
+    description: 'Accept payments from 12+ blockchains. Customers pay with whatever they have.',
+  },
+  {
+    icon: <FileText className="h-5 w-5" />,
+    title: 'Invoicing',
+    description: 'Create and send professional invoices with built-in crypto payment links.',
+  },
+  {
+    icon: <BarChart2 className="h-5 w-5" />,
+    title: 'Dashboard',
+    description: 'Real-time analytics, transaction history, and revenue tracking.',
+  },
+  {
+    icon: <Palette className="h-5 w-5" />,
+    title: 'Branded Checkout',
+    description: 'Customizable checkout page with your logo and colors.',
+  },
+];
+
 // ── Feature Accordion Item ────────────────────────────────────────────────────
 
 function FeatureCard({ feature, color, bg }: { feature: Feature; color: string; bg: string }) {
@@ -353,84 +394,135 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen">
 
-      {/* ═══ HERO — two-column: copy left, terminal right ═══ */}
-      <section className="relative z-10 px-4 pb-16 pt-20 sm:pt-24 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left — copy */}
-          <div>
-            {/* Badge */}
-            <div
-              className="animate-hero-badge mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
-              style={{
-                background: 'rgba(37,99,235,0.1)',
-                border: '1px solid rgba(37,99,235,0.25)',
-                color: 'var(--brand)',
-              }}
-            >
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Live on 12 chains
-            </div>
-
-            {/* Headline */}
-            <h1
-              className="animate-hero-h1 text-hero mb-6"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Skip the bridge.{' '}
-              <span style={{ color: 'var(--brand)' }}>Just send it.</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p
-              className="animate-hero-sub text-body-lg mb-8 max-w-lg"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              You shouldn&apos;t need a tutorial to move your own money.
-              Pick tokens, sign once, done. 65+ tokens across 12 chains.
-            </p>
-
-            {/* CTAs */}
-            <div
-              className="animate-hero-cta flex flex-col sm:flex-row items-start gap-3 mb-10"
-            >
-              <Link href="/app" className="btn btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold">
-                Launch App <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#features"
-                className="btn btn-ghost inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                See all features <ChevronDown className="h-4 w-4" />
-              </a>
-            </div>
-
-            {/* Stats — horizontal */}
-            <div className="animate-hero-stats">
-              <div
-                className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
-                style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
-              >
-                {[
-                  { value: '12', suffix: '', label: 'Chains' },
-                  { value: '65', suffix: '+', label: 'Tokens' },
-                  { value: '45', suffix: 's', label: 'Avg. Transfer' },
-                  { value: '100', suffix: '%', label: 'Auto-Refund' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <div className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                      <AnimatedCounter value={s.value} />{s.suffix}
-                    </div>
-                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* ═══ HERO — dual-product showcase ═══ */}
+      <section className="relative z-10 px-4 pb-16 pt-24 sm:pt-32 max-w-5xl mx-auto">
+        {/* Badge */}
+        <div className="text-center">
+          <div
+            className="animate-hero-badge mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+            style={{
+              background: 'rgba(37,99,235,0.1)',
+              border: '1px solid rgba(37,99,235,0.25)',
+              color: 'var(--brand)',
+            }}
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            Live on 12 chains
           </div>
 
-          {/* Right — terminal visual */}
-          <div className="animate-hero-terminal hidden lg:block">
-            <TerminalTransfer />
+          {/* Headline */}
+          <h1
+            className="animate-hero-h1 text-hero text-4xl sm:text-5xl lg:text-6xl mb-6"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            One platform.{' '}
+            <span style={{ color: 'var(--brand)' }}>Every payment.</span>
+          </h1>
+
+          {/* Subheadline */}
+          <p
+            className="animate-hero-sub text-body-lg mb-12 max-w-2xl mx-auto"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Send tokens across 12 chains in seconds — or accept crypto payments
+            for your business. Non-custodial. Instant settlement.
+          </p>
+        </div>
+
+        {/* Two CTA cards */}
+        <div className="animate-hero-cta grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-10">
+          {/* Left — For Users */}
+          <Link
+            href="/app"
+            className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+            style={{
+              background: 'var(--elevated)',
+              border: '1px solid rgba(37,99,235,0.25)',
+              boxShadow: '0 0 24px rgba(37,99,235,0.06)',
+            }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(37,99,235,0.1)', color: 'var(--brand)' }}
+              >
+                <Zap className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--brand)' }}>
+                For Users
+              </span>
+            </div>
+            <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+              Cross-Chain Transfers
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              65+ tokens, 12 chains. Pick tokens, sign once, done. Average transfer: 45 seconds.
+            </p>
+            <span
+              className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all"
+              style={{ color: 'var(--brand)' }}
+            >
+              Launch App <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+
+          {/* Right — For Businesses */}
+          <a
+            href="https://merchant.goblink.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+            style={{
+              background: 'var(--elevated)',
+              border: '1px solid rgba(34,197,94,0.25)',
+              boxShadow: '0 0 24px rgba(34,197,94,0.06)',
+            }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+              >
+                <Store className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#22C55E' }}>
+                For Businesses
+              </span>
+            </div>
+            <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+              Accept Crypto Payments
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Every payment, straight to your wallet. No middlemen, no chargebacks, instant settlement.
+            </p>
+            <span
+              className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all"
+              style={{ color: '#22C55E' }}
+            >
+              Start Accepting <ArrowRight className="h-4 w-4" />
+            </span>
+          </a>
+        </div>
+
+        {/* Stats row */}
+        <div className="animate-hero-stats flex justify-center">
+          <div
+            className="inline-flex flex-wrap gap-8 px-6 py-4 rounded-2xl"
+            style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+          >
+            {[
+              { value: '12', suffix: '', label: 'Chains' },
+              { value: '65', suffix: '+', label: 'Tokens' },
+              { value: '45', suffix: 's', label: 'Avg. Transfer' },
+              { value: '100', suffix: '%', label: 'Auto-Refund' },
+            ].map((s) => (
+              <div key={s.label}>
+                <div className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  <AnimatedCounter value={s.value} />{s.suffix}
+                </div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -474,7 +566,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ FEES — prominent, tinted background ═══ */}
-      <section className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
+      <section id="pricing" className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
         <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -549,12 +641,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ FEATURES — front and centre ═══ */}
+      {/* ═══ FEATURES — transfer platform features ═══ */}
       <section id="features" className="relative z-10 pt-20 pb-20 px-4 max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="mb-12">
             <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-              Not just a swap form.
+              Transfer Features
             </h2>
             <p className="text-body-sm max-w-xl" style={{ color: 'var(--text-secondary)' }}>
               Every detail is designed to remove friction and build trust. Click any feature to see how it works.
@@ -567,6 +659,82 @@ export default function LandingPage() {
         ))}
       </section>
 
+      {/* ═══ MERCHANT SECTION ═══ */}
+      <section className="relative z-10 py-20 px-4" style={{ background: 'rgba(34,197,94,0.03)' }}>
+        <div className="max-w-5xl mx-auto">
+          <ScrollReveal>
+            <div className="text-center mb-12">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
+                style={{
+                  background: 'rgba(34,197,94,0.1)',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  color: '#22C55E',
+                }}
+              >
+                <Store className="h-3.5 w-3.5" />
+                goBlink Merchant
+              </div>
+              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+                Accept crypto. Settle instantly.
+              </h2>
+              <p className="text-body-sm max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                goBlink Merchant gives businesses non-custodial payment processing across every chain.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* Feature grid */}
+          <ScrollReveal>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+              {MERCHANT_FEATURES.map((f) => (
+                <div
+                  key={f.title}
+                  className="rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                  style={{
+                    background: 'var(--elevated)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+                  >
+                    {f.icon}
+                  </div>
+                  <h4 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {f.title}
+                  </h4>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {f.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+
+          {/* Merchant CTA */}
+          <ScrollReveal>
+            <div className="text-center">
+              <a
+                href="https://merchant.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white"
+                style={{ background: '#22C55E' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#16A34A')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#22C55E')}
+              >
+                Get Started — It&apos;s Free <ArrowRight className="h-4 w-4" />
+              </a>
+              <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                No setup fees. No monthly charges. You only pay transfer fees.
+              </p>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ═══ CHAIN TICKER ═══ */}
       <ScrollReveal>
         <section className="relative z-10 py-12 border-y" style={{ borderColor: 'var(--border)' }}>
@@ -574,28 +742,41 @@ export default function LandingPage() {
         </section>
       </ScrollReveal>
 
-      {/* ═══ CTA BANNER ═══ */}
+      {/* ═══ CTA BANNER — dual product ═══ */}
       <ScrollReveal>
         <section className="relative z-10 px-4 py-20 max-w-3xl mx-auto text-center">
           <div
             className="rounded-3xl p-10"
             style={{
-              background: 'rgba(37,99,235,0.06)',
-              border: '1px solid rgba(37,99,235,0.2)',
+              background: 'var(--elevated)',
+              border: '1px solid var(--border)',
             }}
           >
             <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-              Stop reading. Start sending.
+              Stop reading. Start moving money.
             </h2>
             <p className="text-body-sm mb-8" style={{ color: 'var(--text-secondary)' }}>
-              First transfer takes about 60 seconds. Including connecting your wallet.
+              Whether you&apos;re sending tokens or accepting payments — get started in under 60 seconds.
             </p>
-            <Link
-              href="/app"
-              className="btn btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold"
-            >
-              Try it now <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/app"
+                className="btn btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold"
+              >
+                Start Sending <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="https://merchant.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white"
+                style={{ background: '#22C55E' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#16A34A')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#22C55E')}
+              >
+                Start Accepting <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
               {['Non-custodial', 'No account needed', 'Auto-refund on failure'].map((t) => (
                 <span key={t} className="text-xs" style={{ color: 'var(--text-muted)' }}>

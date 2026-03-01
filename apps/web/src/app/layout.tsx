@@ -3,8 +3,7 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
-import UnifiedConnectButton from '@/components/UnifiedConnectButton';
-import AppMenu from '@/components/AppMenu';
+import LayoutShell from '@/components/LayoutShell';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -14,8 +13,8 @@ const baseUrl = process.env.NODE_ENV === 'production'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-  description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+  title: 'goBlink — Move & Accept Crypto. Instantly.',
+  description: 'Transfer tokens across 12 blockchains in seconds, or accept crypto payments for your business. Non-custodial, instant settlement, no bridges needed.',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -32,17 +31,17 @@ export const metadata: Metadata = {
     title: 'goBlink',
   },
   openGraph: {
-    title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-    description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+    title: 'goBlink — Move & Accept Crypto. Instantly.',
+    description: 'Transfer tokens across 12 blockchains in seconds, or accept crypto payments for your business. Non-custodial, instant settlement, no bridges needed.',
     siteName: 'goBlink',
     url: baseUrl,
-    images: [{ url: `${baseUrl}/og-image.jpg`, width: 1200, height: 630, alt: 'goBlink — Transfer tokens across 12 chains in seconds. Try it now at goblink.io' }],
+    images: [{ url: `${baseUrl}/og-image.jpg`, width: 1200, height: 630, alt: 'goBlink — Move & accept crypto instantly across 12 chains' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'goBlink — Move Value Anywhere, Instantly. Try It Now',
-    description: 'Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure. Try it free.',
+    title: 'goBlink — Move & Accept Crypto. Instantly.',
+    description: 'Transfer tokens across 12 blockchains in seconds, or accept crypto payments for your business. Non-custodial, instant settlement, no bridges needed.',
     images: [`${baseUrl}/og-image.jpg`],
     creator: '@goBlink_io',
   },
@@ -85,7 +84,7 @@ export default function RootLayout({
               "@type": "WebApplication",
               "name": "goBlink",
               "url": "https://goblink.io",
-              "description": "Transfer tokens across 12 blockchains in under 60 seconds. One click, any chain, no bridges. Non-custodial with auto-refund on failure.",
+              "description": "Transfer tokens across 12 blockchains in seconds, or accept crypto payments for your business. Non-custodial, instant settlement, no bridges needed.",
               "applicationCategory": "DeFi",
               "operatingSystem": "Web",
               "offers": {
@@ -93,7 +92,7 @@ export default function RootLayout({
                 "price": "0",
                 "priceCurrency": "USD"
               },
-              "featureList": ["Cross-chain transfers", "65+ tokens", "12 blockchains", "Non-custodial", "Auto-refund", "Payment requests", "Embeddable widget"]
+              "featureList": ["Cross-chain transfers", "65+ tokens", "12 blockchains", "Non-custodial", "Auto-refund", "Payment requests", "Merchant payments", "Embeddable widget"]
             }),
           }}
         />
@@ -119,38 +118,9 @@ export default function RootLayout({
       <body className="font-sans" suppressHydrationWarning>
         <ClientLayout>
           <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-            {/* ── Navbar ── */}
-            <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--surface) 80%, transparent)', borderColor: 'var(--border)' }}>
-              <div className="mx-auto max-w-5xl px-4 sm:px-6">
-                <div className="flex h-16 items-center justify-between">
-                  {/* Logo & Nav */}
-                  <div className="flex items-center gap-6">
-                    <a href="/" className="flex items-center gap-2.5 group">
-                      <img src="/icon-192.png" alt="goBlink" className="h-8 w-8 rounded-lg" />
-                      <span className="text-h5 flex items-center">
-                        <span className="font-normal" style={{ color: 'var(--text-secondary)' }}>go</span>
-                        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Blink</span>
-                        <span className="ml-0.5 inline-block w-[3px] h-5 rounded-sm animate-cursor-blink" style={{ background: 'var(--brand)' }} />
-                      </span>
-                    </a>
-                    <a href="/history" className="text-body-sm font-medium hover:opacity-70 transition-opacity hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
-                      History
-                    </a>
-                  </div>
-
-                  {/* Right side */}
-                  <div className="flex items-center gap-2">
-                    <AppMenu />
-                    <UnifiedConnectButton />
-                  </div>
-                </div>
-              </div>
-            </nav>
-
-            {/* ── Main ── */}
-            <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+            <LayoutShell>
               {children}
-            </main>
+            </LayoutShell>
 
             {/* ── Footer ── */}
             <footer className="border-t mt-16 sm:mt-24" style={{ borderColor: 'var(--border)' }}>
