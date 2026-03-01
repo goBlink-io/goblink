@@ -252,7 +252,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
                 refundTo: quoteRequest.refundTo,
                 status: 'pending',
                 feeBps: feeInfo?.bps,
-                feeAmount: feeInfo?.amount,
+                feeAmount: feeInfo?.estimatedUsd || null,
                 amountUsd: feeInfo?.estimatedUsd ? parseFloat(feeInfo.estimatedUsd) / (feeInfo.bps / 10000) : undefined,
                 // Payment modal metadata
                 ...(source && { source }),
