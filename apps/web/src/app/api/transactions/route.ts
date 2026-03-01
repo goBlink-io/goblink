@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createTransaction, getTransactionsByWallet } from '@/lib/server/transactions';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { errorResponse, successResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -11,16 +10,6 @@ export const dynamic = 'force-dynamic';
  * Create a new transaction record when swap is initiated
  */
 export async function POST(request: NextRequest) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.quote);
-
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded', 429),
-      rateLimit
-    );
-  }
-
   try {
     const body = await request.json();
     const {
@@ -47,12 +36,9 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!walletAddress || !walletChain || !fromChain || !fromToken || !toChain || !toToken || !amountIn || !recipient) {
-      return addRateLimitHeaders(
-        errorResponse('Missing required fields', 400, {
-          details: { required: ['walletAddress', 'walletChain', 'fromChain', 'fromToken', 'toChain', 'toToken', 'amountIn', 'recipient'] }
-        }),
-        rateLimit
-      );
+      return errorResponse('Missing required fields', 400, {
+        details: { required: ['walletAddress', 'walletChain', 'fromChain', 'fromToken', 'toChain', 'toToken', 'amountIn', 'recipient'] }
+      });
     }
 
     const result = await createTransaction({
@@ -78,24 +64,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return addRateLimitHeaders(
-        errorResponse(result.error || 'Failed to create transaction', 500),
-        rateLimit
-      );
+      return errorResponse(result.error || 'Failed to create transaction', 500);
     }
 
     logger.info('[TRANSACTION_API_CREATE]', { id: result.transaction?.id, walletAddress });
-    return addRateLimitHeaders(
-      successResponse(result.transaction, 201),
-      rateLimit
-    );
+    return successResponse(result.transaction, 201);
   } catch (error: unknown) {
     logger.error('[TRANSACTION_API_ERROR]', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return addRateLimitHeaders(
-      errorResponse('Failed to create transaction', 500, { details: message }),
-      rateLimit
-    );
+    return errorResponse('Failed to create transaction', 500, { details: message });
   }
 }
 
@@ -104,16 +81,6 @@ export async function POST(request: NextRequest) {
  * Get transaction history for a wallet
  */
 export async function GET(request: NextRequest) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.status);
-
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded', 429),
-      rateLimit
-    );
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const wallet = searchParams.get('wallet');
@@ -122,25 +89,16 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
 
     if (!wallet) {
-      return addRateLimitHeaders(
-        errorResponse('Wallet address is required', 400),
-        rateLimit
-      );
+      return errorResponse('Wallet address is required', 400);
     }
 
     // Validate pagination
     if (page < 1 || page > 1000) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid page number (1-1000)', 400),
-        rateLimit
-      );
+      return errorResponse('Invalid page number (1-1000)', 400);
     }
 
     if (limit < 1 || limit > 100) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid limit (1-100)', 400),
-        rateLimit
-      );
+      return errorResponse('Invalid limit (1-100)', 400);
     }
 
     // Support comma-separated wallet addresses (multi-wallet history)
@@ -148,31 +106,22 @@ export async function GET(request: NextRequest) {
     const result = await getTransactionsByWallet(wallets.length === 1 ? wallets[0] : wallets, { page, limit, status });
 
     if (!result.success) {
-      return addRateLimitHeaders(
-        errorResponse(result.error || 'Failed to fetch transactions', 500),
-        rateLimit
-      );
+      return errorResponse(result.error || 'Failed to fetch transactions', 500);
     }
 
-    return addRateLimitHeaders(
-      NextResponse.json({
-        success: true,
-        data: {
-          transactions: result.transactions || [],
-          total: result.total || 0,
-          page,
-          limit,
-          totalPages: Math.ceil((result.total || 0) / limit),
-        },
-      }),
-      rateLimit
-    );
+    return NextResponse.json({
+      success: true,
+      data: {
+        transactions: result.transactions || [],
+        total: result.total || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((result.total || 0) / limit),
+      },
+    });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_API_GET_ERROR]', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return addRateLimitHeaders(
-      errorResponse('Failed to fetch transactions', 500, { details: message }),
-      rateLimit
-    );
+    return errorResponse('Failed to fetch transactions', 500, { details: message });
   }
 }

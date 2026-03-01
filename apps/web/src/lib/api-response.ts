@@ -51,20 +51,3 @@ export function successResponse<T>(
     { status: statusCode }
   );
 }
-
-/**
- * Add rate limit headers to any response
- */
-export function addRateLimitHeaders(
-  response: NextResponse,
-  rateLimit: {
-    limit: number;
-    remaining: number;
-    reset: number;
-  }
-): NextResponse {
-  response.headers.set('X-RateLimit-Limit', rateLimit.limit.toString());
-  response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString());
-  response.headers.set('X-RateLimit-Reset', rateLimit.reset.toString());
-  return response;
-}
