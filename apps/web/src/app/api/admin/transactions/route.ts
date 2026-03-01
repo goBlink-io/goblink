@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const to = from + limit - 1;
 
   let query = supabase
-    .from('transactions')
+    .from('transaction_history')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);

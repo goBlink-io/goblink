@@ -11,7 +11,7 @@ export async function GET() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: txns } = await supabase
-    .from('transactions')
+    .from('transaction_history')
     .select('wallet_address, from_chain, to_chain, from_token, to_token, amount_usd, fee_amount, created_at')
     .limit(50000);
 
