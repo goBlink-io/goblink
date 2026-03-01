@@ -5,7 +5,7 @@ import { useAppKitAccount } from '@reown/appkit/react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useAccount } from 'wagmi';
 import { useWalletContext } from '@/contexts/WalletContext';
-import { Clock, ExternalLink, ChevronDown, Wallet, Search, ArrowRight } from 'lucide-react';
+import { Clock, ExternalLink, ChevronDown, Wallet, Search, ArrowRight, Download } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -128,6 +128,47 @@ export default function HistoryPage() {
       }, i * 300);
     });
   }, [loading, transactions.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const downloadCSV = () => {
+    const escapeCSV = (val: string) => {
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    };
+
+    const formatDateUTC = (dateString: string) => {
+      const d = new Date(dateString);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+    };
+
+    const headers = ['Date', 'From Chain', 'From Token', 'To Chain', 'To Token', 'Amount In', 'Amount Out', 'USD Value', 'Status', 'Recipient', 'Deposit TX', 'Fulfillment TX'];
+    const rows = transactions.map(tx => [
+      formatDateUTC(tx.created_at),
+      tx.from_chain,
+      tx.from_token,
+      tx.to_chain,
+      tx.to_token,
+      tx.amount_in,
+      tx.amount_out ?? '',
+      tx.amount_usd != null ? tx.amount_usd.toFixed(2) : '',
+      tx.status,
+      tx.recipient,
+      tx.deposit_tx_hash ?? '',
+      tx.fulfillment_tx_hash ?? '',
+    ].map(v => escapeCSV(String(v))));
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `goblink-history-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // --- Status badge using design system tokens ---
   const getStatusBadge = (status: string) => {
@@ -259,11 +300,24 @@ export default function HistoryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-h2 mb-1" style={{ color: 'var(--text-primary)' }}>Transaction History</h1>
-        <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-          {total > 0 ? `${total} transaction${total === 1 ? '' : 's'} found` : 'No transactions yet'}
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-h2 mb-1" style={{ color: 'var(--text-primary)' }}>Transaction History</h1>
+          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            {total > 0 ? `${total} transaction${total === 1 ? '' : 's'} found` : 'No transactions yet'}
+          </p>
+        </div>
+        <button
+          onClick={downloadCSV}
+          disabled={transactions.length === 0}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: 'rgb(39 39 42)', color: 'rgb(161 161 170)' }}
+          onMouseEnter={e => { if (transactions.length > 0) (e.currentTarget.style.background = 'rgb(63 63 70)'); }}
+          onMouseLeave={e => { (e.currentTarget.style.background = 'rgb(39 39 42)'); }}
+        >
+          <Download className="h-4 w-4" />
+          Download CSV
+        </button>
       </div>
 
       {transactions.length === 0 ? (
