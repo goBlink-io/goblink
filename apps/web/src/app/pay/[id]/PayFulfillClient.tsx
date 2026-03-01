@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { ArrowRight, Zap, Copy, Check, Clock, CheckCircle2, Loader2, ExternalLink } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import { PaymentRequestData, shortAddress } from '@/lib/payment-requests';
 import { ChainLogo } from '@/lib/chain-logos';
 import PaymentModal from '@/components/PaymentModal';
@@ -74,6 +75,70 @@ function TxRow({ label, hash, chain }: { label: string; hash?: string | null; ch
   );
 }
 
+function JourneyStepper({ currentStep }: { currentStep: 0 | 1 | 2 }) {
+  const steps = ['Choose', 'Pay', 'Done'];
+  return (
+    <div className="flex items-center justify-center gap-0 mb-6 w-full max-w-xs mx-auto">
+      {steps.map((label, i) => {
+        const isCompleted = i < currentStep;
+        const isCurrent = i === currentStep;
+        const isDone = i === 2 && currentStep === 2;
+        return (
+          <div key={label} className="flex items-center flex-1">
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                style={{
+                  background: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'rgb(82 82 91)',
+                  color: isCompleted || isCurrent || isDone ? '#fff' : 'rgb(161 161 170)',
+                }}
+              >
+                {isCompleted || isDone ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  i + 1
+                )}
+              </div>
+              <span
+                className="text-xs mt-1 font-medium"
+                style={{
+                  color: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'rgb(113 113 122)',
+                }}
+              >
+                {isDone ? 'Done \u2713' : label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div
+                className="h-0.5 flex-1 -mt-4 mx-1"
+                style={{
+                  background: i < currentStep ? 'var(--success)' : 'rgb(63 63 70)',
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function fireConfetti() {
+  const colors = ['#22c55e', '#3b82f6', '#8b5cf6'];
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { x: 0.15, y: 0.6 },
+    colors,
+  });
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { x: 0.85, y: 0.6 },
+    colors,
+  });
+}
+
 export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
   const [copied, setCopied] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,6 +164,15 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
     const interval = setInterval(fetchStatus, 8000);
     return () => clearInterval(interval);
   }, [linkStatus.status, fetchStatus]);
+
+  // Fire confetti once when status transitions to 'paid'
+  const confettiFired = useRef(false);
+  useEffect(() => {
+    if (linkStatus.status === 'paid' && !confettiFired.current) {
+      confettiFired.current = true;
+      fireConfetti();
+    }
+  }, [linkStatus.status]);
 
   if (!data) {
     return (
@@ -133,10 +207,17 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg-primary)' }}>
         <div className="card p-8 max-w-sm w-full space-y-5">
+          <JourneyStepper currentStep={2} />
+
           {/* Header */}
           <div className="text-center">
-            <CheckCircle2 className="h-14 w-14 mx-auto mb-3" style={{ color: 'var(--success)' }} />
-            <h1 className="text-h3 mb-1" style={{ color: 'var(--text-primary)' }}>Payment Complete</h1>
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+              style={{ background: 'rgba(34, 197, 94, 0.15)' }}
+            >
+              <CheckCircle2 className="h-10 w-10" style={{ color: 'var(--success)' }} />
+            </div>
+            <h1 className="text-h2 font-black mb-1" style={{ color: 'var(--text-primary)' }}>Transfer Complete!</h1>
             <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
               {requester} received exactly <strong>{data.amount} {data.toToken}</strong> on {chainName}.
             </p>
@@ -178,18 +259,50 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
   // Don't short-circuit while the modal is open — TransferModal needs to stay
   // mounted so it can call onOutcome → onPaymentConfirmed → promote to 'paid'.
   if (linkStatus.status === 'processing' && !modalOpen) {
+    const hasFunds = !!linkStatus.send_tx_hash;
     return (
-      <StatusCard
-        icon={<Loader2 className="h-12 w-12 animate-spin" style={{ color: 'var(--brand)' }} />}
-        title="Payment Processing"
-        subtitle="The transaction has been submitted. This page will update when confirmed."
-      >
-        {linkStatus.send_tx_hash && (
-          <div className="p-3 rounded-xl text-left" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
-            <TxRow label="Send tx" hash={linkStatus.send_tx_hash} chain={linkStatus.payer_chain} />
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg-primary)' }}>
+        <div className="card p-10 max-w-sm w-full text-center space-y-4">
+          <JourneyStepper currentStep={1} />
+
+          <div className="flex justify-center">
+            <div className="relative">
+              <Loader2 className="h-12 w-12 animate-spin" style={{ color: 'var(--brand)' }} />
+            </div>
           </div>
-        )}
-      </StatusCard>
+
+          <h1 className="text-h3" style={{ color: 'var(--text-primary)' }}>
+            {hasFunds ? 'Funds Detected!' : 'Processing Payment'}
+          </h1>
+          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            {hasFunds
+              ? 'Your funds have been received. Completing the cross-chain transfer...'
+              : 'The transaction has been submitted. This page will update when confirmed.'}
+          </p>
+
+          {/* Progress bar */}
+          <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'var(--elevated)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                background: hasFunds ? 'var(--success)' : 'var(--brand)',
+                width: hasFunds ? '75%' : '40%',
+                animation: 'pulse 2s ease-in-out infinite',
+              }}
+            />
+          </div>
+
+          {linkStatus.send_tx_hash && (
+            <div className="p-3 rounded-xl text-left" style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}>
+              <TxRow label="Send tx" hash={linkStatus.send_tx_hash} chain={linkStatus.payer_chain} />
+            </div>
+          )}
+
+          <Link href="/" className="inline-flex items-center gap-2 text-body-sm font-medium" style={{ color: 'var(--brand)' }}>
+            Go to goBlink <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
     );
   }
 
@@ -224,6 +337,9 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
               <Zap className="h-5 w-5" style={{ color: 'var(--brand)' }} />
             </Link>
           </div>
+
+          {/* Journey Stepper */}
+          <JourneyStepper currentStep={0} />
 
           {/* Request Card */}
           <div className="card p-6 mb-4" style={{ boxShadow: '0 8px 32px rgba(124,58,237,0.1), 0 2px 8px rgba(0,0,0,0.06)' }}>
