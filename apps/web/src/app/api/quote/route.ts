@@ -5,6 +5,7 @@ import * as fees from '@/lib/server/fees';
 import { errorResponse } from '@/lib/api-response';
 import { isValidAssetId, isValidAmount, isValidSlippage, isValidDeadline } from '@/lib/validators';
 import { logger } from '@/lib/logger';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 const NATIVE_TO_NEP141_MAP: Record<string, string> = {
   'sui:0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI': 'nep141:sui.omft.near',
@@ -157,6 +158,14 @@ export async function POST(request: NextRequest) {
         recipient: feeRecipient,
       },
     };
+
+    const ip = getClientIp(request.headers);
+    logAudit({
+      actor: ip,
+      action: 'quote.requested',
+      metadata: { originAsset, destinationAsset, amount },
+      ipAddress: ip,
+    });
 
     return NextResponse.json(response);
   } catch (error: unknown) {

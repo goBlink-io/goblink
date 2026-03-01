@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
 import { decodePaymentRequest } from '@/lib/payment-requests';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 /**
  * POST /api/pay/[id]/complete
@@ -43,6 +44,15 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const ip = getClientIp(request.headers);
+  logAudit({
+    actor: ip,
+    action: 'payment_request.completed',
+    resourceType: 'payment_request',
+    resourceId: id,
+    ipAddress: ip,
+  });
 
   return NextResponse.json({ ok: true, status: 'processing' });
 }

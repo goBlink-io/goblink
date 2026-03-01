@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createTransaction, getTransactionsByWallet } from '@/lib/server/transactions';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,15 @@ export async function POST(request: NextRequest) {
     }
 
     logger.info('[TRANSACTION_API_CREATE]', { id: result.transaction?.id, walletAddress });
+
+    const ip = getClientIp(request.headers);
+    logAudit({
+      actor: ip,
+      action: 'transaction.recorded',
+      resourceId: result.transaction?.id,
+      ipAddress: ip,
+    });
+
     return successResponse(result.transaction, 201);
   } catch (error: unknown) {
     logger.error('[TRANSACTION_API_ERROR]', error);

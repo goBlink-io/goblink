@@ -3,6 +3,7 @@ import * as oneclick from '@/lib/server/oneclick';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { isValidTxHash } from '@/lib/validators';
 import { logger } from '@/lib/logger';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest) {
     // Submit to 1Click API
     try {
       const result = await oneclick.submitDeposit(txHash, depositAddress);
+
+      const ip = getClientIp(request.headers);
+      logAudit({
+        actor: ip,
+        action: 'deposit.submitted',
+        metadata: { depositAddress, txHash },
+        ipAddress: ip,
+      });
 
       return successResponse({
         message: 'Transaction submitted successfully',
