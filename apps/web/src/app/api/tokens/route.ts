@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as oneclick from '@/lib/server/oneclick';
 import tokenIcons from '@/data/token-icons.json';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { errorResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { errorResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 
 // Cache token list for 5 minutes
@@ -108,18 +107,7 @@ const BLOCKCHAIN_ALIASES: Record<string, string> = {
   'sol': 'solana', 'pol': 'polygon', 'op': 'optimism', 'avax': 'avalanche',
 };
 
-export async function GET(request: NextRequest) {
-  // Rate limiting
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.tokens);
-  
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded', 429),
-      rateLimit
-    );
-  }
-  
+export async function GET(_request: NextRequest) {
   try {
     const rawTokens = await oneclick.getTokens();
 
@@ -217,19 +205,14 @@ export async function GET(request: NextRequest) {
       if (SYMBOL_OVERRIDES[sym]) token.symbol = SYMBOL_OVERRIDES[sym];
     });
 
-    const response = NextResponse.json(allTokens, {
+    return NextResponse.json(allTokens, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
       },
     });
-    
-    return addRateLimitHeaders(response, rateLimit);
   } catch (error: unknown) {
     logger.error('[TOKENS_ERROR]', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return addRateLimitHeaders(
-      errorResponse('Failed to fetch tokens', 500, { details: message }),
-      rateLimit
-    );
+    return errorResponse('Failed to fetch tokens', 500, { details: message });
   }
 }

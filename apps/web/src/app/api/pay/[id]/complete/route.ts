@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
 import { decodePaymentRequest } from '@/lib/payment-requests';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { addRateLimitHeaders } from '@/lib/api-response';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 /**
  * POST /api/pay/[id]/complete
@@ -13,17 +12,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.quote);
-
   const { id } = await params;
   const data = decodePaymentRequest(id);
 
   if (!data) {
-    return addRateLimitHeaders(
-      NextResponse.json({ error: 'Invalid link' }, { status: 400 }),
-      rateLimit
-    );
+    return NextResponse.json({ error: 'Invalid link' }, { status: 400 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -49,16 +42,19 @@ export async function POST(
     }, { onConflict: 'link_id', ignoreDuplicates: false });
 
   if (error) {
-    return addRateLimitHeaders(
-      NextResponse.json({ error: error.message }, { status: 500 }),
-      rateLimit
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return addRateLimitHeaders(
-    NextResponse.json({ ok: true, status: 'processing' }),
-    rateLimit
-  );
+  const ip = getClientIp(request.headers);
+  logAudit({
+    actor: ip,
+    action: 'payment_request.completed',
+    resourceType: 'payment_request',
+    resourceId: id,
+    ipAddress: ip,
+  });
+
+  return NextResponse.json({ ok: true, status: 'processing' });
 }
 
 /**
@@ -70,9 +66,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.quote);
-
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const { fulfillmentTxHash, outcome } = body; // outcome: 'paid' | 'failed'
@@ -89,14 +82,8 @@ export async function PATCH(
     .eq('link_id', id);
 
   if (error) {
-    return addRateLimitHeaders(
-      NextResponse.json({ error: error.message }, { status: 500 }),
-      rateLimit
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return addRateLimitHeaders(
-    NextResponse.json({ ok: true, status }),
-    rateLimit
-  );
+  return NextResponse.json({ ok: true, status });
 }

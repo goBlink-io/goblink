@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as oneclick from '@/lib/server/oneclick';
 import { QuoteRequest } from '@defuse-protocol/one-click-sdk-typescript';
 import * as fees from '@/lib/server/fees';
-import { checkRateLimit, getClientIdentifier, RateLimitConfigs } from '@/lib/rate-limit';
-import { errorResponse, addRateLimitHeaders } from '@/lib/api-response';
+import { errorResponse } from '@/lib/api-response';
 import { isValidAssetId, isValidAmount, isValidSlippage, isValidDeadline } from '@/lib/validators';
 import { logger } from '@/lib/logger';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 const NATIVE_TO_NEP141_MAP: Record<string, string> = {
   'sui:0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI': 'nep141:sui.omft.near',
@@ -67,85 +67,50 @@ async function estimateAmountUsd(
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
-  const identifier = getClientIdentifier(request);
-  const rateLimit = checkRateLimit(identifier, RateLimitConfigs.quote);
-  
-  if (!rateLimit.allowed) {
-    return addRateLimitHeaders(
-      errorResponse('Rate limit exceeded. Maximum 60 quotes per minute.', 429),
-      rateLimit
-    );
-  }
-  
   try {
     const body = await request.json();
     const { dry, originAsset, destinationAsset, amount, recipient, refundTo, swapType, slippageTolerance, deadline } = body;
 
     // Required fields validation
     if (!originAsset || !destinationAsset || !amount || !recipient || !refundTo) {
-      return addRateLimitHeaders(
-        errorResponse('Missing required fields: originAsset, destinationAsset, amount, recipient, refundTo', 400),
-        rateLimit
-      );
+      return errorResponse('Missing required fields: originAsset, destinationAsset, amount, recipient, refundTo', 400);
     }
 
     // Validate asset IDs
     if (!isValidAssetId(originAsset)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid originAsset format', 400, { code: 'INVALID_ORIGIN_ASSET' }),
-        rateLimit
-      );
+      return errorResponse('Invalid originAsset format', 400, { code: 'INVALID_ORIGIN_ASSET' });
     }
-    
+
     if (!isValidAssetId(destinationAsset)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid destinationAsset format', 400, { code: 'INVALID_DESTINATION_ASSET' }),
-        rateLimit
-      );
+      return errorResponse('Invalid destinationAsset format', 400, { code: 'INVALID_DESTINATION_ASSET' });
     }
 
     // Validate amount
     const amountValidation = isValidAmount(amount, 18); // Use 18 decimals as default
     if (!amountValidation.valid) {
-      return addRateLimitHeaders(
-        errorResponse(amountValidation.error || 'Invalid amount', 400, { code: 'INVALID_AMOUNT' }),
-        rateLimit
-      );
+      return errorResponse(amountValidation.error || 'Invalid amount', 400, { code: 'INVALID_AMOUNT' });
     }
 
     // Validate addresses (basic length check - specific validation per chain would be better)
     if (typeof recipient !== 'string' || recipient.length < 10 || recipient.length > 128) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid recipient address', 400, { code: 'INVALID_RECIPIENT' }),
-        rateLimit
-      );
+      return errorResponse('Invalid recipient address', 400, { code: 'INVALID_RECIPIENT' });
     }
-    
+
     if (typeof refundTo !== 'string' || refundTo.length < 10 || refundTo.length > 128) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid refundTo address', 400, { code: 'INVALID_REFUND_ADDRESS' }),
-        rateLimit
-      );
+      return errorResponse('Invalid refundTo address', 400, { code: 'INVALID_REFUND_ADDRESS' });
     }
 
     // Validate slippage tolerance if provided
     const slippageValue = slippageTolerance ?? 100;
     if (!isValidSlippage(slippageValue)) {
-      return addRateLimitHeaders(
-        errorResponse('Invalid slippage tolerance: must be 0-10000 bps (0-100%)', 400, { code: 'INVALID_SLIPPAGE' }),
-        rateLimit
-      );
+      return errorResponse('Invalid slippage tolerance: must be 0-10000 bps (0-100%)', 400, { code: 'INVALID_SLIPPAGE' });
     }
 
     // Validate deadline if provided
     const deadlineValue = deadline ?? new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const deadlineValidation = isValidDeadline(deadlineValue);
     if (!deadlineValidation.valid) {
-      return addRateLimitHeaders(
-        errorResponse(deadlineValidation.error || 'Invalid deadline', 400, { code: 'INVALID_DEADLINE' }),
-        rateLimit
-      );
+      return errorResponse(deadlineValidation.error || 'Invalid deadline', 400, { code: 'INVALID_DEADLINE' });
     }
 
     const resolvedOriginAsset = NATIVE_TO_NEP141_MAP[originAsset] || originAsset;
@@ -194,17 +159,22 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    return addRateLimitHeaders(
-      NextResponse.json(response),
-      rateLimit
-    );
+    const ip = getClientIp(request.headers);
+    logAudit({
+      actor: ip,
+      action: 'quote.requested',
+      metadata: { originAsset, destinationAsset, amount },
+      ipAddress: ip,
+    });
+
+    return NextResponse.json(response);
   } catch (error: unknown) {
     logger.error('[QUOTE_ERROR]', error);
-    
+
     const message = error instanceof Error ? error.message : 'Unknown error';
     let statusCode = 500;
     let code = 'QUOTE_ERROR';
-    
+
     if (message.includes('refundTo') || message.includes('recipient') || message.includes('amount') || message.includes('asset')) {
       statusCode = 400;
       code = 'INVALID_PARAMS';
@@ -212,7 +182,7 @@ export async function POST(request: NextRequest) {
       statusCode = 503;
       code = 'SERVICE_UNAVAILABLE';
     }
-    
+
     return errorResponse('Failed to get quote', statusCode, { code, details: message });
   }
 }
