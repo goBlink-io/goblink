@@ -5,7 +5,7 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401);
+  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
 
   const { data, error } = await supabase
     .from('route_confidence')

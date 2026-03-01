@@ -6,7 +6,7 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401);
+  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
 
   const url = req.nextUrl;
   const page = parseInt(url.searchParams.get('page') || '1');

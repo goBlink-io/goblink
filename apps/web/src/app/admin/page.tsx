@@ -15,10 +15,12 @@ import { adminFetch, fmtUsd, fmtNumber } from '@/lib/admin';
 interface Stats {
   totalTransactions: number;
   totalVolume: number;
+  totalFees: number;
   successRate: number;
   activePaymentLinks: number;
   todayTransactions: number;
   todayVolume: number;
+  todayFees: number;
   dailyVolume: { date: string; volume: number; count: number }[];
 }
 
@@ -56,8 +58,8 @@ export default function AdminOverview() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-white">Overview</h1>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
               className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 animate-pulse h-24"
@@ -74,12 +76,16 @@ export default function AdminOverview() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-white">Overview</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Transactions"
           value={fmtNumber(stats.totalTransactions)}
         />
         <StatCard label="Total Volume" value={fmtUsd(stats.totalVolume)} />
+        <StatCard
+          label="Total Fees Earned"
+          value={fmtUsd(stats.totalFees)}
+        />
         <StatCard
           label="Success Rate"
           value={`${stats.successRate}%`}
@@ -97,6 +103,10 @@ export default function AdminOverview() {
         <StatCard
           label="Today's Volume"
           value={fmtUsd(stats.todayVolume)}
+        />
+        <StatCard
+          label="Today's Fees"
+          value={fmtUsd(stats.todayFees)}
         />
       </div>
 

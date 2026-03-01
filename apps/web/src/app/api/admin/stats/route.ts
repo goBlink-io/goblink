@@ -5,7 +5,7 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401);
+  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
 
   const now = new Date();
   const todayStart = new Date(
@@ -22,13 +22,17 @@ export async function GET() {
         .select('*', { count: 'exact', head: true }),
       supabase
         .from('transactions')
-        .select('amount_usd, status, created_at')
+        .select('amount_usd, fee_amount, status, created_at')
         .limit(50000),
     ]);
 
   const rows = txns || [];
   const totalVolume = rows.reduce(
     (s, r) => s + (parseFloat(r.amount_usd) || 0),
+    0,
+  );
+  const totalFees = rows.reduce(
+    (s, r) => s + (parseFloat(r.fee_amount) || 0),
     0,
   );
   const successCount = rows.filter((r) => r.status === 'success').length;
@@ -38,6 +42,10 @@ export async function GET() {
   const todayRows = rows.filter((r) => r.created_at >= todayStart);
   const todayVolume = todayRows.reduce(
     (s, r) => s + (parseFloat(r.amount_usd) || 0),
+    0,
+  );
+  const todayFees = todayRows.reduce(
+    (s, r) => s + (parseFloat(r.fee_amount) || 0),
     0,
   );
 
@@ -68,10 +76,12 @@ export async function GET() {
   return successResponse({
     totalTransactions: totalCount || 0,
     totalVolume: Math.round(totalVolume * 100) / 100,
+    totalFees: Math.round(totalFees * 100) / 100,
     successRate: Math.round(successRate * 10) / 10,
     activePaymentLinks: linkCount || 0,
     todayTransactions: todayRows.length,
     todayVolume: Math.round(todayVolume * 100) / 100,
+    todayFees: Math.round(todayFees * 100) / 100,
     dailyVolume,
   });
 }

@@ -3,7 +3,6 @@
 export async function adminFetch<T = any>(url: string): Promise<T | null> {
   const res = await fetch(url);
   if (res.status === 401) {
-    sessionStorage.removeItem('admin_authed');
     window.location.href = '/admin';
     return null;
   }

@@ -1,20 +1,23 @@
-import { cookies } from 'next/headers';
+import { getSupabaseServerClient } from '@/lib/supabase-server';
+import { supabase } from '@/lib/server/db';
 
-export async function hashSecret(secret: string): Promise<string> {
-  const data = new TextEncoder().encode(secret);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
+/**
+ * Verify the current request is from an authenticated admin user.
+ * Returns the admin's email if valid, null otherwise.
+ */
+export async function verifyAdmin(): Promise<string | null> {
+  const sb = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
 
-export async function verifyAdmin(): Promise<boolean> {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
+  if (!user?.email) return null;
 
-  const cookieStore = await cookies();
-  const session = cookieStore.get('admin_session')?.value;
-  if (!session) return false;
+  const { data } = await supabase
+    .from('admin_users')
+    .select('email')
+    .eq('email', user.email)
+    .single();
 
-  return session === (await hashSecret(secret));
+  return data ? user.email : null;
 }
