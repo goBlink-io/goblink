@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": ["ONE_CLICK_BASE_URL", "ONE_CLICK_JWT", "FEATURE_REQUEST_REPO", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
+      "env": ["ONE_CLICK_BASE_URL", "ONE_CLICK_JWT", "FEATURE_REQUEST_REPO", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ADMIN_SECRET"]
     },
     "dev": {
       "cache": false,
