@@ -6,19 +6,19 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "clean": "turbo run clean",
-    "dev:web": "turbo run dev --filter=@goblink/web",
-    "build:web": "turbo run build --filter=@goblink/web"
+    "dev": "pnpm --filter @goblink/web dev",
+    "build": "pnpm --filter @goblink/shared build && pnpm --filter @goblink/connect build && pnpm --filter @goblink/web build",
+    "lint": "pnpm --filter @goblink/web lint",
+    "clean": "pnpm --filter @goblink/shared clean && pnpm --filter @goblink/connect clean",
+    "dev:web": "pnpm --filter @goblink/web dev",
+    "build:web": "pnpm --filter @goblink/shared build && pnpm --filter @goblink/connect build && pnpm --filter @goblink/web build"
   },
   "devDependencies": {
     "eslint": "^9.18.0",
     "next": "^16.1.6",
     "prettier": "^3.4.0",
     "supabase": "^2.76.14",
-    "turbo": "^2.4.0",
+    
     "typescript": "^5.7.0"
   },
   "pnpm": {

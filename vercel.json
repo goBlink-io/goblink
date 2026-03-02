@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm turbo run build --filter=@goblink/web",
+  "buildCommand": "pnpm build:web",
   "installCommand": "pnpm install",
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next"
