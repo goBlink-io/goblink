@@ -1,58 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { NearConnector } from '@hot-labs/near-connect';
 import type { AdapterHookResult } from '../core/types';
-
-// Lazy-loaded NEAR connector state
-let nearConnector: any = null;
-
-function initNearConnector(networkId: string = 'mainnet') {
-  if (typeof window === 'undefined') return null;
-  if (nearConnector) return nearConnector;
-
-  try {
-    // Dynamic require — will fail gracefully if not installed
-    const { NearConnector } = require('@hot-labs/near-connect');
-    nearConnector = new NearConnector({
-      networkId,
-      network: networkId,
-      logger: { log: console.log, error: console.error },
-    } as any);
-    return nearConnector;
-  } catch {
-    return null;
-  }
-}
-
-async function getNearAccount(): Promise<string | null> {
-  if (!nearConnector) return null;
-  try {
-    const wallet = await nearConnector.wallet().catch(() => null);
-    if (!wallet) return null;
-    const accounts = await (wallet as any).getAccounts?.();
-    if (accounts?.length > 0) {
-      const accountId = accounts[0].accountId || accounts[0];
-      return typeof accountId === 'string' ? accountId : null;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-async function connectNearWallet(): Promise<string | null> {
-  if (!nearConnector) throw new Error('NEAR connector not initialized');
-  const wallet = await nearConnector.connect();
-  const accounts = await (wallet as any).getAccounts?.();
-  if (accounts?.length > 0) {
-    const accountId = accounts[0].accountId || accounts[0];
-    return typeof accountId === 'string' ? accountId : null;
-  }
-  return null;
-}
-
-async function disconnectNearWallet(): Promise<void> {
-  if (!nearConnector) return;
-  await nearConnector.disconnect();
-}
 
 export interface NearAdapterOptions {
   networkId?: string;
@@ -63,43 +11,76 @@ export interface NearAdapterOptions {
  */
 export function useNearAdapter(options?: NearAdapterOptions): AdapterHookResult {
   const [address, setAddress] = useState<string | null>(null);
+  const [connector, setConnector] = useState<NearConnector | null>(null);
 
   useEffect(() => {
-    const connector = initNearConnector(options?.networkId);
-    if (!connector) return;
+    if (typeof window === 'undefined') return;
 
+    const nc = new NearConnector({
+      networkId: options?.networkId || 'mainnet',
+      network: options?.networkId || 'mainnet',
+      logger: { log: console.log, error: console.error },
+    } as any);
+
+    setConnector(nc);
+
+    // Check existing connection
     const checkConnection = async () => {
-      const account = await getNearAccount();
-      if (account) setAddress(account);
+      try {
+        const wallet = await nc.wallet().catch(() => null);
+        if (!wallet) return;
+        const accounts = await (wallet as any).getAccounts?.();
+        if (accounts?.length > 0) {
+          const accountId = accounts[0].accountId || accounts[0];
+          if (typeof accountId === 'string') setAddress(accountId);
+        }
+      } catch {}
     };
 
     const timer = setTimeout(checkConnection, 500);
 
     const onSignIn = async () => {
-      const account = await getNearAccount().catch(() => null);
-      if (account) setAddress(account);
+      try {
+        const wallet = await nc.wallet().catch(() => null);
+        if (!wallet) return;
+        const accounts = await (wallet as any).getAccounts?.();
+        if (accounts?.length > 0) {
+          const accountId = accounts[0].accountId || accounts[0];
+          if (typeof accountId === 'string') setAddress(accountId);
+        }
+      } catch {}
     };
     const onSignOut = () => setAddress(null);
 
-    connector.on('wallet:signIn', onSignIn);
-    connector.on('wallet:signOut', onSignOut);
+    nc.on('wallet:signIn', onSignIn);
+    nc.on('wallet:signOut', onSignOut);
 
     return () => {
       clearTimeout(timer);
-      connector.off('wallet:signIn', onSignIn);
-      connector.off('wallet:signOut', onSignOut);
+      nc.off('wallet:signIn', onSignIn);
+      nc.off('wallet:signOut', onSignOut);
     };
   }, [options?.networkId]);
 
   const connect = useCallback(async () => {
-    const account = await connectNearWallet();
-    if (account) setAddress(account);
-  }, []);
+    if (!connector) {
+      console.error('[BlinkConnect] NEAR connector not ready');
+      return;
+    }
+    console.log('[BlinkConnect] Connecting NEAR wallet...');
+    const wallet = await connector.connect();
+    const accounts = await (wallet as any).getAccounts?.();
+    if (accounts?.length > 0) {
+      const accountId = accounts[0].accountId || accounts[0];
+      if (typeof accountId === 'string') setAddress(accountId);
+    }
+  }, [connector]);
 
   const disconnect = useCallback(async () => {
-    await disconnectNearWallet();
+    if (!connector) return;
+    await connector.disconnect();
     setAddress(null);
-  }, []);
+  }, [connector]);
 
   return {
     chain: 'near',
