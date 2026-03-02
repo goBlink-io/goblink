@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { X, Copy, Check, Trash2, BookUser, ArrowRight } from 'lucide-react';
+import { X, Copy, Check, Trash2, BookUser, ArrowRight, Plus } from 'lucide-react';
 import { useUserProfile, SavedAddress } from '@/hooks/useUserProfile';
 import { CHAIN_LOGOS } from '@/lib/chain-logos';
 
@@ -100,9 +100,33 @@ function AddressRow({
   );
 }
 
+const SUPPORTED_CHAINS = [
+  'evm', 'solana', 'sui', 'near', 'bitcoin', 'aptos', 'starknet', 'ton', 'tron',
+];
+
 export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookProps) {
-  const { profile, hydrated, removeAddress } = useUserProfile();
+  const { profile, hydrated, removeAddress, saveAddress } = useUserProfile();
   const [filterChain, setFilterChain] = useState<string>('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newAddress, setNewAddress] = useState('');
+  const [newChain, setNewChain] = useState('evm');
+  const [addError, setAddError] = useState('');
+
+  const handleAddAddress = () => {
+    setAddError('');
+    const label = newLabel.trim();
+    const address = newAddress.trim();
+    if (!label) { setAddError('Label is required'); return; }
+    if (!address) { setAddError('Address is required'); return; }
+    if (profile.savedAddresses.length >= 20) { setAddError('Maximum 20 addresses'); return; }
+    if (profile.savedAddresses.some(a => a.address === address)) { setAddError('Address already saved'); return; }
+    saveAddress(label, address, newChain);
+    setNewLabel('');
+    setNewAddress('');
+    setNewChain('evm');
+    setShowAddForm(false);
+  };
 
   const handleSelect = onSelect
     ? (address: string, chain: string) => { onSelect(address, chain); onClose(); }
@@ -135,13 +159,25 @@ export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookPr
             <BookUser className="h-5 w-5" style={{ color: 'var(--brand)' }} />
             <h2 className="text-h4">Address Book</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl transition-all hover:opacity-80"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {profile.savedAddresses.length < 20 && (
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-tiny font-semibold transition-all hover:opacity-80 active:scale-95"
+                style={{ background: showAddForm ? 'var(--elevated)' : 'var(--brand)', color: showAddForm ? 'var(--text-secondary)' : '#fff' }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {showAddForm ? 'Cancel' : 'Add'}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl transition-all hover:opacity-80"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Chain filter */}
@@ -172,6 +208,57 @@ export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookPr
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Add address form */}
+        {showAddForm && (
+          <div className="px-5 py-3 space-y-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div>
+              <input
+                type="text"
+                placeholder="Label (e.g. My Phantom)"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                maxLength={30}
+                className="w-full px-3 py-2 rounded-lg text-body-sm outline-none transition-all"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Wallet address"
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-body-sm font-mono outline-none transition-all"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div>
+              <select
+                value={newChain}
+                onChange={(e) => setNewChain(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-body-sm outline-none transition-all capitalize"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              >
+                {SUPPORTED_CHAINS.map(chain => (
+                  <option key={chain} value={chain}>
+                    {CHAIN_LOGOS[chain]?.name || chain}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {addError && (
+              <p className="text-tiny" style={{ color: 'var(--error, #ef4444)' }}>{addError}</p>
+            )}
+            <button
+              onClick={handleAddAddress}
+              className="w-full py-2 rounded-lg text-body-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: 'var(--brand)', color: '#fff' }}
+            >
+              Save Address
+            </button>
           </div>
         )}
 
