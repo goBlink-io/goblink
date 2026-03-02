@@ -17,7 +17,6 @@ build/
 .env.production.local
 
 # Turbo
-.turbo/
 
 # IDE
 .vscode/
