@@ -98,8 +98,14 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
 
   const handleConnect = async (chain: ChainType) => {
     try {
+      // For AppKit chains (evm/solana/bitcoin), close our modal first
+      // so AppKit's own wallet selection modal can show on top
+      if (chain === 'evm' || chain === 'solana' || chain === 'bitcoin') {
+        ctx.closeModal();
+        await ctx.connect(chain);
+        return;
+      }
       await ctx.connect(chain);
-      if (chain !== 'sui') ctx.closeModal();
     } catch (e) {
       console.error(`[BlinkConnect] Failed to connect ${chain}:`, e);
     }
