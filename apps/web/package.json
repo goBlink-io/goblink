@@ -13,6 +13,7 @@
     "@aptos-labs/ts-sdk": "^6.0.0",
     "@aptos-labs/wallet-adapter-react": "^8.2.2",
     "@defuse-protocol/one-click-sdk-typescript": "^0.1.16",
+    "@goblink/connect": "link:/home/urban/.openclaw/workspace/projects/blinkconnect",
     "@goblink/shared": "workspace:*",
     "@hot-labs/near-connect": "^0.9.0",
     "@mysten/dapp-kit": "^1.0.3",
