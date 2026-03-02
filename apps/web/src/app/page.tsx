@@ -735,6 +735,168 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ ECOSYSTEM — all products ═══ */}
+      <section className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
+        <div className="max-w-5xl mx-auto">
+          <ScrollReveal>
+            <div className="text-center mb-12">
+              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+                The goBlink Ecosystem
+              </h2>
+              <p className="text-body-sm max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                Everything you need to build, ship, and get paid in crypto.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* goBlink Swap */}
+              <Link
+                href="/app"
+                className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                style={{
+                  background: 'var(--elevated)',
+                  border: '1px solid var(--border)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(37,99,235,0.4)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <div
+                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(37,99,235,0.1)', color: '#2563EB' }}
+                >
+                  <Zap className="h-5 w-5" />
+                </div>
+                <h4 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  goBlink Swap
+                </h4>
+                <p className="text-sm font-medium mb-2" style={{ color: '#2563EB' }}>
+                  Cross-chain transfers in one click
+                </p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-muted)' }}>
+                  Send any token to any chain. 26+ blockchains, 65+ tokens, non-custodial. Powered by NEAR Intents.
+                </p>
+                <span
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                  style={{ color: '#2563EB' }}
+                >
+                  Learn more <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+
+              {/* goBlink Merchant */}
+              <a
+                href="https://merchant.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                style={{
+                  background: 'var(--elevated)',
+                  border: '1px solid var(--border)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(34,197,94,0.4)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <div
+                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+                >
+                  <Store className="h-5 w-5" />
+                </div>
+                <h4 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  goBlink Merchant
+                </h4>
+                <p className="text-sm font-medium mb-2" style={{ color: '#22C55E' }}>
+                  Accept crypto. Settle to your wallet.
+                </p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-muted)' }}>
+                  Non-custodial payment processing for businesses. No holds, no chargebacks, no middlemen. Settlement in seconds.
+                </p>
+                <span
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                  style={{ color: '#22C55E' }}
+                >
+                  Learn more <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </a>
+
+              {/* goBlink Connect */}
+              <a
+                href="https://connect.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                style={{
+                  background: 'var(--elevated)',
+                  border: '1px solid var(--border)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(6,182,212,0.4)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <div
+                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(6,182,212,0.1)', color: '#06B6D4' }}
+                >
+                  <Link2 className="h-5 w-5" />
+                </div>
+                <h4 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  goBlink Connect
+                </h4>
+                <p className="text-sm font-medium mb-2" style={{ color: '#06B6D4' }}>
+                  One provider. Every chain.
+                </p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-muted)' }}>
+                  Universal multi-chain wallet SDK. 9 blockchain ecosystems, 350+ wallets, one API. Drop-in React components.
+                </p>
+                <span
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                  style={{ color: '#06B6D4' }}
+                >
+                  Learn more <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </a>
+
+              {/* goBlink Book */}
+              <a
+                href="https://book.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                style={{
+                  background: 'var(--elevated)',
+                  border: '1px solid var(--border)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <div
+                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(139,92,246,0.1)', color: '#8B5CF6' }}
+                >
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <h4 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  goBlink Book
+                </h4>
+                <p className="text-sm font-medium mb-2" style={{ color: '#8B5CF6' }}>
+                  Beautiful docs, zero lock-in.
+                </p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-muted)' }}>
+                  Documentation platform for dev teams. Block editor, custom domains, team collaboration. The GitBook alternative.
+                </p>
+                <span
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                  style={{ color: '#8B5CF6' }}
+                >
+                  Learn more <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </a>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ═══ CHAIN TICKER ═══ */}
       <ScrollReveal>
         <section className="relative z-10 py-12 border-y" style={{ borderColor: 'var(--border)' }}>
@@ -753,10 +915,10 @@ export default function LandingPage() {
             }}
           >
             <h2 className="text-h2 mb-4" style={{ color: 'var(--text-primary)' }}>
-              Stop reading. Start moving money.
+              The future of crypto infrastructure. Start building.
             </h2>
             <p className="text-body-sm mb-8" style={{ color: 'var(--text-secondary)' }}>
-              Whether you&apos;re sending tokens or accepting payments — get started in under 60 seconds.
+              Whether you are sending tokens, accepting payments, or building the next great dapp — goBlink has you covered.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -775,6 +937,17 @@ export default function LandingPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#22C55E')}
               >
                 Start Accepting <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="https://connect.goblink.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white"
+                style={{ background: '#06B6D4' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#0891B2')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#06B6D4')}
+              >
+                Explore SDKs <ArrowRight className="h-4 w-4" />
               </a>
             </div>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
