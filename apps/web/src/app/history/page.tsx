@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAppKitAccount } from '@reown/appkit/react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
-import { useAccount } from 'wagmi';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { Clock, ExternalLink, ChevronDown, Wallet, Search, ArrowRight, Download } from 'lucide-react';
 
 interface Transaction {
@@ -39,17 +36,9 @@ export default function HistoryPage() {
   const [total, setTotal] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  const { address: evmAddress } = useAccount();
-  const suiAccount = useCurrentAccount();
-  const { caipAddress } = useAppKitAccount();
-  const { getAddressForChain } = useWalletContext();
+  const { wallets } = useWallet();
 
-  const allWalletAddresses = [
-    evmAddress,
-    suiAccount?.address,
-    caipAddress?.startsWith('solana:') ? caipAddress.split(':')[2] : null,
-    getAddressForChain('near'),
-  ].filter(Boolean) as string[];
+  const allWalletAddresses = wallets.map(w => w.address);
 
   const limit = 20;
 

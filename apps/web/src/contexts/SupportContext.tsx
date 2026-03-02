@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useWalletContext } from './WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { AppState } from '@/lib/support/types';
 
 interface SupportContextType {
@@ -15,7 +15,7 @@ interface SupportContextType {
 const SupportContext = createContext<SupportContextType | undefined>(undefined);
 
 export function SupportProvider({ children }: { children: ReactNode }) {
-  const { connectedWallets } = useWalletContext();
+  const { wallets: connectedWallets } = useWallet();
   
   // ── App State ──
   const [appState, setAppState] = useState<AppState>({
