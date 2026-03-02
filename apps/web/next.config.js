@@ -7,6 +7,9 @@ const nextConfig = {
   turbopack: {
     root: path.resolve(__dirname, '../..'),
   },
+  experimental: {
+    externalDir: true,
+  },
   webpack: (config) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
     // Fix for Yarn PnP with lru-cache
@@ -16,6 +19,21 @@ const nextConfig = {
       net: false,
       tls: false,
     };
+    // Resolve @goblink/connect subpath exports for linked package
+    const connectPath = path.resolve(__dirname, '../../node_modules/@goblink/connect')
+      || path.resolve(__dirname, 'node_modules/@goblink/connect');
+    const blinkconnectRoot = require('fs').realpathSync(
+      path.resolve(__dirname, 'node_modules/@goblink/connect')
+    );
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@goblink/connect/react': path.join(blinkconnectRoot, 'dist/react/index.js'),
+      '@goblink/connect/vanilla': path.join(blinkconnectRoot, 'dist/vanilla/index.js'),
+      '@goblink/connect/adapters': path.join(blinkconnectRoot, 'dist/adapters/index.js'),
+      '@goblink/connect': path.join(blinkconnectRoot, 'dist/index.js'),
+    };
+    // Also set extensionAlias to help resolve .js → .ts in linked package
+    config.resolve.conditionNames = ['import', 'require', 'default'];
     return config;
   },
   transpilePackages: ['@mysten/dapp-kit', '@mysten/sui', '@reown/appkit', '@reown/appkit-adapter-solana', '@reown/appkit-adapter-wagmi'],

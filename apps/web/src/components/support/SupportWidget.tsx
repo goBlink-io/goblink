@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSupportContext } from '@/contexts/SupportContext';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { evaluateRules } from '@/lib/support/rules';
 import SupportChat from './SupportChat';
 import ProactiveTip from './ProactiveTip';
 
 export default function SupportWidget() {
   const { appState } = useSupportContext();
-  const { openModal } = useWalletContext();
+  const { connect } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
   const [proactiveTip, setProactiveTip] = useState<any>(null);
   const [dismissedTips, setDismissedTips] = useState<Set<string>>(new Set());
@@ -45,7 +45,7 @@ export default function SupportWidget() {
   const handleTipAction = (action: string, data?: string) => {
     switch (action) {
       case 'connect-wallet':
-        openModal();
+        connect();
         break;
       case 'open-link':
         if (data) window.open(data, '_blank');

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Token } from '@goblink/shared';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { useToast } from '@/contexts/ToastContext';
 import { getTokenBalance } from '@/lib/balances';
 import TokenSelector from './TokenSelector';
@@ -48,7 +48,7 @@ const SUPPORTED_CHAINS = [
 import { filterTokens } from '@/lib/token-filters';
 
 export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }: SwapFormProps) {
-  const { getAddressForChain, connectedWallets, isChainConnected, openModal } = useWalletContext();
+  const { getAddress, wallets, isChainConnected, connect } = useWallet();
   const { toast } = useToast();
   const recipientRef = useRef<HTMLInputElement>(null);
 
@@ -92,12 +92,12 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
 
   // Auto-set from chain when first wallet connects
   useEffect(() => {
-    if (connectedWallets.length > 0) {
-      const first = connectedWallets[0];
+    if (wallets.length > 0) {
+      const first = wallets[0];
       const chainId = getChainIdFromType(first.chain);
       setFromChain(chainId);
     }
-  }, [connectedWallets.length]);
+  }, [wallets.length]);
 
   useEffect(() => {
     fetchTokens();
@@ -184,13 +184,13 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
 
   const fromAddress = useCallback(() => {
     const chain = SUPPORTED_CHAINS.find(c => c.id === fromChain);
-    return chain ? getAddressForChain(chain.type) : null;
-  }, [fromChain, getAddressForChain]);
+    return chain ? getAddress(chain.type) : null;
+  }, [fromChain, getAddress]);
 
   const toAddress = useCallback(() => {
     const chain = SUPPORTED_CHAINS.find(c => c.id === toChain);
-    return chain ? getAddressForChain(chain.type) : null;
-  }, [toChain, getAddressForChain]);
+    return chain ? getAddress(chain.type) : null;
+  }, [toChain, getAddress]);
 
   // Chains where user has a wallet connected (for NoWalletCard "switch chain" option)
   const connectedChainOptions = useMemo(() => {
@@ -261,7 +261,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
       setRecipient(addr);
     } else {
       const prevAddr = recipient;
-      const isAutoPopulated = connectedWallets.some(c => c.address === prevAddr);
+      const isAutoPopulated = wallets.some(c => c.address === prevAddr);
       if (isAutoPopulated) setRecipient('');
     }
   }, [toChain, toAddress]);
@@ -509,7 +509,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
             ) : (
               <button
                 type="button"
-                onClick={() => openModal()}
+                onClick={() => connect()}
                 className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 active:scale-95"
                 style={{ color: 'var(--warning)' }}
               >
@@ -650,7 +650,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
                   }, 100);
                 }}
                 onSwitchChain={(chainId) => setToChain(chainId)}
-                onConnectWallet={() => openModal()}
+                onConnectWallet={() => connect()}
               />
             )}
           </>

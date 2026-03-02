@@ -6,8 +6,8 @@ import TransferModal from './TransferModal';
 import TokenSelector from './TokenSelector';
 import { PaymentRequestData } from '@/lib/payment-requests';
 import { ChainLogo } from '@/lib/chain-logos';
-import { useWalletContext } from '@/contexts/WalletContext';
-import type { ChainType } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
+import type { ChainType } from '@goblink/connect';
 import { getTokenBalance } from '@/lib/balances';
 import { filterTokens } from '@/lib/token-filters';
 import { formatTokenAmount as displayAmount } from '@/lib/format';
@@ -64,7 +64,7 @@ interface PaymentModalProps {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onPaymentConfirmed }: PaymentModalProps) {
-  const { getAddressForChain, openModal } = useWalletContext();
+  const { getAddress, connect } = useWallet();
 
   // Token list (all chains)
   const [allTokens, setAllTokens] = useState<any[]>([]);
@@ -134,7 +134,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
   );
 
   // ── Wallet address for from chain ───────────────────────────────────────────
-  const fromAddress = getAddressForChain(chainTypeForId(fromChainId));
+  const fromAddress = getAddress(chainTypeForId(fromChainId));
 
   // ── Auto-quote (EXACT_OUTPUT) ────────────────────────────────────────────────
   const fetchQuote = useCallback(async (asset: string, chainId: ChainId) => {
@@ -517,7 +517,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
             {/* Wallet / CTA */}
             {!fromAddress ? (
               <button
-                onClick={() => openModal()}
+                onClick={() => connect()}
                 className="w-full py-4 rounded-xl font-bold text-base text-white"
                 style={{ background: 'var(--gradient)' }}
               >

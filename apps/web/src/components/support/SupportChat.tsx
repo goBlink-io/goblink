@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSupportContext } from '@/contexts/SupportContext';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { ChatMessage } from '@/lib/support/types';
 import { getResponseForMessage, getQuickReplies, getFallbackMessage } from '@/lib/support/matcher';
 import SupportMessageComponent from './SupportMessage';
@@ -13,7 +13,7 @@ interface SupportChatProps {
 
 export default function SupportChat({ onClose }: SupportChatProps) {
   const { appState } = useSupportContext();
-  const { openModal } = useWalletContext();
+  const { connect } = useWallet();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -85,7 +85,7 @@ export default function SupportChat({ onClose }: SupportChatProps) {
   const handleAction = (action: string, data?: string) => {
     switch (action) {
       case 'connect-wallet':
-        openModal();
+        connect();
         break;
       case 'open-link':
         if (data) window.open(data, '_blank');

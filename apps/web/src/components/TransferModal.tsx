@@ -9,7 +9,7 @@ import { getWalletClient } from 'wagmi/actions';
 import { isEvmChain, isNativeToken, EVM_CHAINS, getExplorerTxUrl } from '@goblink/shared';
 import { getChainLogo } from '@/lib/chain-logos';
 import { formatTokenAmount } from '@/lib/format';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet } from '@goblink/connect/react';
 import { X, ArrowDown, Check, Loader2, AlertTriangle, Copy, Shield, Trophy, ChevronDown, HelpCircle } from 'lucide-react';
 import TransactionStoryline from './TransactionStoryline';
 import ConfidenceScore from './ConfidenceScore';
@@ -36,7 +36,7 @@ interface TransactionData {
 
 export default function TransferModal({ quote, onClose, onComplete, onOutcome }: TransferModalProps) {
   const { quote: quoteData, quoteRequest, originTokenMetadata, destinationTokenMetadata, fromChain, toChain, feeInfo, source, paymentRequestId } = quote;
-  const { getAddressForChain } = useWalletContext();
+  const { getAddress } = useWallet();
 
   const [step, setStep] = useState<ModalStep>('preview');
   const [confirmationStep, setConfirmationStep] = useState('');
@@ -219,7 +219,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
           if (originChain === 'near') {
             // Use wallet context to get NEAR address
-            walletAddress = getAddressForChain('near') || quoteRequest.refundTo || '';
+            walletAddress = getAddress('near') || quoteRequest.refundTo || '';
             walletChain = 'near';
           } else if (originChain === 'sui' && currentAccount) {
             walletAddress = currentAccount.address;
