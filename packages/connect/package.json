@@ -1,0 +1,165 @@
+{
+  "name": "@goblink/connect",
+  "version": "0.1.0",
+  "description": "Universal multi-chain wallet connection SDK — 9 blockchain ecosystems, one API",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    },
+    "./vanilla": {
+      "types": "./dist/vanilla/index.d.ts",
+      "import": "./dist/vanilla/index.js",
+      "require": "./dist/vanilla/index.cjs"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js",
+      "require": "./dist/adapters/index.cjs"
+    },
+    "./adapters/evm": {
+      "types": "./dist/adapters/evm.d.ts",
+      "import": "./dist/adapters/evm.js",
+      "require": "./dist/adapters/evm.cjs"
+    },
+    "./adapters/sui": {
+      "types": "./dist/adapters/sui.d.ts",
+      "import": "./dist/adapters/sui.js",
+      "require": "./dist/adapters/sui.cjs"
+    },
+    "./adapters/near": {
+      "types": "./dist/adapters/near.d.ts",
+      "import": "./dist/adapters/near.js",
+      "require": "./dist/adapters/near.cjs"
+    },
+    "./adapters/aptos": {
+      "types": "./dist/adapters/aptos.d.ts",
+      "import": "./dist/adapters/aptos.js",
+      "require": "./dist/adapters/aptos.cjs"
+    },
+    "./adapters/starknet": {
+      "types": "./dist/adapters/starknet.d.ts",
+      "import": "./dist/adapters/starknet.js",
+      "require": "./dist/adapters/starknet.cjs"
+    },
+    "./adapters/ton": {
+      "types": "./dist/adapters/ton.d.ts",
+      "import": "./dist/adapters/ton.js",
+      "require": "./dist/adapters/ton.cjs"
+    },
+    "./adapters/tron": {
+      "types": "./dist/adapters/tron.d.ts",
+      "import": "./dist/adapters/tron.js",
+      "require": "./dist/adapters/tron.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@aptos-labs/wallet-adapter-react": ">=3.0.0",
+    "@hot-labs/near-connect": ">=0.1.0",
+    "@mysten/dapp-kit": ">=0.14.0",
+    "@reown/appkit": ">=1.0.0",
+    "@reown/appkit-adapter-solana": ">=1.0.0",
+    "@reown/appkit-adapter-wagmi": ">=1.0.0",
+    "@starknet-react/chains": ">=0.1.0",
+    "@starknet-react/core": ">=2.0.0",
+    "@tanstack/react-query": ">=5.0.0",
+    "@tonconnect/ui-react": ">=2.0.0",
+    "@tronweb3/tronwallet-adapter-react-hooks": ">=1.0.0",
+    "@tronweb3/tronwallet-adapters": ">=1.0.0",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "viem": ">=2.0.0",
+    "wagmi": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@mysten/dapp-kit": {
+      "optional": true
+    },
+    "@hot-labs/near-connect": {
+      "optional": true
+    },
+    "@aptos-labs/wallet-adapter-react": {
+      "optional": true
+    },
+    "@starknet-react/core": {
+      "optional": true
+    },
+    "@starknet-react/chains": {
+      "optional": true
+    },
+    "@tonconnect/ui-react": {
+      "optional": true
+    },
+    "@tronweb3/tronwallet-adapter-react-hooks": {
+      "optional": true
+    },
+    "@tronweb3/tronwallet-adapters": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@aptos-labs/wallet-adapter-react": "^8.3.0",
+    "@hot-labs/near-connect": "^0.10.0",
+    "@mysten/dapp-kit": "^1.0.3",
+    "@reown/appkit": "^1.8.18",
+    "@reown/appkit-adapter-solana": "^1.8.18",
+    "@reown/appkit-adapter-wagmi": "^1.8.18",
+    "@starknet-react/chains": "^5.0.3",
+    "@starknet-react/core": "^5.0.3",
+    "@tanstack/react-query": "^5.90.21",
+    "@tonconnect/ui-react": "^2.4.2",
+    "@tronweb3/tronwallet-adapter-react-hooks": "^1.1.11",
+    "@tronweb3/tronwallet-adapters": "^1.2.21",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "viem": "^2.46.3",
+    "wagmi": "^3.5.0"
+  },
+  "keywords": [
+    "wallet",
+    "web3",
+    "multi-chain",
+    "evm",
+    "solana",
+    "bitcoin",
+    "sui",
+    "near",
+    "aptos",
+    "starknet",
+    "ton",
+    "tron",
+    "wallet-connect",
+    "react",
+    "blockchain"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goBlink/connect"
+  },
+  "homepage": "https://goblink.io/connect"
+}

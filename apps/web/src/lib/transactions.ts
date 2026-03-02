@@ -1,7 +1,6 @@
 'use client';
 
-import { getNearConnector } from './nearConnector';
-// import { parseNearAmount } from 'near-api-js/lib/utils/format'; // TODO: Re-enable when needed
+import { NearConnector } from '@hot-labs/near-connect';
 
 export interface TransactionParams {
   chain: string;
@@ -11,22 +10,33 @@ export interface TransactionParams {
   decimals: number;
 }
 
+// Lazy-init a NearConnector for transaction signing.
+// Connection is managed by BlinkConnect — this only accesses the existing wallet.
+let _nearConnector: NearConnector | null = null;
+function getNearSigningConnector(): NearConnector {
+  if (!_nearConnector) {
+    _nearConnector = new NearConnector({
+      networkId: 'mainnet',
+      network: 'mainnet',
+    } as any);
+  }
+  return _nearConnector;
+}
+
 /**
- * Trigger a token transfer transaction for NEAR
+ * Trigger a token transfer transaction for NEAR.
+ * Connection is managed by BlinkConnect. This function accesses the existing wallet for signing.
  */
 export async function sendNearTransaction(params: TransactionParams): Promise<string> {
   const { tokenAddress, recipientAddress, amount } = params;
-  
-  const connector = getNearConnector();
-  if (!connector) {
-    throw new Error('NEAR connector not initialized');
+
+  const connector = getNearSigningConnector();
+  const wallet = await connector.wallet().catch(() => null);
+  if (!wallet) {
+    throw new Error('NEAR wallet not connected — connect via BlinkConnect first');
   }
 
   try {
-    const wallet = await connector.wallet();
-    if (!wallet) {
-      throw new Error('NEAR wallet not connected');
-    }
 
     // Check if it's a native NEAR transfer or NEP-141 token transfer
     const isNativeNear = tokenAddress === 'wrap.near' || tokenAddress === 'near';
