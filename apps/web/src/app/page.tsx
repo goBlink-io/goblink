@@ -8,12 +8,11 @@ import {
   Share2, Link2, CreditCard, Code2, Star, History,
   MessageCircle, ChevronDown, ArrowRight, Sparkles,
   LayoutGrid, Brain, Activity, Package,
-  Globe, FileText, Palette, Lock, Store,
+  Store,
 } from 'lucide-react';
 import ChainTicker from '@/components/ui/ChainTicker';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
-import { getChainLogo } from '@/lib/chain-logos';
 
 // ── Feature Data ──────────────────────────────────────────────────────────────
 
@@ -231,47 +230,6 @@ const CATEGORIES: Category[] = [
         highlight: '18 vulnerabilities found and fixed before beta launch.',
       },
     ],
-  },
-];
-
-// ── Merchant Feature Data ─────────────────────────────────────────────────────
-
-interface MerchantFeature {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}
-
-const MERCHANT_FEATURES: MerchantFeature[] = [
-  {
-    icon: <Zap className="h-5 w-5" />,
-    title: 'Instant Settlement',
-    description: 'Payments go directly to your wallet. No holds, no delays, no intermediaries.',
-  },
-  {
-    icon: <Lock className="h-5 w-5" />,
-    title: 'Non-Custodial',
-    description: 'We never touch your funds. Your keys, your revenue, always.',
-  },
-  {
-    icon: <Globe className="h-5 w-5" />,
-    title: 'Any Token, Any Chain',
-    description: 'Accept payments from 12+ blockchains. Customers pay with whatever they have.',
-  },
-  {
-    icon: <FileText className="h-5 w-5" />,
-    title: 'Invoicing',
-    description: 'Create and send professional invoices with built-in crypto payment links.',
-  },
-  {
-    icon: <BarChart2 className="h-5 w-5" />,
-    title: 'Dashboard',
-    description: 'Real-time analytics, transaction history, and revenue tracking.',
-  },
-  {
-    icon: <Palette className="h-5 w-5" />,
-    title: 'Branded Checkout',
-    description: 'Customizable checkout page with your logo and colors.',
   },
 ];
 
@@ -527,214 +485,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ CHAIN TRUST GRID ═══ */}
-      <section className="relative z-10 py-16 px-4 max-w-5xl mx-auto">
-        <ScrollReveal>
-          <div className="text-center mb-10">
-            <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-              Your tokens live on different chains. So what.
-            </h2>
-            <p className="text-body-sm" style={{ color: 'var(--text-muted)' }}>
-              Pick a source. Pick a destination. We handle the rest.
-            </p>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-w-2xl mx-auto">
-            {['ethereum', 'solana', 'base', 'arbitrum', 'sui', 'polygon'].map((chainId) => {
-              const logo = getChainLogo(chainId);
-              if (!logo) return null;
-              return (
-                <div
-                  key={chainId}
-                  className="flex flex-col items-center gap-2 py-4 px-3 rounded-xl transition-all hover:scale-105"
-                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
-                >
-                  <img
-                    src={logo.icon}
-                    alt={logo.name}
-                    className="h-10 w-10 rounded-full"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{logo.name}</span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-center mt-4 text-tiny" style={{ color: 'var(--text-faint)' }}>
-            + NEAR, BNB, Optimism, Aptos, Starknet, Tron
-          </p>
-        </ScrollReveal>
-      </section>
-
-      {/* ═══ FEES — prominent, tinted background ═══ */}
-      <section id="pricing" className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
-        <div className="max-w-5xl mx-auto">
-        <ScrollReveal>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            {/* Left — messaging */}
-            <div>
-              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-                $1.75, not &quot;~0.3%.&quot;
-              </h2>
-              <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
-                You see the fee in dollars before you sign. No hidden spread,
-                no surprise gas, no subscription. Moving serious volume? Fees drop automatically.
-              </p>
-              <div className="flex flex-col gap-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                <div className="flex items-center gap-2">
-                  <span style={{ color: 'var(--success)' }}>✓</span>
-                  Fee shown upfront in dollars before you confirm
-                </div>
-                <div className="flex items-center gap-2">
-                  <span style={{ color: 'var(--success)' }}>✓</span>
-                  No minimum fee — pay exactly the tier rate
-                </div>
-                <div className="flex items-center gap-2">
-                  <span style={{ color: 'var(--success)' }}>✓</span>
-                  Volume discounts kick in automatically
-                </div>
-              </div>
-            </div>
-
-            {/* Right — fee table */}
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ border: '1px solid var(--border)' }}
-            >
-              {/* Header */}
-              <div className="px-6 py-4" style={{ background: 'var(--brand)', color: 'white' }}>
-                <div className="text-sm font-bold">Tiered Pricing</div>
-                <div className="text-xs opacity-80">The more you move, the less you pay</div>
-              </div>
-
-              {/* Tiers */}
-              <div style={{ background: 'var(--elevated)' }}>
-                {[
-                  { range: 'Under $5,000', rate: '0.35%', example: '$100 transfer = $0.35 fee' },
-                  { range: '$5,000 – $50,000', rate: '0.10%', example: '$10,000 transfer = $10 fee' },
-                  { range: 'Over $50,000', rate: '0.05%', example: '$100,000 transfer = $50 fee' },
-                ].map((tier, i) => (
-                  <div
-                    key={tier.range}
-                    className="flex items-center justify-between px-6 py-4"
-                    style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}
-                  >
-                    <div>
-                      <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {tier.range}
-                      </div>
-                      <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
-                        {tier.example}
-                      </div>
-                    </div>
-                    <div
-                      className="text-h4 font-extrabold tabular-nums"
-                      style={{ color: 'var(--brand)' }}
-                    >
-                      {tier.rate}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══ FEATURES — transfer platform features ═══ */}
-      <section id="features" className="relative z-10 pt-20 pb-20 px-4 max-w-5xl mx-auto">
-        <ScrollReveal>
-          <div className="mb-12">
-            <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-              Transfer Features
-            </h2>
-            <p className="text-body-sm max-w-xl" style={{ color: 'var(--text-secondary)' }}>
-              Every detail is designed to remove friction and build trust. Click any feature to see how it works.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        {CATEGORIES.map((cat) => (
-          <CategorySection key={cat.id} cat={cat} />
-        ))}
-      </section>
-
-      {/* ═══ MERCHANT SECTION ═══ */}
-      <section className="relative z-10 py-20 px-4" style={{ background: 'rgba(34,197,94,0.03)' }}>
-        <div className="max-w-5xl mx-auto">
-          <ScrollReveal>
-            <div className="text-center mb-12">
-              <div
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
-                style={{
-                  background: 'rgba(34,197,94,0.1)',
-                  border: '1px solid rgba(34,197,94,0.25)',
-                  color: '#22C55E',
-                }}
-              >
-                <Store className="h-3.5 w-3.5" />
-                goBlink Merchant
-              </div>
-              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
-                Accept crypto. Settle instantly.
-              </h2>
-              <p className="text-body-sm max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-                goBlink Merchant gives businesses non-custodial payment processing across every chain.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          {/* Feature grid */}
-          <ScrollReveal>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-              {MERCHANT_FEATURES.map((f) => (
-                <div
-                  key={f.title}
-                  className="rounded-2xl p-6 transition-all hover:scale-[1.02]"
-                  style={{
-                    background: 'var(--elevated)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
-                  >
-                    {f.icon}
-                  </div>
-                  <h4 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    {f.title}
-                  </h4>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {f.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-
-          {/* Merchant CTA */}
-          <ScrollReveal>
-            <div className="text-center">
-              <a
-                href="https://merchant.goblink.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white"
-                style={{ background: '#22C55E' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#16A34A')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#22C55E')}
-              >
-                Get Started — It&apos;s Free <ArrowRight className="h-4 w-4" />
-              </a>
-              <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-                No setup fees. No monthly charges. You only pay transfer fees.
-              </p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* ═══ ECOSYSTEM — all products ═══ */}
       <section className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
         <div className="max-w-5xl mx-auto">
@@ -895,6 +645,100 @@ export default function LandingPage() {
             </div>
           </ScrollReveal>
         </div>
+      </section>
+
+      {/* ═══ FEES — prominent, tinted background ═══ */}
+      <section id="pricing" className="relative z-10 py-20 px-4" style={{ background: 'var(--surface)' }}>
+        <div className="max-w-5xl mx-auto">
+        <ScrollReveal>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* Left — messaging */}
+            <div>
+              <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+                $1.75, not &quot;~0.3%.&quot;
+              </h2>
+              <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+                You see the fee in dollars before you sign. No hidden spread,
+                no surprise gas, no subscription. Moving serious volume? Fees drop automatically.
+              </p>
+              <div className="flex flex-col gap-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  Fee shown upfront in dollars before you confirm
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  No minimum fee — pay exactly the tier rate
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ color: 'var(--success)' }}>✓</span>
+                  Volume discounts kick in automatically
+                </div>
+              </div>
+            </div>
+
+            {/* Right — fee table */}
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              {/* Header */}
+              <div className="px-6 py-4" style={{ background: 'var(--brand)', color: 'white' }}>
+                <div className="text-sm font-bold">Tiered Pricing</div>
+                <div className="text-xs opacity-80">The more you move, the less you pay</div>
+              </div>
+
+              {/* Tiers */}
+              <div style={{ background: 'var(--elevated)' }}>
+                {[
+                  { range: 'Under $5,000', rate: '0.35%', example: '$100 transfer = $0.35 fee' },
+                  { range: '$5,000 – $50,000', rate: '0.10%', example: '$10,000 transfer = $10 fee' },
+                  { range: 'Over $50,000', rate: '0.05%', example: '$100,000 transfer = $50 fee' },
+                ].map((tier, i) => (
+                  <div
+                    key={tier.range}
+                    className="flex items-center justify-between px-6 py-4"
+                    style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}
+                  >
+                    <div>
+                      <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {tier.range}
+                      </div>
+                      <div className="text-tiny" style={{ color: 'var(--text-muted)' }}>
+                        {tier.example}
+                      </div>
+                    </div>
+                    <div
+                      className="text-h4 font-extrabold tabular-nums"
+                      style={{ color: 'var(--brand)' }}
+                    >
+                      {tier.rate}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══ FEATURES — transfer platform features ═══ */}
+      <section id="features" className="relative z-10 pt-20 pb-20 px-4 max-w-5xl mx-auto">
+        <ScrollReveal>
+          <div className="mb-12">
+            <h2 className="text-h2 mb-3" style={{ color: 'var(--text-primary)' }}>
+              Transfer Features
+            </h2>
+            <p className="text-body-sm max-w-xl" style={{ color: 'var(--text-secondary)' }}>
+              Every detail is designed to remove friction and build trust. Click any feature to see how it works.
+            </p>
+          </div>
+        </ScrollReveal>
+
+        {CATEGORIES.map((cat) => (
+          <CategorySection key={cat.id} cat={cat} />
+        ))}
       </section>
 
       {/* ═══ CHAIN TICKER ═══ */}
