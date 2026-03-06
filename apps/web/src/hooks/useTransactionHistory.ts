@@ -14,6 +14,7 @@ export interface HistoryEntry {
   timestamp: number;
 }
 
+// TODO(security): Transaction history contains deposit addresses — consider migrating to secureStorage
 const STORAGE_KEY = 'goblink_tx_history';
 const MAX_ENTRIES = 20;
 
