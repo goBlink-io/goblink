@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
+import { createHmac } from 'crypto';
+import { ALL_CHAIN_NAMES } from '@goblink/shared';
 
 export const dynamic = 'force-dynamic';
+
+const VALID_CHAINS = new Set(ALL_CHAIN_NAMES);
+
+/** Debounce: track last refresh_route_confidence call */
+let lastRefreshAt = 0;
+const REFRESH_DEBOUNCE_MS = 60_000; // 1 minute
+
+function verifySignature(body: unknown, signature: string | null): boolean {
+  const secret = process.env.STATS_SECRET;
+  if (!secret) return false;
+  if (!signature) return false;
+  const expected = createHmac('sha256', secret)
+    .update(JSON.stringify(body))
+    .digest('hex');
+  return signature === expected;
+}
 
 /**
  * POST /api/route-stats/log
@@ -13,8 +31,36 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { fromChain, toChain, fromToken, toToken, success, durationSecs, amountUsd } = body;
 
+    // Validate required fields
     if (!fromChain || !toChain || !fromToken || !toToken || typeof success !== 'boolean') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate HMAC signature
+    const signature = request.headers.get('x-stats-signature');
+    if (!verifySignature(body, signature)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+    }
+
+    // Validate chain IDs
+    if (!VALID_CHAINS.has(fromChain) || !VALID_CHAINS.has(toChain)) {
+      return NextResponse.json({ error: 'Invalid chain ID' }, { status: 400 });
+    }
+
+    // Validate amountUsd if provided
+    if (amountUsd != null) {
+      const amt = Number(amountUsd);
+      if (!Number.isFinite(amt) || amt <= 0 || amt > 1_000_000) {
+        return NextResponse.json({ error: 'Invalid amountUsd' }, { status: 400 });
+      }
+    }
+
+    // Validate durationSecs if provided
+    if (durationSecs != null) {
+      const dur = Number(durationSecs);
+      if (!Number.isFinite(dur) || dur < 1 || dur > 300) {
+        return NextResponse.json({ error: 'Invalid durationSecs' }, { status: 400 });
+      }
     }
 
     const { error } = await supabase.from('route_stats').insert({
@@ -33,8 +79,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false }, { status: 200 });
     }
 
-    // Refresh materialized view in background (best-effort)
-    void Promise.resolve(supabase.rpc('refresh_route_confidence')).catch(() => {});
+    // Refresh materialized view with debounce (max once per minute)
+    const now = Date.now();
+    if (now - lastRefreshAt >= REFRESH_DEBOUNCE_MS) {
+      lastRefreshAt = now;
+      void Promise.resolve(supabase.rpc('refresh_route_confidence')).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch {
