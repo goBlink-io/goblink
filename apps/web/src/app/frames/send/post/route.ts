@@ -45,6 +45,10 @@ const CHAIN_TOKENS: Record<string, string[]> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function htmlEncode(s: string) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function html(body: string) {
   return new NextResponse(body, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
@@ -77,16 +81,16 @@ function buildFrameHtml(opts: {
 }): string {
   let h = `<!DOCTYPE html><html><head>
 <meta property="fc:frame" content="vNext" />
-<meta property="fc:frame:image" content="${opts.imageUrl}" />
+<meta property="fc:frame:image" content="${htmlEncode(opts.imageUrl)}" />
 <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />`;
-  if (opts.inputText) h += `\n<meta property="fc:frame:input:text" content="${opts.inputText}" />`;
+  if (opts.inputText) h += `\n<meta property="fc:frame:input:text" content="${htmlEncode(opts.inputText)}" />`;
   opts.buttons.forEach((btn, i) => {
     const n = i + 1;
-    h += `\n<meta property="fc:frame:button:${n}" content="${btn.label}" />`;
-    h += `\n<meta property="fc:frame:button:${n}:action" content="${btn.action}" />`;
-    h += `\n<meta property="fc:frame:button:${n}:target" content="${btn.target}" />`;
+    h += `\n<meta property="fc:frame:button:${n}" content="${htmlEncode(btn.label)}" />`;
+    h += `\n<meta property="fc:frame:button:${n}:action" content="${htmlEncode(btn.action)}" />`;
+    h += `\n<meta property="fc:frame:button:${n}:target" content="${htmlEncode(btn.target)}" />`;
   });
-  if (opts.postUrl) h += `\n<meta property="fc:frame:post_url" content="${opts.postUrl}" />`;
+  if (opts.postUrl) h += `\n<meta property="fc:frame:post_url" content="${htmlEncode(opts.postUrl)}" />`;
   h += '\n</head></html>';
   return h;
 }
