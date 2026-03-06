@@ -71,7 +71,7 @@ async function getRateLimiter(limit: RouteLimit) {
   return rl;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only process API routes
