@@ -41,6 +41,7 @@
     "ethers": "^6.16.0",
     "framer-motion": "^12.34.1",
     "geist": "^1.7.0",
+    "jose": "^6.2.0",
     "lucide-react": "^0.300.0",
     "nanoid": "^5.1.6",
     "near-api-js": "^5.0.0",

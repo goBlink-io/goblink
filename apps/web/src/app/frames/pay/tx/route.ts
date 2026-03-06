@@ -8,6 +8,7 @@ import {
   parseAmount,
   TOKEN_ADDRESSES,
 } from '../../utils/frame-helpers';
+import { extractVerifiedAddress } from '../../utils/verify-frame';
 
 /**
  * POST /frames/pay/tx — Farcaster transaction endpoint.
@@ -37,11 +38,11 @@ export async function POST(request: NextRequest) {
 
   // ─── Cross-chain via 1Click ─────────────────────────────────────
   if (isCrossChain) {
-    // Get payer's address from Farcaster frame message
+    // Get payer's address from Farcaster frame message (with format validation)
     let refundAddress = '';
     try {
       const body = await request.json();
-      refundAddress = body?.untrustedData?.address || '';
+      refundAddress = extractVerifiedAddress(body) || '';
     } catch { /* */ }
 
     if (!refundAddress) {

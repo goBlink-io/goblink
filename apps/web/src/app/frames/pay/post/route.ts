@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl } from '../../utils/frame-helpers';
 
+function htmlEncode(s: string) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /**
  * POST /frames/pay — Farcaster frame post_url handler.
  * Called after the user completes the transaction.
@@ -8,11 +12,11 @@ import { getBaseUrl } from '../../utils/frame-helpers';
  */
 export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const to = searchParams.get('to') || '';
-  const amount = searchParams.get('amount') || '0';
-  const token = (searchParams.get('token') || 'USDC').toUpperCase();
-  const chain = searchParams.get('chain') || 'base';
-  const base = getBaseUrl();
+  const to = htmlEncode(searchParams.get('to') || '');
+  const amount = htmlEncode(searchParams.get('amount') || '0');
+  const token = htmlEncode((searchParams.get('token') || 'USDC').toUpperCase());
+  const chain = htmlEncode(searchParams.get('chain') || 'base');
+  const base = htmlEncode(getBaseUrl());
 
   const imageUrl = `${base}/frames/image?type=pay&to=${encodeURIComponent(to)}&amount=${amount}&token=${token}&chain=${chain}`;
 

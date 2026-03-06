@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 import { decodePaymentRequest } from '@/lib/payment-requests';
 import { logAudit, getClientIp } from '@/lib/server/audit';
+import { createHmac } from 'crypto';
+
+/**
+ * Generate a completion token for a payment link.
+ * HMAC(link_id, secret) — only the creator (who knows the link ID at creation time) can derive this.
+ */
+function generateCompletionToken(linkId: string): string {
+  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createHmac('sha256', secret).update(linkId).digest('hex').slice(0, 32);
+}
 
 /**
  * POST /api/pay/[id]/complete
  * Called when the user signs the transaction. Marks link as 'processing'.
- * A second PATCH call (outcome) promotes it to 'paid' once confirmed on-chain.
+ * Requires a valid completion_token query param.
  */
 export async function POST(
   request: NextRequest,
@@ -17,6 +27,13 @@ export async function POST(
 
   if (!data) {
     return NextResponse.json({ error: 'Invalid link' }, { status: 400 });
+  }
+
+  // Verify completion token to prevent unauthorized marking
+  const token = request.nextUrl.searchParams.get('completion_token');
+  const expected = generateCompletionToken(id);
+  if (!token || token !== expected) {
+    return NextResponse.json({ error: 'Invalid or missing completion_token' }, { status: 403 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -61,12 +78,21 @@ export async function POST(
  * PATCH /api/pay/[id]/complete
  * Called when 1Click confirms the on-chain outcome.
  * Promotes status from 'processing' → 'paid' or 'failed'.
+ * Requires a valid completion_token query param.
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Verify completion token
+  const token = request.nextUrl.searchParams.get('completion_token');
+  const expected = generateCompletionToken(id);
+  if (!token || token !== expected) {
+    return NextResponse.json({ error: 'Invalid or missing completion_token' }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const { fulfillmentTxHash, outcome } = body; // outcome: 'paid' | 'failed'
 

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl } from '../../utils/frame-helpers';
+import { extractVerifiedInputText } from '../../utils/verify-frame';
+
+function htmlEncode(s: string) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 /**
  * POST /frames/tip/post — Farcaster frame post_url handler.
@@ -19,40 +24,44 @@ export async function POST(request: NextRequest) {
   searchParams.forEach((v, k) => { if (k !== 'step' && k !== 'amount') allParams.set(k, v); });
   const paramStr = allParams.toString();
 
-  const imageUrl = `${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`;
+  const safeToken = htmlEncode(token);
+  const safeBase = htmlEncode(base);
+  const imageUrl = htmlEncode(`${base}/frames/image?type=tip&to=${encodeURIComponent(to)}&token=${token}&chain=${chain}`);
 
   if (step === 'custom') {
     let inputText = '';
     try {
       const body = await request.json();
-      inputText = body?.untrustedData?.inputText || '';
+      inputText = extractVerifiedInputText(body);
     } catch { /* */ }
 
     if (inputText && !isNaN(Number(inputText)) && Number(inputText) > 0) {
+      const safeInput = htmlEncode(inputText);
       const txParams = new URLSearchParams(allParams);
       txParams.set('amount', inputText);
-      const txTarget = `${base}/frames/tip/tx?${txParams.toString()}`;
+      const txTarget = htmlEncode(`${base}/frames/tip/tx?${txParams.toString()}`);
+      const safePostUrl = htmlEncode(`${base}/frames/tip/post?${paramStr}`);
 
       const html = `<!DOCTYPE html>
 <html><head>
   <meta property="fc:frame" content="vNext" />
   <meta property="fc:frame:image" content="${imageUrl}" />
   <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-  <meta property="fc:frame:button:1" content="Send $${inputText} ${token}" />
+  <meta property="fc:frame:button:1" content="Send $${safeInput} ${safeToken}" />
   <meta property="fc:frame:button:1:action" content="tx" />
   <meta property="fc:frame:button:1:target" content="${txTarget}" />
-  <meta property="fc:frame:post_url" content="${base}/frames/tip/post?${paramStr}" />
+  <meta property="fc:frame:post_url" content="${safePostUrl}" />
 </head></html>`;
       return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
     }
 
-    const customPostUrl = `${base}/frames/tip/post?${paramStr}&step=custom`;
+    const customPostUrl = htmlEncode(`${base}/frames/tip/post?${paramStr}&step=custom`);
     const html = `<!DOCTYPE html>
 <html><head>
   <meta property="fc:frame" content="vNext" />
   <meta property="fc:frame:image" content="${imageUrl}" />
   <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-  <meta property="fc:frame:input:text" content="Enter amount in ${token}" />
+  <meta property="fc:frame:input:text" content="Enter amount in ${safeToken}" />
   <meta property="fc:frame:button:1" content="Send Tip" />
   <meta property="fc:frame:button:1:action" content="post" />
   <meta property="fc:frame:button:1:target" content="${customPostUrl}" />
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
   <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
   <meta property="fc:frame:button:1" content="Tip sent!" />
   <meta property="fc:frame:button:1:action" content="link" />
-  <meta property="fc:frame:button:1:target" content="${base}" />
+  <meta property="fc:frame:button:1:target" content="${safeBase}" />
 </head></html>`;
   return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }

@@ -27,9 +27,13 @@ export async function GET(req: NextRequest) {
 
   if (status) query = query.eq('status', status);
   if (search) {
-    query = query.or(
-      `wallet_address.ilike.%${search}%,recipient.ilike.%${search}%,deposit_tx_hash.ilike.%${search}%,fulfillment_tx_hash.ilike.%${search}%`,
-    );
+    // Sanitize search term — strip PostgREST special characters to prevent filter injection
+    const safe = search.replace(/[,.*()]/g, '');
+    if (safe) {
+      query = query.or(
+        `wallet_address.ilike.%${safe}%,recipient.ilike.%${safe}%,deposit_tx_hash.ilike.%${safe}%,fulfillment_tx_hash.ilike.%${safe}%`,
+      );
+    }
   }
 
   const { data, count, error } = await query;
