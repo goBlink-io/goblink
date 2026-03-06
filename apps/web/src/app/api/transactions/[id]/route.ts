@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getTransaction, updateTransactionStatus } from '@/lib/server/transactions';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
