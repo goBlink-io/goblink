@@ -155,7 +155,7 @@ export async function GET(_request: NextRequest) {
       } else if (assetId.startsWith('nep245:')) {
         const isNativeHot = assetId.includes('_11111111111111111111');
         const chainIdMatch = assetId.match(/:(\d+)_/);
-        const hotChainId = chainIdMatch ? parseInt(chainIdMatch[1]) : null;
+        const hotChainId = chainIdMatch ? parseInt(chainIdMatch[1], 10) : null;
         const HOT_CHAIN_ID_MAP: Record<number, string> = {
           56: 'bsc', 137: 'polygon', 10: 'optimism', 43114: 'avalanche',
           143: 'monad', 196: 'xlayer', 9745: 'plasma', 36900: 'adi',

@@ -47,7 +47,7 @@ export async function GET(
     }) as unknown as { result: number[] };
 
     const balance = JSON.parse(Buffer.from(result.result).toString());
-    const decimalsNum = parseInt(decimals);
+    const decimalsNum = parseInt(decimals, 10) || 0;
     const balanceInTokens = String(Number(balance) / Math.pow(10, decimalsNum));
 
     return successResponse({

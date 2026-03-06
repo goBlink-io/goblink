@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid address format' }, { status: 400 });
     }
     const result = await getTokenBalance(
-      chain as SupportedChain, address, tokenAddress, decimals ? parseInt(decimals) : undefined
+      chain as SupportedChain, address, tokenAddress, decimals ? parseInt(decimals, 10) : undefined
     );
     return NextResponse.json(result);
   } catch (error: unknown) {

@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
 
   const url = req.nextUrl;
-  const page = parseInt(url.searchParams.get('page') || '1');
+  const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
   const limit = Math.min(
-    parseInt(url.searchParams.get('limit') || '50'),
+    parseInt(url.searchParams.get('limit') || '50', 10) || 50,
     100,
   );
   const action = url.searchParams.get('action') || '';
