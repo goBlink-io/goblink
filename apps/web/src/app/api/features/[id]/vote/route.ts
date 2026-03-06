@@ -8,46 +8,55 @@ export async function POST(
 ) {
   try {
     const user = await getGitHubUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
 
-    // Check if user has already voted
-    const { data: existingVote } = await supabase
-      .from('feature_request_votes')
-      .select('id')
-      .eq('feature_request_id', id)
-      .eq('github_user_id', user.id)
-      .single();
+    // Atomic vote toggle via DB function.
+    // Falls back to upsert + delete approach if RPC is unavailable.
+    const { data, error } = await supabase.rpc('toggle_feature_vote', {
+      p_feature_request_id: id,
+      p_github_user_id: user.id,
+    });
 
-    if (existingVote) {
-      // Remove vote
-      await supabase
+    if (error) {
+      // Fallback: use atomic upsert/delete with conflict handling
+      const { data: existingVote } = await supabase
         .from('feature_request_votes')
-        .delete()
-        .eq('id', existingVote.id);
+        .select('id')
+        .eq('feature_request_id', id)
+        .eq('github_user_id', user.id)
+        .single();
 
-      // Decrement vote count
-      await supabase.rpc('decrement_votes', { request_id: id });
+      if (existingVote) {
+        const { error: deleteError } = await supabase
+          .from('feature_request_votes')
+          .delete()
+          .eq('feature_request_id', id)
+          .eq('github_user_id', user.id);
 
-      return NextResponse.json({ voted: false });
-    } else {
-      // Add vote
-      await supabase
-        .from('feature_request_votes')
-        .insert({
-          feature_request_id: id,
-          github_user_id: user.id,
-        });
+        if (deleteError) throw deleteError;
+        await supabase.rpc('decrement_votes', { request_id: id });
+        return NextResponse.json({ voted: false });
+      } else {
+        const { error: insertError } = await supabase
+          .from('feature_request_votes')
+          .upsert(
+            { feature_request_id: id, github_user_id: user.id },
+            { onConflict: 'feature_request_id,github_user_id', ignoreDuplicates: true },
+          );
 
-      // Increment vote count
-      await supabase.rpc('increment_votes', { request_id: id });
-
-      return NextResponse.json({ voted: true });
+        if (insertError) throw insertError;
+        await supabase.rpc('increment_votes', { request_id: id });
+        return NextResponse.json({ voted: true });
+      }
     }
+
+    // RPC returns the new vote state
+    return NextResponse.json({ voted: !!data });
   } catch (error) {
     console.error('Error toggling vote:', error);
     return NextResponse.json({ error: 'Failed to toggle vote' }, { status: 500 });
