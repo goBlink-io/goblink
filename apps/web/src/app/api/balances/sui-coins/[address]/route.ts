@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSuiAccountCoins } from '@/lib/server/sui';
+import { isValidSuiAddress } from '@/lib/validators';
 
 export async function GET(
   _request: NextRequest,
@@ -7,6 +8,11 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidSuiAddress(address)) {
+      return NextResponse.json({ error: 'Invalid Sui address format' }, { status: 400 });
+    }
+
     const result = await getSuiAccountCoins(address);
     return NextResponse.json({ address, ...result });
   } catch (error: unknown) {

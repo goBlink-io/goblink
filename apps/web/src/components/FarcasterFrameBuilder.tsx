@@ -119,7 +119,7 @@ export default function FarcasterFrameBuilder() {
   const handleGenerate = () => {
     if (!isValid || !selectedSourceToken || !selectedDestToken) return;
 
-    const base = 'https://goblink.io';
+    const base = process.env.NEXT_PUBLIC_APP_URL || 'https://goblink.io';
     const params = new URLSearchParams();
     params.set('to', recipient.trim());
     // Pass defuseAssetId for 1Click resolution, plus human-readable for display
@@ -254,7 +254,7 @@ export default function FarcasterFrameBuilder() {
           </div>
 
           <button
-            onClick={() => setGeneratedUrl('https://goblink.io/frames/send')}
+            onClick={() => setGeneratedUrl(`${process.env.NEXT_PUBLIC_APP_URL || 'https://goblink.io'}/frames/send`)}
             className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all"
             style={{ background: 'var(--gradient)', cursor: 'pointer' }}
           >

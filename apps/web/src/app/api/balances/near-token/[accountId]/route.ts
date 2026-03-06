@@ -48,7 +48,11 @@ export async function GET(
 
     const balance = JSON.parse(Buffer.from(result.result).toString());
     const decimalsNum = parseInt(decimals, 10) || 0;
-    const balanceInTokens = String(Number(balance) / Math.pow(10, decimalsNum));
+    const raw = BigInt(balance);
+    const divisor = BigInt(10 ** decimalsNum);
+    const whole = raw / divisor;
+    const fraction = raw % divisor;
+    const balanceInTokens = String(Number(whole) + Number(fraction) / Number(divisor));
 
     return successResponse({
       balance: balanceInTokens,

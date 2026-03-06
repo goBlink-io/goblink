@@ -59,7 +59,11 @@ async function estimateAmountUsd(
   if (!tokenInfo) return undefined;
 
   try {
-    const amount = Number(BigInt(atomicAmount)) / Math.pow(10, tokenInfo.decimals);
+    const raw = BigInt(atomicAmount);
+    const divisor = BigInt(10 ** tokenInfo.decimals);
+    const whole = raw / divisor;
+    const fraction = raw % divisor;
+    const amount = Number(whole) + Number(fraction) / Number(divisor);
     return amount * tokenInfo.price;
   } catch {
     return undefined;
