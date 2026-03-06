@@ -14,7 +14,7 @@ export async function GET(
     const result = await getSuiTokenBalance(address, coinType);
     return NextResponse.json(result);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch Sui token balance', message }, { status: 500 });
+    console.error('[sui-token]', error);
+    return NextResponse.json({ error: 'Failed to fetch Sui token balance' }, { status: 500 });
   }
 }

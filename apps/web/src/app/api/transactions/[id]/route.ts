@@ -30,8 +30,7 @@ export async function GET(
     return successResponse(result.transaction);
   } catch (error: unknown) {
     logger.error('[TRANSACTION_GET_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch transaction', 500, { details: message });
+    return errorResponse('Failed to fetch transaction', 500);
   }
 }
 
@@ -90,7 +89,6 @@ export async function PATCH(
     return NextResponse.json({ success: true, status });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_PATCH_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to update transaction', 500, { details: message });
+    return errorResponse('Failed to update transaction', 500);
   }
 }

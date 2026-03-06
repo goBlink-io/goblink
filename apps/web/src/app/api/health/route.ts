@@ -12,17 +12,17 @@ async function checkOneClickAPI(): Promise<{ status: 'ok' | 'error'; message?: s
   } catch (error) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Service check failed',
     };
   }
 }
 
 export async function GET() {
   const checks: Record<string, { status: 'ok' | 'error'; message?: string }> = {};
-  
+
   // Check 1Click API
   checks.oneclick = await checkOneClickAPI();
-  
+
   // Check Solana RPC
   const solanaRpc = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
   try {
@@ -31,16 +31,17 @@ export async function GET() {
       { jsonrpc: '2.0', id: 1, method: 'getHealth' },
       { timeout: TIMEOUT }
     );
-    checks.solana_rpc = response.data?.result === 'ok' 
+    checks.solana_rpc = response.data?.result === 'ok'
       ? { status: 'ok' }
       : { status: 'error', message: 'Unhealthy response' };
   } catch (error) {
+    console.error('[health] Solana RPC error:', error);
     checks.solana_rpc = {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Service check failed',
     };
   }
-  
+
   // Check NEAR RPC
   const nearRpc = process.env.NEAR_RPC_URL || 'https://rpc.fastnear.com';
   try {
@@ -53,9 +54,10 @@ export async function GET() {
       ? { status: 'ok' }
       : { status: 'error', message: 'No result' };
   } catch (error) {
+    console.error('[health] NEAR RPC error:', error);
     checks.near_rpc = {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Service check failed',
     };
   }
   

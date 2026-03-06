@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_SEARCH_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Search failed', 500, { details: message });
+    return errorResponse('Search failed', 500);
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+// TODO(security): User profile contains saved wallet addresses — consider migrating to secureStorage
 const STORAGE_KEY = 'goblink_profile';
 const MAX_ADDRESSES = 20;
 

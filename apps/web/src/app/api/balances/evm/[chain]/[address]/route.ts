@@ -17,7 +17,7 @@ export async function GET(
     const result = await getNativeBalance(chain as SupportedChain, address);
     return NextResponse.json(result);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch balance', message }, { status: 500 });
+    console.error('[evm-balance]', error);
+    return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 });
   }
 }

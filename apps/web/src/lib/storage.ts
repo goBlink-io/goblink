@@ -1,17 +1,18 @@
 /**
  * Encrypted localStorage wrapper for sensitive data.
- * Uses Web Crypto API for AES-GCM encryption.
+ * Uses Web Crypto API for AES-GCM encryption with random salt per encryption.
  */
 
-const ENCRYPTION_SALT = 'goblink-storage-v1';
+const SALT_LENGTH = 16;
+const IV_LENGTH = 12;
 const KEY_ITERATIONS = 100000;
 
 /**
- * Derive encryption key from a password/seed
+ * Derive encryption key from a password/seed using PBKDF2 with a random salt
  */
-async function deriveKey(password: string): Promise<CryptoKey> {
+async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder();
-  
+
   // Import password as key material
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -20,12 +21,12 @@ async function deriveKey(password: string): Promise<CryptoKey> {
     false,
     ['deriveBits', 'deriveKey']
   );
-  
+
   // Derive AES-GCM key
   return await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: encoder.encode(ENCRYPTION_SALT),
+      salt,
       iterations: KEY_ITERATIONS,
       hash: 'SHA-256',
     },
@@ -37,100 +38,111 @@ async function deriveKey(password: string): Promise<CryptoKey> {
 }
 
 /**
- * Encrypt data using AES-GCM
+ * Encrypt data using AES-GCM with random salt and IV.
+ * Output format: salt (16 bytes) + iv (12 bytes) + ciphertext
  */
-async function encrypt(data: string, key: CryptoKey): Promise<string> {
+async function encrypt(data: string, password: string): Promise<string> {
   const encoder = new TextEncoder();
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+  const key = await deriveKey(password, salt);
+
   const encrypted = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
     encoder.encode(data)
   );
-  
-  // Combine IV and encrypted data
-  return JSON.stringify({
-    iv: Array.from(iv),
-    data: Array.from(new Uint8Array(encrypted)),
-  });
+
+  // Combine: salt + iv + ciphertext
+  const combined = new Uint8Array(SALT_LENGTH + IV_LENGTH + encrypted.byteLength);
+  combined.set(salt, 0);
+  combined.set(iv, SALT_LENGTH);
+  combined.set(new Uint8Array(encrypted), SALT_LENGTH + IV_LENGTH);
+  return Array.from(combined).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
- * Decrypt data using AES-GCM
+ * Decrypt data: parse salt (first 16 bytes), iv (next 12 bytes), then ciphertext
  */
-async function decrypt(encryptedData: string, key: CryptoKey): Promise<string> {
+async function decrypt(hexData: string, password: string): Promise<string> {
+  const bytes = new Uint8Array(hexData.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+  const salt = bytes.slice(0, SALT_LENGTH);
+  const iv = bytes.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+  const ciphertext = bytes.slice(SALT_LENGTH + IV_LENGTH);
+
+  const key = await deriveKey(password, salt);
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext
+  );
+
+  return new TextDecoder().decode(decrypted);
+}
+
+/**
+ * Try to decrypt legacy format (JSON with {iv, data} and hardcoded salt)
+ */
+async function decryptLegacy(encryptedData: string, password: string): Promise<string> {
   const { iv, data } = JSON.parse(encryptedData);
-  
+  const encoder = new TextEncoder();
+  const legacySalt = encoder.encode('goblink-storage-v1');
+  const key = await deriveKey(password, legacySalt);
+
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: new Uint8Array(iv) },
     key,
     new Uint8Array(data)
   );
-  
-  const decoder = new TextDecoder();
-  return decoder.decode(decrypted);
+
+  return new TextDecoder().decode(decrypted);
 }
 
 /**
  * Get encryption key for this browser session
- * In a real app, you might derive this from user's wallet signature
  */
 function getEncryptionPassword(): string {
-  // For now, use a browser-specific key
-  // In production, consider deriving from wallet signature
   let password = sessionStorage.getItem('__enc_key');
-  
+
   if (!password) {
-    // Generate random key for this session
     password = Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     sessionStorage.setItem('__enc_key', password);
   }
-  
+
   return password;
 }
 
 /**
- * Encrypted localStorage wrapper
+ * Encrypted localStorage wrapper.
+ * No plaintext fallback — encryption failure throws.
  */
 export const secureStorage = {
-  /**
-   * Store encrypted data
-   */
   async setItem(key: string, value: any): Promise<void> {
-    try {
-      const password = getEncryptionPassword();
-      const encryptionKey = await deriveKey(password);
-      const serialized = JSON.stringify(value);
-      const encrypted = await encrypt(serialized, encryptionKey);
-      localStorage.setItem(key, encrypted);
-    } catch (error) {
-      // Fallback to unencrypted if crypto fails
-      console.error('Encryption failed, falling back to plaintext:', error);
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+    const password = getEncryptionPassword();
+    const serialized = JSON.stringify(value);
+    const encrypted = await encrypt(serialized, password);
+    localStorage.setItem(key, encrypted);
   },
-  
-  /**
-   * Retrieve and decrypt data
-   */
+
   async getItem<T = any>(key: string): Promise<T | null> {
     try {
-      const encrypted = localStorage.getItem(key);
-      if (!encrypted) return null;
-      
-      // Try to decrypt
+      const stored = localStorage.getItem(key);
+      if (!stored) return null;
+
+      const password = getEncryptionPassword();
+
+      // Try new format (hex-encoded salt+iv+ciphertext)
       try {
-        const password = getEncryptionPassword();
-        const encryptionKey = await deriveKey(password);
-        const decrypted = await decrypt(encrypted, encryptionKey);
+        const decrypted = await decrypt(stored, password);
         return JSON.parse(decrypted);
       } catch {
-        // If decryption fails, might be plaintext (old data)
+        // Try legacy JSON format for migration
         try {
-          return JSON.parse(encrypted);
+          const decrypted = await decryptLegacy(stored, password);
+          return JSON.parse(decrypted);
         } catch {
           return null;
         }
@@ -140,25 +152,19 @@ export const secureStorage = {
       return null;
     }
   },
-  
-  /**
-   * Remove item
-   */
+
   removeItem(key: string): void {
     localStorage.removeItem(key);
   },
-  
-  /**
-   * Clear all encrypted storage
-   */
+
   clear(): void {
     localStorage.clear();
   },
 };
 
 /**
- * For backward compatibility, also export a sync version that uses base64 obfuscation
- * This is less secure but doesn't require async/await everywhere
+ * @deprecated Base64-only encoding — NOT encryption. Use secureStorage for sensitive data.
+ * Retained for backward compatibility with non-sensitive preferences.
  */
 export const obfuscatedStorage = {
   setItem(key: string, value: any): void {
@@ -170,12 +176,12 @@ export const obfuscatedStorage = {
       localStorage.setItem(key, JSON.stringify(value));
     }
   },
-  
+
   getItem<T = any>(key: string): T | null {
     try {
       const encoded = localStorage.getItem(key);
       if (!encoded) return null;
-      
+
       try {
         const decoded = atob(encoded);
         return JSON.parse(decoded);
@@ -187,7 +193,7 @@ export const obfuscatedStorage = {
       return null;
     }
   },
-  
+
   removeItem(key: string): void {
     localStorage.removeItem(key);
   },

@@ -47,7 +47,7 @@ export async function GET(
     }) as unknown as { result: number[] };
 
     const balance = JSON.parse(Buffer.from(result.result).toString());
-    const decimalsNum = parseInt(decimals);
+    const decimalsNum = parseInt(decimals, 10) || 0;
     const balanceInTokens = String(Number(balance) / Math.pow(10, decimalsNum));
 
     return successResponse({
@@ -58,7 +58,6 @@ export async function GET(
     });
   } catch (error: unknown) {
     logger.error('[NEAR_TOKEN_BALANCE_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch token balance', 500, { details: message });
+    return errorResponse('Failed to fetch token balance', 500);
   }
 }

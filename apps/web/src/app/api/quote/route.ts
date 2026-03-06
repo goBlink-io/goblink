@@ -183,6 +183,6 @@ export async function POST(request: NextRequest) {
       code = 'SERVICE_UNAVAILABLE';
     }
 
-    return errorResponse('Failed to get quote', statusCode, { code, details: message });
+    return errorResponse('Failed to get quote', statusCode, { code });
   }
 }
