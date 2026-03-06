@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAllowedOrigin, ALLOWED_ORIGINS } from '@/lib/cors';
+import { isAllowedOrigin } from '@/lib/cors';
 
 /**
  * Rate limiting middleware for all API routes.
