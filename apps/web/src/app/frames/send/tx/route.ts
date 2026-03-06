@@ -9,6 +9,7 @@ import {
   TOKEN_ADDRESSES,
   ERC20_TRANSFER_ABI,
 } from '../../utils/frame-helpers';
+import { extractVerifiedAddress } from '../../utils/verify-frame';
 
 /**
  * POST /frames/send/tx — Transaction endpoint for the Send frame wizard.
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
   let refundAddress = '';
   try {
     const body = await request.json();
-    refundAddress = body?.untrustedData?.address || '';
+    refundAddress = extractVerifiedAddress(body) || '';
   } catch { /* */ }
 
   if (!refundAddress) {

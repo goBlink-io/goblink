@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl } from '../../utils/frame-helpers';
+import { extractVerifiedInputText } from '../../utils/verify-frame';
 
 /**
  * POST /frames/tip/post — Farcaster frame post_url handler.
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
     let inputText = '';
     try {
       const body = await request.json();
-      inputText = body?.untrustedData?.inputText || '';
+      inputText = extractVerifiedInputText(body);
     } catch { /* */ }
 
     if (inputText && !isNaN(Number(inputText)) && Number(inputText) > 0) {

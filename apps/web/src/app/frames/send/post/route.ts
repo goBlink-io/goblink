@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBaseUrl, getChainDisplayName } from '../../utils/frame-helpers';
 import { errorFrame } from '../../utils/error-frame';
+import { extractVerifiedInputText } from '../../utils/verify-frame';
 
 /**
  * POST /frames/send/post — Unified multi-step wizard for Send, Pay, and Tip frames.
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
   let inputText = '';
   try {
     const body = await request.json();
-    inputText = body?.untrustedData?.inputText || '';
+    inputText = extractVerifiedInputText(body);
   } catch { /* */ }
 
   const state = getState(searchParams);
