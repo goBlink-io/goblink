@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { decodePaymentRequest, shortAddress, PaymentRequestData } from '@/lib/payment-requests';
 import { getChainLogo } from '@/lib/chain-logos';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 import PayFulfillClient from './PayFulfillClient';
 
 interface PageProps {
