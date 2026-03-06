@@ -73,9 +73,25 @@ async function getRateLimiter(limit: RouteLimit) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only rate-limit API routes
+  // Only process API routes
   if (!pathname.startsWith('/api/')) {
     return NextResponse.next();
+  }
+
+  // CSRF protection: require X-Requested-With header on state-mutating requests (M-02).
+  // Skip for API-key-authenticated routes (health, webhooks) and GET/HEAD/OPTIONS.
+  const CSRF_EXEMPT = ['/api/health', '/api/webhooks'];
+  const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(request.method);
+  const isExempt = CSRF_EXEMPT.some(p => pathname.startsWith(p));
+
+  if (mutatingMethod && !isExempt) {
+    const xrw = request.headers.get('x-requested-with');
+    if (xrw !== 'XMLHttpRequest') {
+      return NextResponse.json(
+        { error: 'Missing or invalid X-Requested-With header' },
+        { status: 403 },
+      );
+    }
   }
 
   try {
