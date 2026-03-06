@@ -62,7 +62,7 @@ async function runChecks() {
   return { checks, allHealthy };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const { checks, allHealthy } = await runChecks();
   const statusCode = allHealthy ? 200 : 503;
 
