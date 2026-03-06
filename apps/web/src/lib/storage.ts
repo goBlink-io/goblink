@@ -10,7 +10,7 @@ const KEY_ITERATIONS = 100000;
 /**
  * Derive encryption key from a password/seed using PBKDF2 with a random salt
  */
-async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveKey(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const encoder = new TextEncoder();
 
   // Import password as key material
@@ -43,8 +43,8 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
  */
 async function encrypt(data: string, password: string): Promise<string> {
   const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH)) as Uint8Array<ArrayBuffer>;
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH)) as Uint8Array<ArrayBuffer>;
   const key = await deriveKey(password, salt);
 
   const encrypted = await crypto.subtle.encrypt(
@@ -66,9 +66,9 @@ async function encrypt(data: string, password: string): Promise<string> {
  */
 async function decrypt(hexData: string, password: string): Promise<string> {
   const bytes = new Uint8Array(hexData.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-  const salt = bytes.slice(0, SALT_LENGTH);
-  const iv = bytes.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
-  const ciphertext = bytes.slice(SALT_LENGTH + IV_LENGTH);
+  const salt = new Uint8Array(bytes.buffer.slice(0, SALT_LENGTH)) as Uint8Array<ArrayBuffer>;
+  const iv = new Uint8Array(bytes.buffer.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)) as Uint8Array<ArrayBuffer>;
+  const ciphertext = new Uint8Array(bytes.buffer.slice(SALT_LENGTH + IV_LENGTH)) as Uint8Array<ArrayBuffer>;
 
   const key = await deriveKey(password, salt);
 
