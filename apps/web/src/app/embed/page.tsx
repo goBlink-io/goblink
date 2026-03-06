@@ -3,21 +3,20 @@
 import { Suspense } from 'react';
 import SwapForm from '@/components/SwapForm';
 import TransferModal from '@/components/TransferModal';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
 
-/** Post a message to the parent window (for SDK widget integration) */
-function postToParent(event: Record<string, unknown>) {
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage(event, '*');
-    }
-  } catch {
-    // Cross-origin restriction — silently ignore
-  }
+/**
+ * Parse the comma-separated NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS env var.
+ * Returns an empty array if not set (restrictive default — no postMessage).
+ */
+function getAllowedOrigins(): string[] {
+  const raw = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS;
+  if (!raw) return [];
+  return raw.split(',').map(o => o.trim()).filter(Boolean);
 }
 
 function EmbedInner() {
@@ -25,6 +24,42 @@ function EmbedInner() {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const { addEntry } = useTransactionHistory();
+  const validatedOriginRef = useRef<string | null>(null);
+  const allowedOrigins = useRef(getAllowedOrigins());
+
+  /** Post a message to the parent window only if origin is validated */
+  const postToParent = useCallback((event: Record<string, unknown>) => {
+    try {
+      if (window.parent && window.parent !== window && validatedOriginRef.current) {
+        window.parent.postMessage(event, validatedOriginRef.current);
+      }
+    } catch {
+      // Cross-origin restriction — silently ignore
+    }
+  }, []);
+
+  // Listen for init handshake from parent
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type !== 'goblink:init') return;
+      const origin = e.origin;
+      if (allowedOrigins.current.length === 0) {
+        console.warn('[embed] NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS not set — postMessage disabled');
+        return;
+      }
+      if (allowedOrigins.current.includes(origin)) {
+        validatedOriginRef.current = origin;
+        // Acknowledge the handshake
+        try {
+          window.parent.postMessage({ type: 'goblink:ready' }, origin);
+        } catch { /* ignore */ }
+      } else {
+        console.warn(`[embed] Origin ${origin} not in allowlist`);
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Read URL params for pre-filling the form
   const toChain = searchParams.get('chain') || searchParams.get('toChain') || undefined;
