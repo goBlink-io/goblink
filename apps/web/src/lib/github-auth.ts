@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 export interface GitHubUser {
   id: string;
@@ -7,17 +8,32 @@ export interface GitHubUser {
   access_token: string;
 }
 
+const getSessionSecret = () => {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) return null;
+  return new TextEncoder().encode(secret);
+};
+
 export async function getGitHubUser(): Promise<GitHubUser | null> {
   const cookieStore = await cookies();
   const authCookie = cookieStore.get('github_auth');
-  
+
   if (!authCookie) {
     return null;
   }
 
   try {
-    const user = JSON.parse(authCookie.value) as GitHubUser;
-    return user;
+    const secret = getSessionSecret();
+    if (!secret) return null;
+
+    const { payload } = await jwtVerify(authCookie.value, secret);
+
+    return {
+      id: payload.userId as string,
+      login: payload.login as string,
+      avatar_url: payload.avatarUrl as string,
+      access_token: payload.accessToken as string,
+    };
   } catch {
     return null;
   }
