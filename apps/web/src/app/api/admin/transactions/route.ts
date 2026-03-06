@@ -2,11 +2,15 @@ import { NextRequest } from 'next/server';
 import { verifyAdmin } from '@/lib/server/admin-auth';
 import { supabase } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/api-response';
+import { logAudit, getClientIp } from '@/lib/server/audit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
+  const admin = await verifyAdmin();
+  if (!admin) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
+
+  logAudit({ actor: admin, action: 'admin.view_transactions', ipAddress: getClientIp(req.headers) });
 
   const url = req.nextUrl;
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
