@@ -84,7 +84,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       }
 
       const actualQuote = await response.json();
-      console.log('Actual quote response:', actualQuote);
+      if (process.env.NODE_ENV === 'development') console.log('Actual quote response:', actualQuote);
       
       // Check response structure - the deposit address might be in different locations
       const receivedDepositAddress = actualQuote.depositAddress || 
@@ -96,7 +96,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
         throw new Error('No deposit address in response');
       }
 
-      console.log('Deposit address received:', receivedDepositAddress);
+      if (process.env.NODE_ENV === 'development') console.log('Deposit address received:', receivedDepositAddress);
       setDepositAddress(receivedDepositAddress);
       setConfirmationStep('Preparing transaction...');
 
@@ -105,11 +105,13 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       // NOT the asset ID (which may be a NEP-141 wrapper like nep141:sui.omft.near)
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
       
-      console.log('=== CHAIN DETECTION DEBUG ===');
-      console.log('fromChain (from SwapForm):', fromChain);
-      console.log('originAssetId:', quoteRequest.originAsset);
-      console.log('resolved originChain:', originChain);
-      console.log('===========================');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('=== CHAIN DETECTION DEBUG ===');
+        console.log('fromChain (from SwapForm):', fromChain);
+        console.log('originAssetId:', quoteRequest.originAsset);
+        console.log('resolved originChain:', originChain);
+        console.log('===========================');
+      }
       
       // Step 3: Handle transaction based on origin chain
       if (originChain === 'near') {
@@ -125,7 +127,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             decimals: originTokenMetadata?.decimals || 18,
           });
           
-          console.log('Transaction sent:', txHash);
+          if (process.env.NODE_ENV === 'development') console.log('Transaction sent:', txHash);
           setConfirmationStep('Transaction sent! Tracking status...');
 
           // Navigate to status tracker with tx hash
@@ -161,7 +163,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             decimals: originTokenMetadata?.decimals || 9,
           }, suiClient, currentAccount, signAndExecuteTransaction);
           
-          console.log('Sui transaction sent:', txHash);
+          if (process.env.NODE_ENV === 'development') console.log('Sui transaction sent:', txHash);
           setConfirmationStep('Transaction sent! Tracking status...');
 
           // Navigate to status tracker with tx hash
@@ -182,21 +184,19 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           }
           
           setConfirmationStep('Preparing Solana transaction...');
-          console.log('[SOL] Solana provider methods:', Object.keys(solanaProvider));
-          
+          if (process.env.NODE_ENV === 'development') console.log('[SOL] Solana provider methods:', Object.keys(solanaProvider));
+
           const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
-          
+
           const fromPubkey = new PublicKey(solanaProvider.publicKey);
           const toPubkey = new PublicKey(receivedDepositAddress);
           const lamports = Number(BigInt(quoteRequest.amount));
-          console.log('[SOL] Transfer:', { from: fromPubkey.toString(), to: toPubkey.toString(), lamports });
-          
+          if (process.env.NODE_ENV === 'development') console.log('[SOL] Transfer:', { from: fromPubkey.toString(), to: toPubkey.toString(), lamports });
+
           // Step 1: Fetch blockhash via backend proxy
-          console.log('[SOL] Fetching blockhash...');
           const blockhashRes = await fetch('/api/balances/solana-blockhash');
           if (!blockhashRes.ok) throw new Error('Failed to fetch Solana blockhash');
           const { blockhash } = await blockhashRes.json();
-          console.log('[SOL] Blockhash:', blockhash);
           
           // Step 2: Build transaction
           const transaction = new Transaction({
@@ -212,19 +212,13 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           
           // Step 3: Sign via wallet — user sees approval popup
           setConfirmationStep('Please approve the transaction in your Solana wallet...');
-          console.log('[SOL] Requesting wallet signature...');
-          console.log('[SOL] signTransaction available:', typeof solanaProvider.signTransaction);
-          
           let signed;
           if (typeof solanaProvider.signTransaction === 'function') {
             signed = await solanaProvider.signTransaction(transaction);
           } else {
-            // Fallback: use signAllTransactions if signTransaction isn't available
-            console.log('[SOL] signAllTransactions available:', typeof solanaProvider.signAllTransactions);
             const signedTxns = await solanaProvider.signAllTransactions([transaction]);
             signed = signedTxns[0];
           }
-          console.log('[SOL] Transaction signed successfully');
           
           // Step 4: Broadcast via backend proxy
           setConfirmationStep('Broadcasting transaction...');
@@ -233,8 +227,6 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           
           // Use base64 encoding which is simpler and supported
           const base64Tx = btoa(String.fromCharCode(...bytes));
-          console.log('[SOL] Broadcasting transaction, size:', bytes.length);
-          
           const sendRes = await fetch('/api/balances/solana-rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -249,14 +241,13 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             }),
           });
           const sendData = await sendRes.json();
-          console.log('[SOL] Broadcast response:', sendData);
           
           if (sendData.error) {
             throw new Error(sendData.error.message || 'Failed to broadcast Solana transaction');
           }
           
           const signature = sendData.result;
-          console.log('[SOL] Transaction sent:', signature);
+          if (process.env.NODE_ENV === 'development') console.log('[SOL] Transaction sent:', signature);
           setConfirmationStep('Transaction sent! Tracking status...');
           onSwapInitiated(receivedDepositAddress, signature);
         } catch (txError: any) {
@@ -315,7 +306,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
             });
           }
 
-          console.log('EVM transaction sent:', txHash);
+          if (process.env.NODE_ENV === 'development') console.log('EVM transaction sent:', txHash);
           setConfirmationStep('Transaction sent! Tracking status...');
           onSwapInitiated(receivedDepositAddress, txHash);
         } catch (txError: any) {

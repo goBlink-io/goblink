@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAllowedOrigin, ALLOWED_ORIGINS } from '@/lib/cors';
 
 /**
  * Rate limiting middleware for all API routes.
@@ -78,6 +79,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // CORS: respond to preflight and set headers for API routes (L-03).
+  const origin = request.headers.get('origin');
+  if (request.method === 'OPTIONS') {
+    const headers: Record<string, string> = {
+      'Access-Control-Allow-Methods': 'GET,HEAD,POST,PUT,DELETE,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    };
+    if (origin && isAllowedOrigin(origin)) {
+      headers['Access-Control-Allow-Origin'] = origin;
+    }
+    return new NextResponse(null, { status: 204, headers });
+  }
+
   // CSRF protection: require X-Requested-With header on state-mutating requests (M-02).
   // Skip for API-key-authenticated routes (health, webhooks) and GET/HEAD/OPTIONS.
   const CSRF_EXEMPT = ['/api/health', '/api/webhooks'];
@@ -100,7 +115,11 @@ export async function middleware(request: NextRequest) {
 
     if (!rl) {
       // Upstash not configured — skip rate limiting
-      return NextResponse.next();
+      const res = NextResponse.next();
+      if (origin && isAllowedOrigin(origin)) {
+        res.headers.set('Access-Control-Allow-Origin', origin);
+      }
+      return res;
     }
 
     const ip = getClientIp(request);
@@ -125,6 +144,9 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
     response.headers.set('X-RateLimit-Limit', String(max));
     response.headers.set('X-RateLimit-Remaining', String(remaining));
+    if (origin && isAllowedOrigin(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+    }
     return response;
   } catch (error) {
     // Rate limiting failure should not block requests
