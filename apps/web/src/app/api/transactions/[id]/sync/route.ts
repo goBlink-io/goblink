@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
  * Trigger status sync from Intents Explorer for a transaction
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -20,11 +20,22 @@ export async function POST(
       return errorResponse('Transaction ID is required', 400);
     }
 
+    // Require wallet address for ownership verification
+    const walletAddress = request.nextUrl.searchParams.get('walletAddress');
+    if (!walletAddress) {
+      return errorResponse('walletAddress query param is required for authentication', 401);
+    }
+
     // First, get the transaction to find its deposit address
     const txResult = await getTransaction(id);
 
     if (!txResult.success || !txResult.transaction) {
       return errorResponse('Transaction not found', 404);
+    }
+
+    // Verify wallet ownership
+    if (txResult.transaction.wallet_address !== walletAddress.toLowerCase()) {
+      return errorResponse('Wallet address does not match transaction owner', 403);
     }
 
     const { deposit_address } = txResult.transaction;
@@ -50,7 +61,6 @@ export async function POST(
     });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_SYNC_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to sync transaction', 500, { details: message });
+    return errorResponse('Failed to sync transaction', 500);
   }
 }

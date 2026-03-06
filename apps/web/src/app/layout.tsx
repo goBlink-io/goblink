@@ -6,6 +6,12 @@ import ClientLayout from '@/components/ClientLayout';
 import LayoutShell from '@/components/LayoutShell';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { validateEnv } from '@/lib/env';
+
+// Validate required environment variables at startup (server-side only)
+if (typeof window === 'undefined') {
+  validateEnv();
+}
 
 const baseUrl = process.env.NODE_ENV === 'production' 
   ? 'https://goblink.io' 

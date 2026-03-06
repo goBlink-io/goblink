@@ -47,7 +47,11 @@ export async function getSuiBalance(address: string) {
   );
   if (!suiCoin) return { balance: '0.0000', balanceMist: '0', address };
   const balanceMist = suiCoin.balance;
-  const balanceInSui = String(Number(balanceMist) / 1e9);
+  const raw = BigInt(balanceMist);
+  const divisor = BigInt(10 ** 9);
+  const whole = raw / divisor;
+  const fraction = raw % divisor;
+  const balanceInSui = String(Number(whole) + Number(fraction) / Number(divisor));
   return { balance: balanceInSui, balanceMist, address };
 }
 
@@ -62,6 +66,10 @@ export async function getSuiTokenBalance(address: string, coinType: string) {
     c.coinType.toLowerCase() === coinType.toLowerCase()
   );
   if (!coin) return { balance: '0.0000', balanceRaw: '0', address, decimals: 6 };
-  const balanceFormatted = String(Number(coin.balance) / Math.pow(10, coin.decimals));
+  const raw = BigInt(coin.balance);
+  const divisor = BigInt(10 ** coin.decimals);
+  const whole = raw / divisor;
+  const fraction = raw % divisor;
+  const balanceFormatted = String(Number(whole) + Number(fraction) / Number(divisor));
   return { balance: balanceFormatted, balanceRaw: coin.balance, address, decimals: coin.decimals };
 }

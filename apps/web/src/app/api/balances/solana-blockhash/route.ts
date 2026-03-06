@@ -14,7 +14,7 @@ export async function GET() {
     if (!blockhash) throw new Error('No blockhash returned from Solana RPC');
     return NextResponse.json({ blockhash, lastValidBlockHeight });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch Solana blockhash', message }, { status: 500 });
+    console.error('[solana-blockhash]', error);
+    return NextResponse.json({ error: 'Failed to fetch Solana blockhash' }, { status: 500 });
   }
 }

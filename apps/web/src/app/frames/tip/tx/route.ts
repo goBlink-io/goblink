@@ -8,6 +8,7 @@ import {
   parseAmount,
   TOKEN_ADDRESSES,
 } from '../../utils/frame-helpers';
+import { extractVerifiedAddress } from '../../utils/verify-frame';
 
 /**
  * POST /frames/tip/tx — Farcaster transaction endpoint for tips.
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     let refundAddress = '';
     try {
       const body = await request.json();
-      refundAddress = body?.untrustedData?.address || '';
+      refundAddress = extractVerifiedAddress(body) || '';
     } catch { /* */ }
 
     if (!refundAddress) {

@@ -215,16 +215,22 @@ export async function searchTransactions(
       return { success: true, transactions: [] };
     }
 
-    // Try multiple search strategies
+    // Sanitize search term — strip PostgREST special characters to prevent filter injection
+    const safe = searchTerm.replace(/[,.*()]/g, '');
+
+    if (!safe) {
+      return { success: true, transactions: [] };
+    }
+
     const { data, error } = await supabase
       .from('transaction_history')
       .select('*')
       .or(
-        `wallet_address.ilike.%${searchTerm}%,` +
-        `deposit_address.ilike.%${searchTerm}%,` +
-        `deposit_tx_hash.ilike.%${searchTerm}%,` +
-        `fulfillment_tx_hash.ilike.%${searchTerm}%,` +
-        `refund_tx_hash.ilike.%${searchTerm}%`
+        `wallet_address.ilike.%${safe}%,` +
+        `deposit_address.ilike.%${safe}%,` +
+        `deposit_tx_hash.ilike.%${safe}%,` +
+        `fulfillment_tx_hash.ilike.%${safe}%,` +
+        `refund_tx_hash.ilike.%${safe}%`
       )
       .order('created_at', { ascending: false })
       .limit(50);

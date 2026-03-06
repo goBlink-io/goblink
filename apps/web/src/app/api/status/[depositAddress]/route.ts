@@ -89,7 +89,6 @@ export async function GET(
     return errorResponse('Status temporarily unavailable', 503);
   } catch (error: unknown) {
     logger.error('[STATUS_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch status', 500, { details: message });
+    return errorResponse('Failed to fetch status', 500);
   }
 }

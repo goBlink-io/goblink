@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSuiAccountCoins } from '@/lib/server/sui';
+import { isValidSuiAddress } from '@/lib/validators';
 
 export async function GET(
   _request: NextRequest,
@@ -7,10 +8,15 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidSuiAddress(address)) {
+      return NextResponse.json({ error: 'Invalid Sui address format' }, { status: 400 });
+    }
+
     const result = await getSuiAccountCoins(address);
     return NextResponse.json({ address, ...result });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch Sui coins', message }, { status: 500 });
+    console.error('[sui-coins]', error);
+    return NextResponse.json({ error: 'Failed to fetch Sui coins' }, { status: 500 });
   }
 }

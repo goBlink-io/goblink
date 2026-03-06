@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 import { decodePaymentRequest } from '@/lib/payment-requests';
 import * as oneclick from '@/lib/server/oneclick';
 

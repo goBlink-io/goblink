@@ -22,14 +22,13 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid address format' }, { status: 400 });
     }
     const result = await getTokenBalance(
-      chain as SupportedChain, address, tokenAddress, decimals ? parseInt(decimals) : undefined
+      chain as SupportedChain, address, tokenAddress, decimals ? parseInt(decimals, 10) : undefined
     );
     return NextResponse.json(result);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
     // Return 200 with null balance — RPC failures are transient and shouldn't
     // surface as 500 errors. The client will treat null as "balance unavailable".
-    console.warn('[evm-token] RPC error:', message);
-    return NextResponse.json({ balance: null, balanceRaw: null, error: message }, { status: 200 });
+    console.warn('[evm-token] RPC error:', error);
+    return NextResponse.json({ balance: null, balanceRaw: null, error: 'RPC error' }, { status: 200 });
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 import { getGitHubUser } from '@/lib/github-auth';
 
 export async function GET() {
@@ -14,7 +14,8 @@ export async function GET() {
       .order('votes', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[features-get]', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ requests });
@@ -88,7 +89,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[features-post]', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ featureRequest }, { status: 201 });

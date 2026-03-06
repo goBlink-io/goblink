@@ -25,7 +25,11 @@ export async function GET(
       account_id: accountId,
     }) as unknown as { amount: string };
 
-    const balanceInNear = String(Number(account.amount) / 1e24);
+    const raw = BigInt(account.amount);
+    const divisor = BigInt(10 ** 24);
+    const whole = raw / divisor;
+    const fraction = raw % divisor;
+    const balanceInNear = String(Number(whole) + Number(fraction) / Number(divisor));
 
     return successResponse({
       balance: balanceInNear,
@@ -34,7 +38,6 @@ export async function GET(
     });
   } catch (error: unknown) {
     logger.error('[NEAR_BALANCE_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch balance', 500, { details: message });
+    return errorResponse('Failed to fetch balance', 500);
   }
 }

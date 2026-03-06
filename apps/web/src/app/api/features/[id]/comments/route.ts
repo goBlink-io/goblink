@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 import { getGitHubUser } from '@/lib/github-auth';
 
 export async function GET(
@@ -16,7 +16,8 @@ export async function GET(
       .order('created_at', { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[comments-get]', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ comments });
@@ -101,7 +102,8 @@ export async function POST(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[comments-post]', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({ comment }, { status: 201 });

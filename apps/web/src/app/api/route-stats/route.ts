@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/server/db';
+import { anonSupabase as supabase } from '@/lib/server/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       stats: data ? {
         totalSwaps: data.total_swaps,
         successRate: parseFloat(data.success_rate),
-        avgDurationSecs: data.avg_duration_secs ? parseInt(data.avg_duration_secs) : null,
+        avgDurationSecs: data.avg_duration_secs ? parseInt(data.avg_duration_secs, 10) : null,
         avgAmountUsd: data.avg_amount_usd ? parseFloat(data.avg_amount_usd) : null,
         lastSwapAt: data.last_swap_at,
       } : null,

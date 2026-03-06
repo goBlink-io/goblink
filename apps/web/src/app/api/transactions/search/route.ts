@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { searchTransactions } from '@/lib/server/transactions';
+import { verifyAdmin } from '@/lib/server/admin-auth';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 
@@ -8,10 +9,16 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/transactions/search?q=...
  * Search transactions by wallet address, deposit address, or tx hash
- * Primarily for customer support use
+ * Restricted to authenticated admin users
  */
 export async function GET(request: NextRequest) {
   try {
+    // Require admin authentication — this endpoint is for customer support
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
+    }
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
 
@@ -32,7 +39,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_SEARCH_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Search failed', 500, { details: message });
+    return errorResponse('Search failed', 500);
   }
 }

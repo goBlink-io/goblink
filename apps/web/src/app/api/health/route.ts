@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import * as oneclick from '@/lib/server/oneclick';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
+import { verifyAdmin } from '@/lib/server/admin-auth';
 
 const TIMEOUT = 5000; // 5 seconds
 
@@ -12,18 +13,16 @@ async function checkOneClickAPI(): Promise<{ status: 'ok' | 'error'; message?: s
   } catch (error) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Service check failed',
     };
   }
 }
 
-export async function GET() {
+async function runChecks() {
   const checks: Record<string, { status: 'ok' | 'error'; message?: string }> = {};
-  
-  // Check 1Click API
+
   checks.oneclick = await checkOneClickAPI();
-  
-  // Check Solana RPC
+
   const solanaRpc = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
   try {
     const response = await axios.post(
@@ -31,17 +30,14 @@ export async function GET() {
       { jsonrpc: '2.0', id: 1, method: 'getHealth' },
       { timeout: TIMEOUT }
     );
-    checks.solana_rpc = response.data?.result === 'ok' 
+    checks.solana_rpc = response.data?.result === 'ok'
       ? { status: 'ok' }
       : { status: 'error', message: 'Unhealthy response' };
   } catch (error) {
-    checks.solana_rpc = {
-      status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
+    logger.error('[HEALTH] Solana RPC error:', error);
+    checks.solana_rpc = { status: 'error', message: 'Service check failed' };
   }
-  
-  // Check NEAR RPC
+
   const nearRpc = process.env.NEAR_RPC_URL || 'https://rpc.fastnear.com';
   try {
     const response = await axios.post(
@@ -53,26 +49,35 @@ export async function GET() {
       ? { status: 'ok' }
       : { status: 'error', message: 'No result' };
   } catch (error) {
-    checks.near_rpc = {
-      status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
+    logger.error('[HEALTH] NEAR RPC error:', error);
+    checks.near_rpc = { status: 'error', message: 'Service check failed' };
   }
-  
-  // Check if any critical service is down
+
   const allHealthy = Object.values(checks).every(c => c.status === 'ok');
-  const statusCode = allHealthy ? 200 : 503;
-  
+
   if (!allHealthy) {
     logger.warn('[HEALTH_CHECK]', 'Some services unhealthy:', checks);
   }
-  
+
+  return { checks, allHealthy };
+}
+
+export async function GET(_request: NextRequest) {
+  const { checks, allHealthy } = await runChecks();
+  const statusCode = allHealthy ? 200 : 503;
+
+  // Authenticated admins get full diagnostics
+  const admin = await verifyAdmin();
+  if (admin) {
+    return NextResponse.json(
+      { status: allHealthy ? 'healthy' : 'degraded', timestamp: new Date().toISOString(), checks },
+      { status: statusCode },
+    );
+  }
+
+  // Public callers get only status + timestamp — no infrastructure details
   return NextResponse.json(
-    {
-      status: allHealthy ? 'healthy' : 'degraded',
-      timestamp: new Date().toISOString(),
-      checks,
-    },
-    { status: statusCode }
+    { status: allHealthy ? 'ok' : 'degraded', timestamp: new Date().toISOString() },
+    { status: statusCode },
   );
 }

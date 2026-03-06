@@ -30,8 +30,7 @@ export async function GET(
     return successResponse(result.transaction);
   } catch (error: unknown) {
     logger.error('[TRANSACTION_GET_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch transaction', 500, { details: message });
+    return errorResponse('Failed to fetch transaction', 500);
   }
 }
 
@@ -50,10 +49,25 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash } = body;
+    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash, walletAddress } = body;
 
     if (!depositAddress || !status) {
       return errorResponse('depositAddress and status are required', 400);
+    }
+
+    // Verify wallet ownership — the requester must provide their wallet address
+    // and it must match the transaction's wallet_address to prevent cross-wallet tampering
+    if (!walletAddress) {
+      return errorResponse('walletAddress is required for authentication', 401);
+    }
+
+    const existingTx = await getTransaction(id);
+    if (!existingTx.success || !existingTx.transaction) {
+      return errorResponse('Transaction not found', 404);
+    }
+
+    if (existingTx.transaction.wallet_address !== walletAddress.toLowerCase()) {
+      return errorResponse('Wallet address does not match transaction owner', 403);
     }
 
     if (!VALID_STATUSES.has(status)) {
@@ -75,7 +89,6 @@ export async function PATCH(
     return NextResponse.json({ success: true, status });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_PATCH_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to update transaction', 500, { details: message });
+    return errorResponse('Failed to update transaction', 500);
   }
 }

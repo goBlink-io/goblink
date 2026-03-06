@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) return errorResponse('Unauthorized', 401, { code: 'UNAUTHORIZED' });
 
   const url = req.nextUrl;
-  const page = parseInt(url.searchParams.get('page') || '1');
+  const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
   const limit = Math.min(
-    parseInt(url.searchParams.get('limit') || '50'),
+    parseInt(url.searchParams.get('limit') || '50', 10) || 50,
     100,
   );
   const action = url.searchParams.get('action') || '';
@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
   if (action) query = query.eq('action', action);
 
   const { data, count, error } = await query;
-  if (error) return errorResponse(error.message, 500);
+  if (error) {
+    console.error('[admin-audit]', error);
+    return errorResponse('Database query failed', 500);
+  }
 
   return successResponse({
     logs: data || [],
