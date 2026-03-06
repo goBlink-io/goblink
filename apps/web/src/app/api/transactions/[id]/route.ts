@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getTransaction, updateTransactionStatus } from '@/lib/server/transactions';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
@@ -50,10 +50,25 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash } = body;
+    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash, walletAddress } = body;
 
     if (!depositAddress || !status) {
       return errorResponse('depositAddress and status are required', 400);
+    }
+
+    // Verify wallet ownership — the requester must provide their wallet address
+    // and it must match the transaction's wallet_address to prevent cross-wallet tampering
+    if (!walletAddress) {
+      return errorResponse('walletAddress is required for authentication', 401);
+    }
+
+    const existingTx = await getTransaction(id);
+    if (!existingTx.success || !existingTx.transaction) {
+      return errorResponse('Transaction not found', 404);
+    }
+
+    if (existingTx.transaction.wallet_address !== walletAddress.toLowerCase()) {
+      return errorResponse('Wallet address does not match transaction owner', 403);
     }
 
     if (!VALID_STATUSES.has(status)) {

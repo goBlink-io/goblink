@@ -6,6 +6,13 @@ import { logAudit, getClientIp } from '@/lib/server/audit';
 
 export const dynamic = 'force-dynamic';
 
+// Basic wallet address format validation
+function isValidWalletAddress(address: string): boolean {
+  if (!address || address.length < 10 || address.length > 128) return false;
+  // Reject obviously invalid characters
+  return /^[a-zA-Z0-9._\-:]+$/.test(address);
+}
+
 /**
  * POST /api/transactions
  * Create a new transaction record when swap is initiated
@@ -40,6 +47,11 @@ export async function POST(request: NextRequest) {
       return errorResponse('Missing required fields', 400, {
         details: { required: ['walletAddress', 'walletChain', 'fromChain', 'fromToken', 'toChain', 'toToken', 'amountIn', 'recipient'] }
       });
+    }
+
+    // Validate wallet address format
+    if (!isValidWalletAddress(walletAddress)) {
+      return errorResponse('Invalid wallet address format', 400);
     }
 
     const result = await createTransaction({
