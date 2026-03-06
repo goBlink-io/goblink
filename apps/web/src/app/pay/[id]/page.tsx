@@ -13,8 +13,8 @@ interface PageProps {
  * Returns the PaymentRequestData and the canonical link_id (base64) for status tracking.
  */
 async function resolvePaymentLink(id: string): Promise<{ data: PaymentRequestData | null; linkId: string }> {
-  // Short IDs are 8 chars alphanumeric/dash/underscore — base64 payloads are much longer
-  if (id.length <= 12) {
+  // Short IDs are up to 16 chars alphanumeric/dash/underscore — base64 payloads are much longer
+  if (id.length <= 24) {
     const { data: row } = await supabase
       .from('payment_links')
       .select('*')
