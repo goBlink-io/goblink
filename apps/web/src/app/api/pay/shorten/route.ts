@@ -46,6 +46,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Input length and format validation (L-09)
+    if (typeof recipient !== 'string' || recipient.trim().length > 100) {
+      return NextResponse.json({ error: 'Recipient too long (max 100 chars)' }, { status: 400 });
+    }
+    const amountStr = String(amount).trim();
+    if (!/^\d+(\.\d+)?$/.test(amountStr) || parseFloat(amountStr) <= 0) {
+      return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 });
+    }
+    if (memo && (typeof memo !== 'string' || memo.trim().length > 200)) {
+      return NextResponse.json({ error: 'Memo too long (max 200 chars)' }, { status: 400 });
+    }
+    if (name && (typeof name !== 'string' || name.trim().length > 50)) {
+      return NextResponse.json({ error: 'Name too long (max 50 chars)' }, { status: 400 });
+    }
+
     const id = nanoid(16);
 
     const { error } = await supabase.from('payment_links').insert({
