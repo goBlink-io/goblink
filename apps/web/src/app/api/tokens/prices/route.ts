@@ -32,7 +32,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('[PRICES_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch prices', 500, { details: message });
+    return errorResponse('Failed to fetch prices', 500);
   }
 }

@@ -37,7 +37,10 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, count, error } = await query;
-  if (error) return errorResponse(error.message, 500);
+  if (error) {
+    console.error('[admin-transactions]', error);
+    return errorResponse('Database query failed', 500);
+  }
 
   return successResponse({
     transactions: data || [],

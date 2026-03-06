@@ -58,7 +58,6 @@ export async function GET(
     });
   } catch (error: unknown) {
     logger.error('[NEAR_TOKEN_BALANCE_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch token balance', 500, { details: message });
+    return errorResponse('Failed to fetch token balance', 500);
   }
 }

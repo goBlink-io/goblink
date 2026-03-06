@@ -12,7 +12,10 @@ export async function GET() {
     .select('*')
     .order('total_swaps', { ascending: false });
 
-  if (error) return errorResponse(error.message, 500);
+  if (error) {
+    console.error('[admin-routes]', error);
+    return errorResponse('Database query failed', 500);
+  }
 
   return successResponse({ routes: data || [] });
 }

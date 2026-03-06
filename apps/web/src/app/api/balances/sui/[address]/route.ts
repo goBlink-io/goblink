@@ -21,7 +21,6 @@ export async function GET(
     return successResponse(result);
   } catch (error: unknown) {
     logger.error('[SUI_BALANCE_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch SUI balance', 500, { details: message });
+    return errorResponse('Failed to fetch SUI balance', 500);
   }
 }

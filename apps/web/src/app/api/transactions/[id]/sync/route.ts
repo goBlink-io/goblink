@@ -61,7 +61,6 @@ export async function POST(
     });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_SYNC_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to sync transaction', 500, { details: message });
+    return errorResponse('Failed to sync transaction', 500);
   }
 }

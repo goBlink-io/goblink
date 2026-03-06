@@ -10,7 +10,7 @@ export async function GET(
     const result = await getSuiAccountCoins(address);
     return NextResponse.json({ address, ...result });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch Sui coins', message }, { status: 500 });
+    console.error('[sui-coins]', error);
+    return NextResponse.json({ error: 'Failed to fetch Sui coins' }, { status: 500 });
   }
 }

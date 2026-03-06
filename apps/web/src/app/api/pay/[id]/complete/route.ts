@@ -59,7 +59,8 @@ export async function POST(
     }, { onConflict: 'link_id', ignoreDuplicates: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[pay-complete-post]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 
   const ip = getClientIp(request.headers);
@@ -108,7 +109,8 @@ export async function PATCH(
     .eq('link_id', id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[pay-complete-patch]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, status });

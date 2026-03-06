@@ -93,8 +93,7 @@ export async function POST(request: NextRequest) {
     return successResponse(result.transaction, 201);
   } catch (error: unknown) {
     logger.error('[TRANSACTION_API_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to create transaction', 500, { details: message });
+    return errorResponse('Failed to create transaction', 500);
   }
 }
 
@@ -143,7 +142,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('[TRANSACTION_API_GET_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch transactions', 500, { details: message });
+    return errorResponse('Failed to fetch transactions', 500);
   }
 }

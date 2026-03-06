@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
   if (action) query = query.eq('action', action);
 
   const { data, count, error } = await query;
-  if (error) return errorResponse(error.message, 500);
+  if (error) {
+    console.error('[admin-audit]', error);
+    return errorResponse('Database query failed', 500);
+  }
 
   return successResponse({
     logs: data || [],

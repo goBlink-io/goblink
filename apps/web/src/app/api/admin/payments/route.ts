@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
   if (status) query = query.eq('status', status);
 
   const { data, count, error } = await query;
-  if (error) return errorResponse(error.message, 500);
+  if (error) {
+    console.error('[admin-payments]', error);
+    return errorResponse('Database query failed', 500);
+  }
 
   return successResponse({
     payments: data || [],

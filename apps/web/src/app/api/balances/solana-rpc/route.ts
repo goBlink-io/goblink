@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(response.data);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[solana-rpc]', error);
     return NextResponse.json(
-      { jsonrpc: '2.0', error: { code: -32000, message }, id: null },
+      { jsonrpc: '2.0', error: { code: -32000, message: 'Internal server error' }, id: null },
       { status: 500 }
     );
   }

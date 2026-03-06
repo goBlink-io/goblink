@@ -212,7 +212,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('[TOKENS_ERROR]', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse('Failed to fetch tokens', 500, { details: message });
+    return errorResponse('Failed to fetch tokens', 500);
   }
 }
