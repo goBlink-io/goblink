@@ -10,11 +10,12 @@ export async function GET() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data: txns } = await supabase
+  const { data: txns, error: txnError } = await supabase
     .from('transaction_history')
     .select('wallet_address, from_chain, to_chain, from_token, to_token, amount_usd, fee_amount, created_at')
     .limit(50000);
 
+  if (txnError) return errorResponse('Failed to fetch analytics data', 500, { code: 'DB_ERROR' });
   const rows = txns || [];
 
   // --- Revenue: daily fee revenue (last 30 days) ---

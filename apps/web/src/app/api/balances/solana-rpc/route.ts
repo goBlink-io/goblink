@@ -9,7 +9,6 @@ const ALLOWED_METHODS = new Set([
   'getAccountInfo',
   'getTokenAccountBalance',
   'getTokenAccountsByOwner',
-  'sendTransaction',
   'simulateTransaction',
   'getFeeForMessage',
   'getMinimumBalanceForRentExemption',
@@ -26,6 +25,12 @@ function isRateLimited(ip: string): boolean {
   const entry = ipRequestCounts.get(ip);
   if (!entry || now >= entry.resetAt) {
     ipRequestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    // Evict stale entries to prevent memory leak
+    if (ipRequestCounts.size > 10000) {
+      for (const [key, val] of ipRequestCounts) {
+        if (now >= val.resetAt) ipRequestCounts.delete(key);
+      }
+    }
     return false;
   }
   entry.count++;

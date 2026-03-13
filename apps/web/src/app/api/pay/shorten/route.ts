@@ -28,7 +28,8 @@ function getClientIp(request: NextRequest): string {
 }
 
 function generateCompletionToken(linkId: string): string {
-  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error('SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY must be set for HMAC token generation');
   return createHmac('sha256', secret).update(linkId).digest('hex').slice(0, 32);
 }
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       recipient: recipient.trim(),
       to_chain: toChain,
       to_token: toToken,
-      amount: amount.trim(),
+      amount: amountStr,
       memo: memo?.trim() || null,
       requester_name: name?.trim() || null,
     });

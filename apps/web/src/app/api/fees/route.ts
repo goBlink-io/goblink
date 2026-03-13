@@ -17,10 +17,13 @@ export async function GET() {
           ? 'Standard'
           : 'Pro',
     })),
-    summary: [
-      { range: 'Under $5,000', rate: '0.35%' },
-      { range: '$5,000 – $50,000', rate: '0.10%' },
-      { range: 'Over $50,000', rate: '0.05%' },
-    ],
+    summary: tiers.map((t, i) => ({
+      range: t.maxAmountUsd === null
+        ? `Over $${(tiers[i - 1]?.maxAmountUsd ?? 0).toLocaleString()}`
+        : i === 0
+          ? `Under $${t.maxAmountUsd.toLocaleString()}`
+          : `$${(tiers[i - 1]?.maxAmountUsd ?? 0).toLocaleString()} – $${t.maxAmountUsd.toLocaleString()}`,
+      rate: `${(t.bps / 100).toFixed(2)}%`,
+    })),
   });
 }

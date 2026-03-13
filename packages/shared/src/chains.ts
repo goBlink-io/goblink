@@ -209,19 +209,35 @@ export const ALL_CHAIN_NAMES = [...EVM_CHAIN_NAMES, ...NON_EVM_CHAIN_NAMES];
 
 export const NATIVE_TOKEN_SYMBOLS = ['ETH', 'BNB', 'POL', 'BERA', 'MON', 'AVAX', 'xDAI', 'OKB', 'XPL', 'ADI'];
 
+// Non-EVM chains use different URL path patterns than /tx/ and /address/
+const NON_EVM_TX_PATHS: Record<string, string> = {
+  near: '/txns/', solana: '/tx/', sui: '/txblock/', bitcoin: '/tx/',
+  litecoin: '/tx/', dogecoin: '/tx/', bitcoincash: '/tx/',
+  tron: '/#/transaction/', ton: '/transaction/', stellar: '/tx/',
+  xrp: '/tx/', starknet: '/tx/', cardano: '/transaction/', aptos: '/txn/', aleo: '/transaction/',
+};
+const NON_EVM_ADDR_PATHS: Record<string, string> = {
+  near: '/address/', solana: '/account/', sui: '/account/', bitcoin: '/address/',
+  litecoin: '/address/', dogecoin: '/address/', bitcoincash: '/address/',
+  tron: '/#/address/', ton: '/', stellar: '/account/', xrp: '/account/',
+  starknet: '/contract/', cardano: '/address/', aptos: '/account/', aleo: '/address/',
+};
+
 export function getExplorerTxUrl(chain: string, txHash: string): string {
-  const evmConfig = EVM_CHAINS[chain.toLowerCase()];
+  const key = chain.toLowerCase();
+  const evmConfig = EVM_CHAINS[key];
   if (evmConfig) return `${evmConfig.explorer}/tx/${txHash}`;
-  const nonEvmConfig = NON_EVM_CHAINS[chain.toLowerCase()];
-  if (nonEvmConfig) return `${nonEvmConfig.explorer}/tx/${txHash}`;
+  const nonEvmConfig = NON_EVM_CHAINS[key];
+  if (nonEvmConfig) return `${nonEvmConfig.explorer}${NON_EVM_TX_PATHS[key] || '/tx/'}${txHash}`;
   return `https://etherscan.io/tx/${txHash}`;
 }
 
 export function getExplorerAddressUrl(chain: string, address: string): string {
-  const evmConfig = EVM_CHAINS[chain.toLowerCase()];
+  const key = chain.toLowerCase();
+  const evmConfig = EVM_CHAINS[key];
   if (evmConfig) return `${evmConfig.explorer}/address/${address}`;
-  const nonEvmConfig = NON_EVM_CHAINS[chain.toLowerCase()];
-  if (nonEvmConfig) return `${nonEvmConfig.explorer}/address/${address}`;
+  const nonEvmConfig = NON_EVM_CHAINS[key];
+  if (nonEvmConfig) return `${nonEvmConfig.explorer}${NON_EVM_ADDR_PATHS[key] || '/address/'}${address}`;
   return `https://etherscan.io/address/${address}`;
 }
 

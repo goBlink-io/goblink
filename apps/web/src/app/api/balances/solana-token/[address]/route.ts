@@ -52,19 +52,26 @@ export async function GET(
     }
 
     // Sum across all token accounts for this mint (wallet may have multiple)
-    let totalRaw = 0;
+    let totalRaw = 0n;
     let decimals = 0;
     for (const account of accounts) {
       const tokenAmount = account.account?.data?.parsed?.info?.tokenAmount;
       if (tokenAmount) {
-        totalRaw += Number(tokenAmount.amount || 0);
+        totalRaw += BigInt(tokenAmount.amount || '0');
         decimals = tokenAmount.decimals ?? decimals;
       }
     }
 
-    const balance = decimals > 0
-      ? String(totalRaw / Math.pow(10, decimals))
-      : String(totalRaw);
+    let balance: string;
+    if (decimals > 0) {
+      const divisor = 10n ** BigInt(decimals);
+      const whole = totalRaw / divisor;
+      const fraction = totalRaw % divisor;
+      const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+      balance = fractionStr ? `${whole}.${fractionStr}` : whole.toString();
+    } else {
+      balance = totalRaw.toString();
+    }
 
     return successResponse({ balance, address, mint });
   } catch (error: unknown) {

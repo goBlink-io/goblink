@@ -26,10 +26,11 @@ export async function GET(
     }) as unknown as { amount: string };
 
     const raw = BigInt(account.amount);
-    const divisor = BigInt(10 ** 24);
+    const divisor = 10n ** 24n;
     const whole = raw / divisor;
     const fraction = raw % divisor;
-    const balanceInNear = String(Number(whole) + Number(fraction) / Number(divisor));
+    const fractionStr = fraction.toString().padStart(24, '0').replace(/0+$/, '');
+    const balanceInNear = fractionStr ? `${whole}.${fractionStr}` : whole.toString();
 
     return successResponse({
       balance: balanceInNear,

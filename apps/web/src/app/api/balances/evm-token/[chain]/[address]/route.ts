@@ -21,8 +21,12 @@ export async function GET(
     if (!/^0x[a-fA-F0-9]{40}$/.test(address) || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
       return NextResponse.json({ error: 'Invalid address format' }, { status: 400 });
     }
+    const parsedDecimals = decimals ? parseInt(decimals, 10) : undefined;
+    if (parsedDecimals !== undefined && isNaN(parsedDecimals)) {
+      return NextResponse.json({ error: 'Invalid decimals parameter' }, { status: 400 });
+    }
     const result = await getTokenBalance(
-      chain as SupportedChain, address, tokenAddress, decimals ? parseInt(decimals, 10) : undefined
+      chain as SupportedChain, address, tokenAddress, parsedDecimals
     );
     return NextResponse.json(result);
   } catch (error: unknown) {

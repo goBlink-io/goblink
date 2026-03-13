@@ -58,7 +58,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    if (!userResponse.ok) {
+      return NextResponse.redirect(new URL('/features?error=github_api', request.url));
+    }
+
     const userData = await userResponse.json();
+
+    if (!userData.id || !userData.login) {
+      return NextResponse.redirect(new URL('/features?error=invalid_user', request.url));
+    }
 
     // Create signed JWT with user data (C-02) — access_token stays server-side only (H-05)
     const jwt = await new SignJWT({

@@ -89,12 +89,12 @@ export async function createTransaction(
       to_token: data.toToken,
       amount_in: data.amountIn,
       amount_out: data.amountOut || null,
-      amount_usd: data.amountUsd || null,
+      amount_usd: data.amountUsd ?? null,
       recipient: data.recipient,
       refund_to: data.refundTo || null,
       status: data.status || 'pending',
       deposit_tx_hash: data.depositTxHash || null,
-      fee_bps: data.feeBps || null,
+      fee_bps: data.feeBps ?? null,
       fee_amount: data.feeAmount || null,
       quote_id: data.quoteId || null,
       source: data.source || 'swap',
@@ -131,12 +131,12 @@ export async function updateTransactionStatus(
   try {
     const updateData: Partial<TransactionRecord> = {};
     
-    if (updates.status) updateData.status = updates.status;
-    if (updates.amountOut) updateData.amount_out = updates.amountOut;
-    if (updates.depositTxHash) updateData.deposit_tx_hash = updates.depositTxHash;
-    if (updates.fulfillmentTxHash) updateData.fulfillment_tx_hash = updates.fulfillmentTxHash;
-    if (updates.refundTxHash) updateData.refund_tx_hash = updates.refundTxHash;
-    if (updates.errorMessage) updateData.error_message = updates.errorMessage;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.amountOut !== undefined) updateData.amount_out = updates.amountOut;
+    if (updates.depositTxHash !== undefined) updateData.deposit_tx_hash = updates.depositTxHash;
+    if (updates.fulfillmentTxHash !== undefined) updateData.fulfillment_tx_hash = updates.fulfillmentTxHash;
+    if (updates.refundTxHash !== undefined) updateData.refund_tx_hash = updates.refundTxHash;
+    if (updates.errorMessage !== undefined) updateData.error_message = updates.errorMessage;
 
     const { data: updated, error } = await supabase
       .from('transaction_history')
@@ -216,7 +216,7 @@ export async function searchTransactions(
     }
 
     // Sanitize search term — strip PostgREST special characters to prevent filter injection
-    const safe = searchTerm.replace(/[,.*()]/g, '');
+    const safe = searchTerm.replace(/[,.*()%_]/g, '');
 
     if (!safe) {
       return { success: true, transactions: [] };

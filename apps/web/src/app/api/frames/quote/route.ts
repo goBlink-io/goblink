@@ -139,14 +139,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No deposit address returned from 1Click' }, { status: 502 });
     }
 
-    // For EXACT_OUTPUT: add fee on top of amountIn
-    let sendAmount = maxAmountIn || amountIn;
-    if (feeBps > 0 && sendAmount) {
-      try {
-        const base = BigInt(sendAmount as string);
-        sendAmount = ((base * BigInt(10000 + feeBps)) / BigInt(10000)).toString();
-      } catch { /* keep original */ }
-    }
+    // The fee is already included via appFees in the quote request —
+    // do NOT add it again on top of sendAmount (that would double-charge).
+    const sendAmount = maxAmountIn || amountIn;
 
     return NextResponse.json({
       depositAddress,
@@ -167,5 +162,5 @@ function parseAmount(amount: string, decimals: number): string {
   const parts = amount.split('.');
   const whole = parts[0] || '0';
   const fraction = (parts[1] || '').padEnd(decimals, '0').slice(0, decimals);
-  return (BigInt(whole) * BigInt(10 ** decimals) + BigInt(fraction)).toString();
+  return (BigInt(whole) * (10n ** BigInt(decimals)) + BigInt(fraction)).toString();
 }

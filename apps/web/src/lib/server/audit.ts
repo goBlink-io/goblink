@@ -27,6 +27,9 @@ export function logAudit(params: AuditParams): void {
       if (error) {
         console.error('[audit] Failed to log:', error.message, params.action);
       }
+    })
+    .catch((err) => {
+      console.error('[audit] Unexpected error:', err);
     });
 }
 

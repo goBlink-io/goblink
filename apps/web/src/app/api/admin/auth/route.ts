@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
 
     logAudit({ actor: data.user.email, action: 'admin.login_success', ipAddress: ip });
     return res;
-  } catch {
+  } catch (error) {
+    console.error('[admin-auth] Login error:', error);
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   }
 }

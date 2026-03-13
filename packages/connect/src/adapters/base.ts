@@ -20,12 +20,12 @@ export function createNoopAdapter(chain: ChainType): AdapterHookResult {
 /**
  * Check if a module is available at runtime (for optional peer deps).
  */
-export function isModuleAvailable(moduleName: string): boolean {
-  try {
-    // In bundled environments, this won't work for dynamic detection.
-    // The adapters handle this via try/catch at the hook level.
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Check if a module is available at runtime (for optional peer deps).
+ * NOTE: In bundled environments, dynamic require() detection does not work.
+ * The adapters handle missing deps via try/catch at the hook level instead.
+ * This function is kept as a no-op placeholder for API compatibility.
+ */
+export function isModuleAvailable(_moduleName: string): boolean {
+  return false;
 }

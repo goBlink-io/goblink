@@ -12,7 +12,7 @@ export async function GET() {
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   ).toISOString();
 
-  const [{ count: totalCount }, { count: linkCount }, { data: txns }] =
+  const [txCountResult, linkCountResult, txDataResult] =
     await Promise.all([
       supabase
         .from('transaction_history')
@@ -25,6 +25,14 @@ export async function GET() {
         .select('amount_usd, fee_amount, status, created_at')
         .limit(50000),
     ]);
+
+  if (txCountResult.error || linkCountResult.error || txDataResult.error) {
+    return errorResponse('Failed to fetch stats data', 500, { code: 'DB_ERROR' });
+  }
+
+  const totalCount = txCountResult.count;
+  const linkCount = linkCountResult.count;
+  const txns = txDataResult.data;
 
   const rows = txns || [];
   const totalVolume = rows.reduce(

@@ -60,7 +60,7 @@ async function estimateAmountUsd(
 
   try {
     const raw = BigInt(atomicAmount);
-    const divisor = BigInt(10 ** tokenInfo.decimals);
+    const divisor = 10n ** BigInt(tokenInfo.decimals);
     const whole = raw / divisor;
     const fraction = raw % divisor;
     const amount = Number(whole) + Number(fraction) / Number(divisor);
