@@ -249,7 +249,7 @@ export function SendFrameImage({
         marginBottom: '20px',
         display: 'flex',
         textAlign: 'center',
-        color: isStart ? WHITE : WHITE,
+        color: WHITE,
       }}>
         {title}
       </div>

@@ -334,7 +334,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
     };
     setBalances({});
     fetchBalances();
-  }, [fromAddress(), fromTokens, fromChain, refreshKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fromAddress is a stable useCallback; call it inside the effect, depend on its deps
+  }, [fromChain, getAddress, fromTokens, refreshKey]);
 
   // Fetch destination chain balances
   useEffect(() => {
@@ -364,7 +365,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
     };
     setToBalances({});
     fetchToBalances();
-  }, [toAddress(), toTokens, toChain, refreshKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- toAddress is a stable useCallback; call it inside the effect, depend on its deps
+  }, [toChain, getAddress, toTokens, refreshKey]);
 
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
     amount = amount.trim();
@@ -534,7 +536,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
           emptyMessage={fromAddress() ? "No tokens with balance on this chain" : undefined} />
 
         <div>
-          <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+          <input type="text" inputMode="decimal" value={amount} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setAmount(v); }}
             placeholder="0.0" className="input w-full h-12 text-h4 mb-2" />
           
           {originAsset && balances[originAsset] && parseFloat(balances[originAsset]) > 0 && (
