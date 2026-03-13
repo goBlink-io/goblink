@@ -18,6 +18,13 @@ import {
 } from 'recharts';
 import { adminFetch, fmtUsd, fmtNumber, shortAddr } from '@/lib/admin';
 
+// Chart colors — mapped to design system values (Recharts SVG attrs can't resolve CSS vars)
+const CHART = {
+  brand: '#2563eb', brandLight: '#3b82f6', violet: '#7c3aed', success: '#10b981',
+  warning: '#f59e0b', indigo: '#6366f1', muted: '#6b7280',
+  grid: '#27272a', axis: '#3f3f46', tick: '#71717a', surface: '#18181b', border: '#3f3f46', textMuted: '#a1a1aa',
+} as const;
+
 interface AnalyticsData {
   dailyFees: { date: string; fees: number }[];
   userSegments: { name: string; count: number; volume: number; pct: number }[];
@@ -31,11 +38,11 @@ interface AnalyticsData {
   peakHours: { hour: string; count: number }[];
 }
 
-const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#6b7280'];
+const PIE_COLORS = [CHART.brandLight, CHART.violet, CHART.warning, CHART.muted];
 
 const tooltipStyle = {
-  contentStyle: { background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: '13px' },
-  labelStyle: { color: '#a1a1aa' },
+  contentStyle: { background: CHART.surface, border: `1px solid ${CHART.border}`, borderRadius: '8px', fontSize: '13px' },
+  labelStyle: { color: CHART.textMuted },
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -58,10 +65,15 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     adminFetch<AnalyticsData>('/api/admin/analytics')
-      .then((d) => d && setData(d))
+      .then((d) => {
+        if (d) setData(d);
+        else setError('Failed to load analytics');
+      })
+      .catch(() => setError('Failed to load analytics'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,6 +86,15 @@ export default function AnalyticsPage() {
             <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 animate-pulse h-72" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-white">Analytics</h1>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
       </div>
     );
   }
@@ -91,11 +112,11 @@ export default function AnalyticsPage() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.dailyFees}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
-                <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => `$${fmtNumber(v)}`} axisLine={false} tickLine={false} width={60} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: CHART.tick, fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: CHART.axis }} tickLine={false} />
+                <YAxis tick={{ fill: CHART.tick, fontSize: 11 }} tickFormatter={(v) => `$${fmtNumber(v)}`} axisLine={false} tickLine={false} width={60} />
                 <Tooltip {...tooltipStyle} formatter={(v) => [`$${Number(v ?? 0).toFixed(2)}`, 'Fees']} />
-                <Bar dataKey="fees" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="fees" fill={CHART.success} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -184,11 +205,11 @@ export default function AnalyticsPage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.chains} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="chain" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} horizontal={false} />
+                  <XAxis type="number" tick={{ fill: CHART.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="chain" tick={{ fill: CHART.tick, fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
                   <Tooltip {...tooltipStyle} formatter={(v) => [Number(v ?? 0), 'Transactions']} />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill={CHART.brandLight} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -281,11 +302,11 @@ export default function AnalyticsPage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.dailyActiveWallets}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fill: CHART.tick, fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: CHART.axis }} tickLine={false} />
+                  <YAxis tick={{ fill: CHART.tick, fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
                   <Tooltip {...tooltipStyle} formatter={(v) => [Number(v ?? 0), 'Wallets']} />
-                  <Line type="monotone" dataKey="wallets" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="wallets" stroke={CHART.violet} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -296,11 +317,11 @@ export default function AnalyticsPage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.avgTxSize}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => `$${fmtNumber(v)}`} axisLine={false} tickLine={false} width={60} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fill: CHART.tick, fontSize: 11 }} tickFormatter={(d) => d.slice(5)} axisLine={{ stroke: CHART.axis }} tickLine={false} />
+                  <YAxis tick={{ fill: CHART.tick, fontSize: 11 }} tickFormatter={(v) => `$${fmtNumber(v)}`} axisLine={false} tickLine={false} width={60} />
                   <Tooltip {...tooltipStyle} formatter={(v) => [`$${Number(v ?? 0).toFixed(2)}`, 'Avg Size']} />
-                  <Line type="monotone" dataKey="avg" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="avg" stroke={CHART.warning} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -312,11 +333,11 @@ export default function AnalyticsPage() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.peakHours}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="hour" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
-                <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+                <XAxis dataKey="hour" tick={{ fill: CHART.tick, fontSize: 11 }} axisLine={{ stroke: CHART.axis }} tickLine={false} />
+                <YAxis tick={{ fill: CHART.tick, fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
                 <Tooltip {...tooltipStyle} formatter={(v) => [Number(v ?? 0), 'Transactions']} />
-                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill={CHART.indigo} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

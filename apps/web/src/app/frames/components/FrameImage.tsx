@@ -17,6 +17,10 @@ const MUTED = '#a1a1aa';           // zinc-400
 const FAINT = '#71717a';           // zinc-500
 const BG_DARK = '#09090b';         // zinc-950
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Brand gradient for backgrounds
 const BG_GRADIENT = `linear-gradient(135deg, ${BG_DARK} 0%, #0c1a3d 40%, #0f0a2e 70%, ${BG_DARK} 100%)`;
 
@@ -332,7 +336,7 @@ export function ErrorFrameImage({ message }: { message: string }) {
         Something went wrong
       </div>
       <div style={{ fontSize: '20px', color: MUTED, display: 'flex', textAlign: 'center', maxWidth: '500px' }}>
-        {message}
+        {escapeHtml(message)}
       </div>
       <Footer />
     </div>

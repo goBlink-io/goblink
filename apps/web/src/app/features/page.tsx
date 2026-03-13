@@ -30,6 +30,7 @@ export default function FeaturesPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -76,13 +77,14 @@ export default function FeaturesPage() {
         setTitle('');
         setDescription('');
         setShowNewRequest(false);
+        setSubmitError(null);
         fetchFeatures();
       } else {
-        alert('Failed to create request');
+        setSubmitError('Failed to create request');
       }
     } catch (error) {
       console.error('Failed to create request:', error);
-      alert('Failed to create request');
+      setSubmitError('Failed to create request');
     } finally {
       setSubmitting(false);
     }
@@ -116,8 +118,8 @@ export default function FeaturesPage() {
     switch (status) {
       case 'open': return 'var(--text-secondary)';
       case 'in_progress': return 'var(--brand)';
-      case 'completed': return '#22c55e';
-      case 'declined': return '#ef4444';
+      case 'completed': return 'var(--success)';
+      case 'declined': return 'var(--error)';
       default: return 'var(--text-muted)';
     }
   }
@@ -241,8 +243,12 @@ export default function FeaturesPage() {
                 }}
               />
 
-              <button 
-                type="submit" 
+              {submitError && (
+                <p className="text-body-sm" style={{ color: 'var(--error)', marginBottom: '0.5rem' }}>{submitError}</p>
+              )}
+
+              <button
+                type="submit"
                 className="btn btn-primary"
                 disabled={submitting}
               >

@@ -38,6 +38,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [commentBody, setCommentBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
@@ -112,13 +113,14 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
 
       if (res.ok) {
         setCommentBody('');
+        setSubmitError(null);
         fetchComments();
       } else {
-        alert('Failed to add comment');
+        setSubmitError('Failed to add comment');
       }
     } catch (error) {
       console.error('Failed to add comment:', error);
-      alert('Failed to add comment');
+      setSubmitError('Failed to add comment');
     } finally {
       setSubmitting(false);
     }
@@ -128,8 +130,8 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
     switch (status) {
       case 'open': return 'var(--text-secondary)';
       case 'in_progress': return 'var(--brand)';
-      case 'completed': return '#22c55e';
-      case 'declined': return '#ef4444';
+      case 'completed': return 'var(--success)';
+      case 'declined': return 'var(--error)';
       default: return 'var(--text-muted)';
     }
   }
@@ -305,8 +307,12 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
                   resize: 'vertical'
                 }}
               />
-              <button 
-                type="submit" 
+              {submitError && (
+                <p className="text-body-sm" style={{ color: 'var(--error)', marginBottom: '0.5rem' }}>{submitError}</p>
+              )}
+
+              <button
+                type="submit"
                 className="btn btn-primary"
                 disabled={submitting}
               >

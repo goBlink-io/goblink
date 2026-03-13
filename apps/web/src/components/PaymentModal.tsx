@@ -11,6 +11,24 @@ import type { ChainType } from '@goblink/connect';
 import { getTokenBalance } from '@/lib/balances';
 import { filterTokens } from '@/lib/token-filters';
 import { formatTokenAmount as displayAmount } from '@/lib/format';
+import type { Token } from '@goblink/shared';
+
+interface QuoteInner {
+  minAmountIn?: string;
+  maxAmountIn?: string;
+  amountInFormatted?: string;
+  amountInUsd?: string;
+  amountOutFormatted?: string;
+  amountOutUsd?: string;
+  timeEstimate?: string;
+}
+
+interface QuoteResponse {
+  quote?: QuoteInner;
+  feeInfo?: { bps?: string; percent?: string; usd?: string };
+  _fromAssetId?: string;
+  _fromChainId?: string;
+}
 
 // ── Supported chains (mirrors SwapForm) ──────────────────────────────────────
 const SUPPORTED_CHAINS = [
@@ -67,11 +85,11 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
   const { getAddress, connect } = useWallet();
 
   // Token list (all chains)
-  const [allTokens, setAllTokens] = useState<any[]>([]);
+  const [allTokens, setAllTokens] = useState<Token[]>([]);
   const [tokensLoading, setTokensLoading] = useState(true);
 
   // Destination token metadata (resolved from token list)
-  const [destToken, setDestToken] = useState<any>(null);
+  const [destToken, setDestToken] = useState<Token | null>(null);
 
   // FROM selection
   const [fromChainId, setFromChainId] = useState<ChainId>('solana');
@@ -82,12 +100,12 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
   const [loadingBalances, setLoadingBalances] = useState(false);
 
   // Quote state
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
 
   // Transfer modal
-  const [transferQuote, setTransferQuote] = useState<any>(null);
+  const [transferQuote, setTransferQuote] = useState<Record<string, unknown> | null>(null);
 
   const quoteAbortRef = useRef<AbortController | null>(null);
 
@@ -98,7 +116,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
   useEffect(() => {
     fetch('/api/tokens')
       .then(r => r.json())
-      .then((tokens: any[]) => {
+      .then((tokens: Token[]) => {
         setAllTokens(filterTokens(tokens));
         setTokensLoading(false);
 
@@ -162,7 +180,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
         signal: ctrl.signal,
         body: JSON.stringify({
           dry: true,
-          originAsset: (allTokens.find(t => t.assetId === asset) as any)?.defuseAssetId || asset,
+          originAsset: allTokens.find(t => t.assetId === asset)?.defuseAssetId || asset,
           destinationAsset: destToken.defuseAssetId || destToken.assetId,
           amount: destAtomicAmount,
           recipient: data.recipient,
@@ -212,7 +230,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
       setLoadingBalances(true);
       const newBalances: Record<string, string> = {};
       await Promise.all(
-        fromTokens.map(async (token: any) => {
+        fromTokens.map(async (token) => {
           try {
             const balance = await getTokenBalance(fromAddress, {
               blockchain: token.blockchain,

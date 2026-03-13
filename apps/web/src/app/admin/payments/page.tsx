@@ -33,15 +33,22 @@ const STATUS_BADGE: Record<string, string> = {
 export default function PaymentsPage() {
   const [data, setData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: '50' });
-    if (status) params.set('status', status);
-    const d = await adminFetch<PaymentData>(`/api/admin/payments?${params}`);
-    if (d) setData(d);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      if (status) params.set('status', status);
+      const d = await adminFetch<PaymentData>(`/api/admin/payments?${params}`);
+      if (d) setData(d);
+      else setError('Failed to load payment links');
+    } catch {
+      setError('Failed to load payment links');
+    }
     setLoading(false);
   }, [page, status]);
 
@@ -66,6 +73,10 @@ export default function PaymentsPage() {
         <option value="paid">Paid</option>
         <option value="failed">Failed</option>
       </select>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
+      )}
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">

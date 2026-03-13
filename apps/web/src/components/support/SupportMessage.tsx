@@ -38,7 +38,7 @@ export default function SupportMessage({ message, onAction }: SupportMessageProp
       {/* Bot avatar */}
       {isBot && (
         <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" 
-             style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', color: 'white' }}>
+             style={{ background: 'linear-gradient(135deg, var(--brand-light) 0%, var(--violet) 100%)', color: 'white' }}>
           gB
         </div>
       )}
@@ -59,9 +59,9 @@ export default function SupportMessage({ message, onAction }: SupportMessageProp
           {/* Action buttons */}
           {message.actions && message.actions.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {message.actions.map((action, idx) => (
+              {message.actions.map((action) => (
                 <button
-                  key={idx}
+                  key={`${action.action}-${action.label}`}
                   onClick={() => onAction?.(action.action, action.data)}
                   className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all hover:scale-105 active:scale-95"
                   style={{

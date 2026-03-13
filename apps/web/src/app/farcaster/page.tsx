@@ -66,6 +66,7 @@ export default function FarcasterPage() {
                 <span
                   className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5"
                   style={{ background: 'var(--brand)', color: 'white' }}
+                  aria-label={`Step ${step}`}
                 >
                   {step}
                 </span>
@@ -105,9 +106,9 @@ export default function FarcasterPage() {
                 q: 'Are there fees?',
                 a: 'goBlink charges a small fee (0.35% for transfers under $5K). No hidden costs.',
               },
-            ].map(({ q, a }, i) => (
+            ].map(({ q, a }) => (
               <div
-                key={i}
+                key={q}
                 className="p-3 rounded-xl"
                 style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
               >

@@ -48,10 +48,15 @@ function timeAgo(iso: string): string {
 export default function RoutesPage() {
   const [routes, setRoutes] = useState<RouteRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     adminFetch<{ routes: RouteRow[] }>('/api/admin/routes')
-      .then((d) => d && setRoutes(d.routes))
+      .then((d) => {
+        if (d) setRoutes(d.routes);
+        else setError('Failed to load routes');
+      })
+      .catch(() => setError('Failed to load routes'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -61,6 +66,10 @@ export default function RoutesPage() {
       <p className="text-sm text-zinc-400">
         Route confidence data (routes with 3+ swaps)
       </p>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
+      )}
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -107,9 +116,9 @@ export default function RoutesPage() {
                   </td>
                 </tr>
               ) : (
-                routes.map((r, i) => (
+                routes.map((r) => (
                   <tr
-                    key={i}
+                    key={`${r.from_chain}/${r.from_token}-${r.to_chain}/${r.to_token}`}
                     className="hover:bg-zinc-800/30 transition-colors"
                   >
                     <td className="px-4 py-3 whitespace-nowrap">

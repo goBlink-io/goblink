@@ -22,8 +22,28 @@ export interface SwapFormInitialValues {
   lockDest?: boolean; // when true, lock the TO chain/token/recipient fields
 }
 
+interface TokenMetadata {
+  symbol: string;
+  decimals: number;
+  assetId: string;
+  blockchain?: string;
+  contractAddress?: string;
+  icon?: string;
+}
+
+interface EnrichedQuote {
+  quote?: Record<string, unknown>;
+  quoteRequest?: Record<string, unknown>;
+  feeInfo?: Record<string, unknown>;
+  fromChain: string;
+  toChain: string;
+  originTokenMetadata: TokenMetadata;
+  destinationTokenMetadata: TokenMetadata;
+  [key: string]: unknown;
+}
+
 interface SwapFormProps {
-  onQuoteReceived: (quote: any) => void;
+  onQuoteReceived: (quote: EnrichedQuote) => void;
   refreshKey?: number;
   onSwapInitiated: (depositAddress: string) => void;
   initialValues?: SwapFormInitialValues;
