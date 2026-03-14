@@ -79,7 +79,7 @@ export interface BlinkWalletContextType {
   disconnectAll: () => Promise<void>;
 
   /** Raw adapter results for advanced usage */
-  adapters: Record<ChainType, AdapterHookResult>;
+  adapters: Partial<Record<ChainType, AdapterHookResult>>;
 
   /** Config */
   config: BlinkConnectConfig;
@@ -175,7 +175,7 @@ function ProviderStack({ config, wagmiAdapter, children }: ProviderStackProps) {
   // Build the provider tree — only include enabled chains
   let tree = <>{children}</>;
 
-  if (isEnabled('tron')) {
+  if (isEnabled('TRON')) {
     tree = (
       <TronWalletProvider adapters={tronAdapters} autoConnect={false}>
         {tree}
@@ -183,11 +183,11 @@ function ProviderStack({ config, wagmiAdapter, children }: ProviderStackProps) {
     );
   }
 
-  if (isEnabled('ton')) {
+  if (isEnabled('TON')) {
     tree = <TonConnectUIProvider manifestUrl={tonManifestUrl}>{tree}</TonConnectUIProvider>;
   }
 
-  if (isEnabled('starknet')) {
+  if (isEnabled('STARKNET')) {
     tree = (
       <StarknetConfig
         chains={[starknetMainnet]}
@@ -199,11 +199,11 @@ function ProviderStack({ config, wagmiAdapter, children }: ProviderStackProps) {
     );
   }
 
-  if (isEnabled('aptos')) {
+  if (isEnabled('APTOS')) {
     tree = <AptosWalletAdapterProvider autoConnect={false}>{tree}</AptosWalletAdapterProvider>;
   }
 
-  if (isEnabled('sui')) {
+  if (isEnabled('SUI')) {
     tree = (
       <SuiClientProvider networks={suiNetworks} defaultNetwork={suiNetwork}>
         <SuiWalletProvider>{tree}</SuiWalletProvider>
@@ -234,17 +234,17 @@ function UnifiedWalletLayer({ config, children }: { config: BlinkConnectConfig; 
   const tonResult = useTonAdapter();
   const tronResult = useTronAdapter();
 
-  const adapters: Record<ChainType, AdapterHookResult> = useMemo(
+  const adapters: Partial<Record<ChainType, AdapterHookResult>> = useMemo(
     () => ({
-      evm: evmResult.evm,
-      solana: evmResult.solana,
-      bitcoin: evmResult.bitcoin,
-      sui: suiResult,
-      near: nearResult,
-      aptos: aptosResult,
-      starknet: starknetResult,
-      ton: tonResult,
-      tron: tronResult,
+      EVM: evmResult.evm,
+      SOLANA: evmResult.solana,
+      BITCOIN: evmResult.bitcoin,
+      SUI: suiResult,
+      NEAR: nearResult,
+      APTOS: aptosResult,
+      STARKNET: starknetResult,
+      TON: tonResult,
+      TRON: tronResult,
     }),
     [evmResult, suiResult, nearResult, aptosResult, starknetResult, tonResult, tronResult]
   );

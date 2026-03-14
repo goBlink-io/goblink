@@ -28,7 +28,7 @@ export interface BalanceResult {
  *
  * @example
  * ```tsx
- * const { balance, symbol, isLoading } = useBalance('evm');
+ * const { balance, symbol, isLoading } = useBalance('EVM');
  * // => { balance: "1.234", symbol: "ETH", isLoading: false }
  * ```
  */

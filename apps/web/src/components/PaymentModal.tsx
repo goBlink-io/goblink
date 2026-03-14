@@ -32,18 +32,18 @@ interface QuoteResponse {
 
 // ── Supported chains (mirrors SwapForm) ──────────────────────────────────────
 const SUPPORTED_CHAINS = [
-  { id: 'aptos',    name: 'Aptos',     type: 'aptos'    as ChainType },
-  { id: 'arbitrum', name: 'Arbitrum',  type: 'evm'      as ChainType },
-  { id: 'base',     name: 'Base',      type: 'evm'      as ChainType },
-  { id: 'bsc',      name: 'BNB Chain', type: 'evm'      as ChainType },
-  { id: 'ethereum', name: 'Ethereum',  type: 'evm'      as ChainType },
-  { id: 'near',     name: 'NEAR',      type: 'near'     as ChainType },
-  { id: 'optimism', name: 'Optimism',  type: 'evm'      as ChainType },
-  { id: 'polygon',  name: 'Polygon',   type: 'evm'      as ChainType },
-  { id: 'solana',   name: 'Solana',    type: 'solana'   as ChainType },
-  { id: 'starknet', name: 'Starknet',  type: 'starknet' as ChainType },
-  { id: 'sui',      name: 'Sui',       type: 'sui'      as ChainType },
-  { id: 'tron',     name: 'Tron',      type: 'tron'     as ChainType },
+  { id: 'aptos',    name: 'Aptos',     type: 'APTOS'    as ChainType },
+  { id: 'arbitrum', name: 'Arbitrum',  type: 'EVM'      as ChainType },
+  { id: 'base',     name: 'Base',      type: 'EVM'      as ChainType },
+  { id: 'bsc',      name: 'BNB Chain', type: 'EVM'      as ChainType },
+  { id: 'ethereum', name: 'Ethereum',  type: 'EVM'      as ChainType },
+  { id: 'near',     name: 'NEAR',      type: 'NEAR'     as ChainType },
+  { id: 'optimism', name: 'Optimism',  type: 'EVM'      as ChainType },
+  { id: 'polygon',  name: 'Polygon',   type: 'EVM'      as ChainType },
+  { id: 'solana',   name: 'Solana',    type: 'SOLANA'   as ChainType },
+  { id: 'starknet', name: 'Starknet',  type: 'STARKNET' as ChainType },
+  { id: 'sui',      name: 'Sui',       type: 'SUI'      as ChainType },
+  { id: 'tron',     name: 'Tron',      type: 'TRON'     as ChainType },
 ] as const;
 
 type ChainId = typeof SUPPORTED_CHAINS[number]['id'];

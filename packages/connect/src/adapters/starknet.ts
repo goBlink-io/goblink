@@ -15,17 +15,25 @@ export function useStarknetAdapter(): AdapterHookResult {
   const { connect: starknetConnect, connectors } = useStarknetConnect();
 
   const connect = useCallback(async () => {
-    if (connectors[0]) {
-      starknetConnect({ connector: connectors[0] });
+    try {
+      if (connectors[0]) {
+        starknetConnect({ connector: connectors[0] });
+      }
+    } catch (error) {
+      console.error('[BlinkConnect] Starknet connect failed:', error);
     }
   }, [starknetConnect, connectors]);
 
   const disconnect = useCallback(async () => {
-    starknetDisconnect();
+    try {
+      starknetDisconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] Starknet disconnect failed:', error);
+    }
   }, [starknetDisconnect]);
 
   return {
-    chain: 'starknet',
+    chain: 'STARKNET',
     address: isConnected ? address ?? null : null,
     connected: !!isConnected,
     connect,

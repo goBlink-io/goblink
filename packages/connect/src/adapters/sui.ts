@@ -19,11 +19,15 @@ export function useSuiAdapter(): AdapterHookResult {
   }, []);
 
   const disconnect = useCallback(async () => {
-    suiDisconnect();
+    try {
+      suiDisconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] Sui disconnect failed:', error);
+    }
   }, [suiDisconnect]);
 
   return {
-    chain: 'sui',
+    chain: 'SUI',
     address: suiAccount?.address ?? null,
     connected: !!suiAccount?.address,
     connect,

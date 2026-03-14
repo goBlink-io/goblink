@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
  * Get a single transaction by ID
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -25,6 +25,12 @@ export async function GET(
     if (!result.success) {
       const statusCode = result.error === 'Transaction not found' ? 404 : 500;
       return errorResponse(result.error || 'Failed to fetch transaction', statusCode);
+    }
+
+    // Require depositAddress as query param — only the swap initiator knows it
+    const depositAddress = new URL(request.url).searchParams.get('depositAddress');
+    if (!depositAddress || depositAddress !== result.transaction?.deposit_address) {
+      return errorResponse('Valid depositAddress query param required', 403);
     }
 
     return successResponse(result.transaction);
@@ -49,25 +55,20 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash, walletAddress } = body;
+    const { depositAddress, status, amountOut, fulfillmentTxHash, refundTxHash } = body;
 
     if (!depositAddress || !status) {
       return errorResponse('depositAddress and status are required', 400);
     }
 
-    // Verify wallet ownership — the requester must provide their wallet address
-    // and it must match the transaction's wallet_address to prevent cross-wallet tampering
-    if (!walletAddress) {
-      return errorResponse('walletAddress is required for authentication', 401);
-    }
-
+    // Verify ownership via depositAddress — only the swap initiator knows it
     const existingTx = await getTransaction(id);
     if (!existingTx.success || !existingTx.transaction) {
       return errorResponse('Transaction not found', 404);
     }
 
-    if (existingTx.transaction.wallet_address !== walletAddress.toLowerCase()) {
-      return errorResponse('Wallet address does not match transaction owner', 403);
+    if (existingTx.transaction.deposit_address !== depositAddress) {
+      return errorResponse('Deposit address does not match transaction', 403);
     }
 
     if (!VALID_STATUSES.has(status)) {

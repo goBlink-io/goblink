@@ -16,18 +16,26 @@ export function useTronAdapter(): AdapterHookResult {
   } = useTronWallet();
 
   const connect = useCallback(async () => {
-    if (wallets?.length) {
-      select(wallets[0].adapter.name);
-      await tronConnect();
+    try {
+      if (wallets?.length) {
+        select(wallets[0].adapter.name);
+        await tronConnect();
+      }
+    } catch (error) {
+      console.error('[BlinkConnect] Tron connect failed:', error);
     }
   }, [select, wallets, tronConnect]);
 
   const disconnect = useCallback(async () => {
-    await tronDisconnect();
+    try {
+      await tronDisconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] Tron disconnect failed:', error);
+    }
   }, [tronDisconnect]);
 
   return {
-    chain: 'tron',
+    chain: 'TRON',
     address: connected ? address ?? null : null,
     connected,
     connect,

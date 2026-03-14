@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
+import { EncryptJWT } from 'jose';
 
 const getSessionSecret = () => {
   const secret = process.env.SESSION_SECRET;
@@ -68,17 +68,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/features?error=invalid_user', request.url));
     }
 
-    // Create signed JWT with user data (C-02) — access_token stays server-side only (H-05)
-    const jwt = await new SignJWT({
+    // Create encrypted JWT (JWE) — access_token is encrypted, not just signed (H-05)
+    const jwt = await new EncryptJWT({
       userId: String(userData.id),
       login: userData.login,
       avatarUrl: userData.avatar_url,
       accessToken: tokenData.access_token,
     })
-      .setProtectedHeader({ alg: 'HS256' })
+      .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
       .setIssuedAt()
       .setExpirationTime('30d')
-      .sign(getSessionSecret());
+      .encrypt(getSessionSecret());
 
     const response = NextResponse.redirect(new URL('/features', request.url));
 
