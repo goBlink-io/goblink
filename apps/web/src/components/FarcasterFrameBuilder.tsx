@@ -7,18 +7,18 @@ import { filterTokens } from '@/lib/token-filters';
 
 // Same chain list as SwapForm — single source of truth
 const SUPPORTED_CHAINS = [
-  { id: 'aptos', name: 'Aptos', type: 'aptos' },
-  { id: 'arbitrum', name: 'Arbitrum', type: 'evm' },
-  { id: 'base', name: 'Base', type: 'evm' },
-  { id: 'bsc', name: 'BNB Chain', type: 'evm' },
-  { id: 'ethereum', name: 'Ethereum', type: 'evm' },
-  { id: 'near', name: 'NEAR', type: 'near' },
-  { id: 'optimism', name: 'Optimism', type: 'evm' },
-  { id: 'polygon', name: 'Polygon', type: 'evm' },
-  { id: 'solana', name: 'Solana', type: 'solana' },
-  { id: 'starknet', name: 'Starknet', type: 'starknet' },
-  { id: 'sui', name: 'Sui', type: 'sui' },
-  { id: 'tron', name: 'Tron', type: 'tron' },
+  { id: 'aptos', name: 'Aptos', type: 'APTOS' },
+  { id: 'arbitrum', name: 'Arbitrum', type: 'EVM' },
+  { id: 'base', name: 'Base', type: 'EVM' },
+  { id: 'bsc', name: 'BNB Chain', type: 'EVM' },
+  { id: 'ethereum', name: 'Ethereum', type: 'EVM' },
+  { id: 'near', name: 'NEAR', type: 'NEAR' },
+  { id: 'optimism', name: 'Optimism', type: 'EVM' },
+  { id: 'polygon', name: 'Polygon', type: 'EVM' },
+  { id: 'solana', name: 'Solana', type: 'SOLANA' },
+  { id: 'starknet', name: 'Starknet', type: 'STARKNET' },
+  { id: 'sui', name: 'Sui', type: 'SUI' },
+  { id: 'tron', name: 'Tron', type: 'TRON' },
 ] as const;
 
 interface Token {
@@ -103,11 +103,11 @@ export default function FarcasterFrameBuilder() {
     const addr = recipient.trim();
     if (!addr) return false;
     const chainType = SUPPORTED_CHAINS.find(c => c.id === destChain)?.type;
-    if (chainType === 'evm') return addr.startsWith('0x') && addr.length === 42;
-    if (chainType === 'solana') return addr.length >= 32 && addr.length <= 44 && !addr.startsWith('0x');
-    if (chainType === 'near') return addr.endsWith('.near') || addr.length === 64;
-    if (chainType === 'sui') return addr.startsWith('0x') && addr.length === 66;
-    if (chainType === 'aptos') return addr.startsWith('0x') && addr.length === 66;
+    if (chainType === 'EVM') return addr.startsWith('0x') && addr.length === 42;
+    if (chainType === 'SOLANA') return addr.length >= 32 && addr.length <= 44 && !addr.startsWith('0x');
+    if (chainType === 'NEAR') return addr.endsWith('.near') || addr.length === 64;
+    if (chainType === 'SUI') return addr.startsWith('0x') && addr.length === 66;
+    if (chainType === 'APTOS') return addr.startsWith('0x') && addr.length === 66;
     if (destChain === 'tron') return addr.startsWith('T') && addr.length === 34;
     if (destChain === 'starknet') return addr.startsWith('0x') && addr.length >= 64;
     return addr.length > 5;
@@ -178,11 +178,11 @@ export default function FarcasterFrameBuilder() {
 
   const addressPlaceholder = useMemo(() => {
     const chainType = SUPPORTED_CHAINS.find(c => c.id === destChain)?.type;
-    if (chainType === 'evm') return '0x...';
-    if (chainType === 'solana') return 'Solana address...';
-    if (chainType === 'near') return 'name.near or account ID';
-    if (chainType === 'sui') return '0x... (66 chars)';
-    if (chainType === 'aptos') return '0x... (66 chars)';
+    if (chainType === 'EVM') return '0x...';
+    if (chainType === 'SOLANA') return 'Solana address...';
+    if (chainType === 'NEAR') return 'name.near or account ID';
+    if (chainType === 'SUI') return '0x... (66 chars)';
+    if (chainType === 'APTOS') return '0x... (66 chars)';
     if (destChain === 'tron') return 'T...';
     if (destChain === 'starknet') return '0x...';
     return 'Recipient address';

@@ -51,18 +51,18 @@ interface SwapFormProps {
 
 // Available chains for selection
 const SUPPORTED_CHAINS = [
-  { id: 'aptos', name: 'Aptos', type: 'aptos' as const },
-  { id: 'arbitrum', name: 'Arbitrum', type: 'evm' as const },
-  { id: 'base', name: 'Base', type: 'evm' as const },
-  { id: 'bsc', name: 'BNB Chain', type: 'evm' as const },
-  { id: 'ethereum', name: 'Ethereum', type: 'evm' as const },
-  { id: 'near', name: 'NEAR', type: 'near' as const },
-  { id: 'optimism', name: 'Optimism', type: 'evm' as const },
-  { id: 'polygon', name: 'Polygon', type: 'evm' as const },
-  { id: 'solana', name: 'Solana', type: 'solana' as const },
-  { id: 'starknet', name: 'Starknet', type: 'starknet' as const },
-  { id: 'sui', name: 'Sui', type: 'sui' as const },
-  { id: 'tron', name: 'Tron', type: 'tron' as const },
+  { id: 'aptos', name: 'Aptos', type: 'APTOS' as const },
+  { id: 'arbitrum', name: 'Arbitrum', type: 'EVM' as const },
+  { id: 'base', name: 'Base', type: 'EVM' as const },
+  { id: 'bsc', name: 'BNB Chain', type: 'EVM' as const },
+  { id: 'ethereum', name: 'Ethereum', type: 'EVM' as const },
+  { id: 'near', name: 'NEAR', type: 'NEAR' as const },
+  { id: 'optimism', name: 'Optimism', type: 'EVM' as const },
+  { id: 'polygon', name: 'Polygon', type: 'EVM' as const },
+  { id: 'solana', name: 'Solana', type: 'SOLANA' as const },
+  { id: 'starknet', name: 'Starknet', type: 'STARKNET' as const },
+  { id: 'sui', name: 'Sui', type: 'SUI' as const },
+  { id: 'tron', name: 'Tron', type: 'TRON' as const },
 ] as const;
 
 import { filterTokens } from '@/lib/token-filters';

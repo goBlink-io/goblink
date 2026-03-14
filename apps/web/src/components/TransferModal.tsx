@@ -219,7 +219,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
 
           if (originChain === 'near') {
             // Use wallet context to get NEAR address
-            walletAddress = getAddress('near') || quoteRequest.refundTo || '';
+            walletAddress = getAddress('NEAR') || quoteRequest.refundTo || '';
             walletChain = 'near';
           } else if (originChain === 'sui' && currentAccount) {
             walletAddress = currentAccount.address;

@@ -13,22 +13,24 @@ interface AuditParams {
  * Log an audit event. Fire-and-forget — does not throw on failure.
  */
 export function logAudit(params: AuditParams): void {
-  supabase
-    .from('audit_logs')
-    .insert({
-      actor: params.actor,
-      action: params.action,
-      resource_type: params.resourceType ?? null,
-      resource_id: params.resourceId ?? null,
-      metadata: params.metadata ?? {},
-      ip_address: params.ipAddress ?? null,
-    })
+  Promise.resolve(
+    supabase
+      .from('audit_logs')
+      .insert({
+        actor: params.actor,
+        action: params.action,
+        resource_type: params.resourceType ?? null,
+        resource_id: params.resourceId ?? null,
+        metadata: params.metadata ?? {},
+        ip_address: params.ipAddress ?? null,
+      })
+  )
     .then(({ error }) => {
       if (error) {
         console.error('[audit] Failed to log:', error.message, params.action);
       }
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       console.error('[audit] Unexpected error:', err);
     });
 }

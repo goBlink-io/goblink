@@ -101,7 +101,7 @@ function AddressRow({
 }
 
 const SUPPORTED_CHAINS = [
-  'evm', 'solana', 'sui', 'near', 'bitcoin', 'aptos', 'starknet', 'ton', 'tron',
+  'EVM', 'SOLANA', 'SUI', 'NEAR', 'BITCOIN', 'APTOS', 'STARKNET', 'TON', 'TRON',
 ];
 
 export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookProps) {
@@ -110,7 +110,7 @@ export default function AddressBook({ isOpen, onClose, onSelect }: AddressBookPr
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newAddress, setNewAddress] = useState('');
-  const [newChain, setNewChain] = useState('evm');
+  const [newChain, setNewChain] = useState('EVM');
   const [addError, setAddError] = useState('');
 
   const handleAddAddress = () => {
