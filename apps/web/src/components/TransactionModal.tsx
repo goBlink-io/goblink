@@ -108,7 +108,6 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
   };
 
   const getStatusIcon = (status: string) => {
-    const statusColors = getStatusColor(status);
     switch (status?.toUpperCase()) {
       case 'SUCCESS':
       case 'COMPLETED':
