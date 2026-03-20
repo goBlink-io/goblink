@@ -106,11 +106,11 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       const originChain = fromChain || getChainFromAssetId(quoteRequest.originAsset);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('=== CHAIN DETECTION DEBUG ===');
-        console.log('fromChain (from SwapForm):', fromChain);
-        console.log('originAssetId:', quoteRequest.originAsset);
-        console.log('resolved originChain:', originChain);
-        console.log('===========================');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('=== CHAIN DETECTION DEBUG ===');
+          console.log('fromChain:', fromChain, 'originAssetId:', quoteRequest.originAsset, 'resolved:', originChain);
+          console.log('===========================');
+        }
       }
       
       // Step 3: Handle transaction based on origin chain

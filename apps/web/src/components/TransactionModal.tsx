@@ -43,7 +43,7 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
           // Handle 404 and 429 silently - don't stress users with error messages
           if (response.status === 404 || response.status === 429) {
             // Keep showing last known state, just log for debugging
-            console.log(`Status ${response.status}: Transaction not yet available or rate limited, will retry...`);
+            // Transaction not yet available or rate limited — will retry silently
             return false;
           }
           const errorData = await response.json();
@@ -66,7 +66,7 @@ export default function TransactionModal({ depositAddress, onClose }: Transactio
           console.error('Status fetch error:', err);
           setError(err.message || 'Failed to fetch transaction status');
         } else {
-          console.log('Rate limited, will retry...');
+          // Rate limited — will retry silently
         }
         return false;
       } finally {
