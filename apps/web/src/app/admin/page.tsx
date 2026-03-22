@@ -12,6 +12,9 @@ import {
 } from 'recharts';
 import { adminFetch, fmtUsd, fmtNumber } from '@/lib/admin';
 
+// Chart colors — mapped to design system values (Recharts SVG attrs can't resolve CSS vars)
+const CHART = { brand: '#2563eb', grid: '#27272a', axis: '#3f3f46', tick: '#71717a', surface: '#18181b', border: '#3f3f46', muted: '#a1a1aa' } as const;
+
 interface Stats {
   totalTransactions: number;
   totalVolume: number;
@@ -47,10 +50,15 @@ function StatCard({
 export default function AdminOverview() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     adminFetch<Stats>('/api/admin/stats')
-      .then((d) => d && setStats(d))
+      .then((d) => {
+        if (d) setStats(d);
+        else setError('Failed to load stats');
+      })
+      .catch(() => setError('Failed to load stats'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -66,6 +74,15 @@ export default function AdminOverview() {
             />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-white">Overview</h1>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
       </div>
     );
   }
@@ -119,18 +136,18 @@ export default function AdminOverview() {
             <BarChart data={stats.dailyVolume}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#27272a"
+                stroke={CHART.grid}
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                tick={{ fill: '#71717a', fontSize: 11 }}
+                tick={{ fill: CHART.tick, fontSize: 11 }}
                 tickFormatter={(d) => d.slice(5)}
-                axisLine={{ stroke: '#3f3f46' }}
+                axisLine={{ stroke: CHART.axis }}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: '#71717a', fontSize: 11 }}
+                tick={{ fill: CHART.tick, fontSize: 11 }}
                 tickFormatter={(v) => `$${fmtNumber(v)}`}
                 axisLine={false}
                 tickLine={false}
@@ -138,19 +155,19 @@ export default function AdminOverview() {
               />
               <Tooltip
                 contentStyle={{
-                  background: '#18181b',
-                  border: '1px solid #3f3f46',
+                  background: CHART.surface,
+                  border: `1px solid ${CHART.border}`,
                   borderRadius: '8px',
                   fontSize: '13px',
                 }}
-                labelStyle={{ color: '#a1a1aa' }}
-                itemStyle={{ color: '#3b82f6' }}
+                labelStyle={{ color: CHART.muted }}
+                itemStyle={{ color: CHART.brand }}
                 formatter={(v) => [
                   `$${Number(v ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
                   'Volume',
                 ]}
               />
-              <Bar dataKey="volume" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="volume" fill={CHART.brand} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

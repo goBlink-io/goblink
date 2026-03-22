@@ -66,7 +66,7 @@ export function isValidAmount(amount: string | number, decimals: number = 18): {
     }
     
     // Reasonable upper bound check (1 billion tokens with given decimals)
-    const maxAmount = BigInt(10 ** 9) * BigInt(10 ** decimals);
+    const maxAmount = 10n ** 9n * (10n ** BigInt(decimals));
     if (amountBigInt > maxAmount) {
       return { valid: false, error: 'Amount exceeds reasonable maximum (1B tokens)' };
     }
@@ -92,7 +92,7 @@ export function isValidAssetId(assetId: string): boolean {
   }
   
   // Must start with a known chain prefix
-  const validPrefixes = ['nep141:', 'sui:', 'solana:', 'evm:', 'near:', 'tron:'];
+  const validPrefixes = ['nep141:', 'nep245:', '1cs_v1:', 'sui:', 'solana:', 'evm:', 'near:', 'tron:', 'ton:', 'bitcoin:', 'starknet:', 'aptos:'];
   const hasValidPrefix = validPrefixes.some(prefix => assetId.startsWith(prefix));
   
   if (!hasValidPrefix) {

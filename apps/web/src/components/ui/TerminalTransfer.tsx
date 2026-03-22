@@ -33,15 +33,18 @@ export default function TerminalTransfer() {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden font-mono text-xs sm:text-sm"
-      style={{ background: '#0a0a0a', border: '1px solid var(--border)' }}
+      className="terminal-window rounded-2xl overflow-hidden font-mono text-xs sm:text-sm"
+      style={{ border: '1px solid var(--border)' }}
     >
+      <style>{`
+        .terminal-window { --terminal-bg: #0a0a0a; --terminal-red: #ff5f57; --terminal-yellow: #febc2e; --terminal-green: #28c840; background: var(--terminal-bg); }
+      `}</style>
       {/* Terminal header */}
       <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ff5f57' }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#febc2e' }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#28c840' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--terminal-red)' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--terminal-yellow)' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--terminal-green)' }} />
         </div>
         <span className="text-[10px] ml-2" style={{ color: 'var(--text-faint)' }}>goblink — live transfers</span>
       </div>
@@ -59,11 +62,11 @@ export default function TerminalTransfer() {
           >
             {/* Command line */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span style={{ color: '#28c840' }}>❯</span>
+              <span style={{ color: 'var(--terminal-green)' }}>❯</span>
               <span style={{ color: 'var(--text-muted)' }}>send</span>
               <span style={{ color: 'var(--brand)' }}>{transfer.amount} {transfer.from}</span>
               <span style={{ color: 'var(--text-faint)' }}>→</span>
-              <span style={{ color: '#28c840' }}>{transfer.to}</span>
+              <span style={{ color: 'var(--terminal-green)' }}>{transfer.to}</span>
               <span style={{ color: 'var(--text-faint)' }}>on {transfer.toChain}</span>
             </div>
 
@@ -95,7 +98,7 @@ export default function TerminalTransfer() {
                 className="space-y-1"
               >
                 <div>
-                  <span style={{ color: '#28c840' }}>✓ delivered</span>
+                  <span style={{ color: 'var(--terminal-green)' }}>✓ delivered</span>
                   <span style={{ color: 'var(--text-muted)' }}> — </span>
                   <span style={{ color: 'var(--text-primary)' }}>{transfer.receive} {transfer.to}</span>
                   <span style={{ color: 'var(--text-faint)' }}> in {transfer.time}</span>

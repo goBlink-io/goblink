@@ -168,9 +168,9 @@ export default function WidgetPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--elevated)', borderBottom: '1px solid var(--border)' }}>
-                  <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Parameter</th>
-                  <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Type</th>
-                  <th className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Description</th>
+                  <th scope="col" className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Parameter</th>
+                  <th scope="col" className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Type</th>
+                  <th scope="col" className="text-left p-3 font-semibold" style={{ color: 'var(--text-secondary)' }}>Description</th>
                 </tr>
               </thead>
               <tbody>

@@ -20,25 +20,25 @@ export function truncateAddress(address: string): string {
 export function validateAddress(chain: string, address: string): boolean {
   if (!address || typeof address !== 'string') return false;
 
-  switch (chain) {
-    case 'evm':
+  switch (chain.toUpperCase()) {
+    case 'EVM':
       return /^0x[a-fA-F0-9]{40}$/.test(address);
-    case 'solana':
+    case 'SOLANA':
       return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-    case 'bitcoin':
+    case 'BITCOIN':
       return /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(address);
-    case 'sui':
+    case 'SUI':
       return /^0x[a-fA-F0-9]{64}$/.test(address);
-    case 'near':
+    case 'NEAR':
       return /^[a-z0-9_-]+(\.[a-z0-9_-]+)*\.(near|testnet)$/.test(address) ||
              /^[a-fA-F0-9]{64}$/.test(address);
-    case 'aptos':
+    case 'APTOS':
       return /^0x[a-fA-F0-9]{1,64}$/.test(address);
-    case 'starknet':
+    case 'STARKNET':
       return /^0x[a-fA-F0-9]{1,64}$/.test(address);
-    case 'ton':
+    case 'TON':
       return address.length >= 32;
-    case 'tron':
+    case 'TRON':
       return /^T[a-zA-Z0-9]{33}$/.test(address);
     default:
       return address.length > 0;

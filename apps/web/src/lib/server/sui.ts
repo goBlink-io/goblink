@@ -48,10 +48,11 @@ export async function getSuiBalance(address: string) {
   if (!suiCoin) return { balance: '0.0000', balanceMist: '0', address };
   const balanceMist = suiCoin.balance;
   const raw = BigInt(balanceMist);
-  const divisor = BigInt(10 ** 9);
+  const divisor = 10n ** 9n;
   const whole = raw / divisor;
   const fraction = raw % divisor;
-  const balanceInSui = String(Number(whole) + Number(fraction) / Number(divisor));
+  const fractionStr = fraction.toString().padStart(9, '0').replace(/0+$/, '');
+  const balanceInSui = fractionStr ? `${whole}.${fractionStr}` : whole.toString();
   return { balance: balanceInSui, balanceMist, address };
 }
 
@@ -65,11 +66,14 @@ export async function getSuiTokenBalance(address: string, coinType: string) {
   const coin = response.result.coins.find(c =>
     c.coinType.toLowerCase() === coinType.toLowerCase()
   );
-  if (!coin) return { balance: '0.0000', balanceRaw: '0', address, decimals: 6 };
+  if (!coin) return { balance: '0', balanceRaw: '0', address, decimals: 0 };
   const raw = BigInt(coin.balance);
-  const divisor = BigInt(10 ** coin.decimals);
+  const divisor = 10n ** BigInt(coin.decimals);
   const whole = raw / divisor;
   const fraction = raw % divisor;
-  const balanceFormatted = String(Number(whole) + Number(fraction) / Number(divisor));
+  const fractionStr = coin.decimals > 0
+    ? fraction.toString().padStart(coin.decimals, '0').replace(/0+$/, '')
+    : '';
+  const balanceFormatted = fractionStr ? `${whole}.${fractionStr}` : whole.toString();
   return { balance: balanceFormatted, balanceRaw: coin.balance, address, decimals: coin.decimals };
 }

@@ -40,28 +40,29 @@ export default function SupportChat({ onClose }: SupportChatProps) {
   }, []);
   
   // ── Handle sending message ──
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    
+  const handleSend = async (overrideText?: string) => {
+    const text = overrideText ?? input;
+    if (!text.trim()) return;
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
-      text: input,
+      text,
       sender: 'user',
       timestamp: Date.now(),
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    
+
     // Show typing indicator
     setIsTyping(true);
-    
+
     // Brief delay for natural feel
     await new Promise(resolve => setTimeout(resolve, 600));
-    
+
     // Get response
-    const response = getResponseForMessage(input, appState) || getFallbackMessage();
-    
+    const response = getResponseForMessage(text, appState) || getFallbackMessage();
+
     const botMessage: ChatMessage = {
       id: `bot-${Date.now()}`,
       text: response.text,
@@ -70,15 +71,14 @@ export default function SupportChat({ onClose }: SupportChatProps) {
       severity: response.severity,
       actions: response.actions,
     };
-    
+
     setIsTyping(false);
     setMessages(prev => [...prev, botMessage]);
   };
-  
+
   // ── Handle quick reply ──
   const handleQuickReply = (message: string) => {
-    setInput(message);
-    setTimeout(() => handleSend(), 100);
+    handleSend(message);
   };
   
   // ── Handle action buttons ──
@@ -211,7 +211,7 @@ export default function SupportChat({ onClose }: SupportChatProps) {
             }}
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!input.trim()}
             className="px-4 py-2.5 rounded-xl font-medium text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{

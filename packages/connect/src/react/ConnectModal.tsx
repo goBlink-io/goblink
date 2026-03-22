@@ -38,15 +38,15 @@ interface ChainOption {
 }
 
 const ALL_CHAINS: ChainOption[] = [
-  { id: 'evm', name: 'EVM Chains', description: 'Ethereum, Base, Arbitrum, BNB +10 more', gradient: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' },
-  { id: 'solana', name: 'Solana', description: 'Fast & low-cost transactions', gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)' },
-  { id: 'bitcoin', name: 'Bitcoin', description: 'Digital gold standard', gradient: 'linear-gradient(135deg, #f97316, #eab308)' },
-  { id: 'sui', name: 'Sui', description: 'Next-gen Move blockchain', gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
-  { id: 'near', name: 'NEAR', description: 'Simple, secure & scalable', gradient: 'linear-gradient(135deg, #22c55e, #14b8a6)' },
-  { id: 'aptos', name: 'Aptos', description: 'Safe & scalable Layer 1', gradient: 'linear-gradient(135deg, #14b8a6, #22c55e)' },
-  { id: 'starknet', name: 'Starknet', description: 'ZK-rollup on Ethereum', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
-  { id: 'ton', name: 'TON', description: 'The Open Network', gradient: 'linear-gradient(135deg, #0ea5e9, #3b82f6)' },
-  { id: 'tron', name: 'Tron', description: 'Decentralized internet', gradient: 'linear-gradient(135deg, #ef4444, #f43f5e)' },
+  { id: 'EVM', name: 'EVM Chains', description: 'Ethereum, Base, Arbitrum, BNB +10 more', gradient: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' },
+  { id: 'SOLANA', name: 'Solana', description: 'Fast & low-cost transactions', gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)' },
+  { id: 'BITCOIN', name: 'Bitcoin', description: 'Digital gold standard', gradient: 'linear-gradient(135deg, #f97316, #eab308)' },
+  { id: 'SUI', name: 'Sui', description: 'Next-gen Move blockchain', gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
+  { id: 'NEAR', name: 'NEAR', description: 'Simple, secure & scalable', gradient: 'linear-gradient(135deg, #22c55e, #14b8a6)' },
+  { id: 'APTOS', name: 'Aptos', description: 'Safe & scalable Layer 1', gradient: 'linear-gradient(135deg, #14b8a6, #22c55e)' },
+  { id: 'STARKNET', name: 'Starknet', description: 'ZK-rollup on Ethereum', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
+  { id: 'TON', name: 'TON', description: 'The Open Network', gradient: 'linear-gradient(135deg, #0ea5e9, #3b82f6)' },
+  { id: 'TRON', name: 'Tron', description: 'Decentralized internet', gradient: 'linear-gradient(135deg, #ef4444, #f43f5e)' },
 ];
 
 /**
@@ -68,7 +68,7 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
   const isDark = resolvedTheme === 'dark';
 
   const [selectedChain, setSelectedChain] = useState<ChainType | null>(null);
-  const previousSuiRef = useRef(ctx.isChainConnected('sui'));
+  const previousSuiRef = useRef(ctx.isChainConnected('SUI'));
 
   // Filter chains based on props and config
   const visibleChains = ALL_CHAINS.filter((c) => {
@@ -79,15 +79,15 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
 
   // Auto-close on Sui connect
   useEffect(() => {
-    const nowConnected = ctx.isChainConnected('sui');
-    if (!previousSuiRef.current && nowConnected && selectedChain === 'sui') {
+    const nowConnected = ctx.isChainConnected('SUI');
+    if (!previousSuiRef.current && nowConnected && selectedChain === 'SUI') {
       setTimeout(() => {
         ctx.closeModal();
         setSelectedChain(null);
       }, 400);
     }
     previousSuiRef.current = nowConnected;
-  }, [ctx.isChainConnected('sui'), selectedChain]);
+  }, [ctx.isChainConnected('SUI'), selectedChain]);
 
   // Reset selection when modal closes
   useEffect(() => {
@@ -100,7 +100,7 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
     try {
       // For AppKit chains (evm/solana/bitcoin), close our modal first
       // so AppKit's own wallet selection modal can show on top
-      if (chain === 'evm' || chain === 'solana' || chain === 'bitcoin') {
+      if (chain === 'EVM' || chain === 'SOLANA' || chain === 'BITCOIN') {
         ctx.closeModal();
         await ctx.connect(chain);
         return;
@@ -255,11 +255,11 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
     if (!selectedChain) return null;
     const chain = ALL_CHAINS.find((c) => c.id === selectedChain)!;
 
-    if (selectedChain === 'sui') {
+    if (selectedChain === 'SUI') {
       return <SuiConnectView colors={colors} onClose={ctx.closeModal} />;
     }
 
-    if (selectedChain === 'starknet' && useStarknetConnectHook) {
+    if (selectedChain === 'STARKNET' && useStarknetConnectHook) {
       return <StarknetConnectView colors={colors} onClose={ctx.closeModal} />;
     }
 
@@ -284,7 +284,7 @@ export function ConnectModal({ chains, theme, accentColor, logo, className }: Co
         >
           Connect Wallet
         </button>
-        {(selectedChain === 'evm' || selectedChain === 'solana' || selectedChain === 'bitcoin') && (
+        {(selectedChain === 'EVM' || selectedChain === 'SOLANA' || selectedChain === 'BITCOIN') && (
           <p style={{ fontSize: '12px', color: colors.textMuted, textAlign: 'center', marginTop: '12px' }}>
             Powered by ReOwn AppKit — 350+ wallets
           </p>

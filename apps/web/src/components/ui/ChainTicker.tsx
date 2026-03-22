@@ -17,7 +17,7 @@ export default function ChainTicker() {
       <div className="flex gap-5 sm:gap-8 animate-ticker" style={{ willChange: 'transform' }}>
         {doubled.map((chain, i) => (
           <div
-            key={`${chain.id}-${i}`}
+            key={`${chain.id}-${i < chains.length ? 'a' : 'b'}`}
             className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
           >
             <img

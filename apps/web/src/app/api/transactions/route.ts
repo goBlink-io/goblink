@@ -3,6 +3,7 @@ import { createTransaction, getTransactionsByWallet } from '@/lib/server/transac
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { logAudit, getClientIp } from '@/lib/server/audit';
+import { getGitHubUser } from '@/lib/github-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid wallet address format', 400);
     }
 
+    // Require depositAddress — serves as correlation key for anonymous swaps
+    if (!depositAddress) {
+      return errorResponse('depositAddress is required', 400);
+    }
+
+    // Associate with authenticated user if logged in
+    const githubUser = await getGitHubUser().catch(() => null);
+    const userId = githubUser?.id ?? null;
+
     const result = await createTransaction({
       walletAddress,
       walletChain,
@@ -74,6 +84,7 @@ export async function POST(request: NextRequest) {
       quoteId,
       source,
       paymentRequestId,
+      ...(userId && { userId }),
     });
 
     if (!result.success) {
@@ -84,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     const ip = getClientIp(request.headers);
     logAudit({
-      actor: ip,
+      actor: userId || ip,
       action: 'transaction.recorded',
       resourceId: result.transaction?.id,
       ipAddress: ip,

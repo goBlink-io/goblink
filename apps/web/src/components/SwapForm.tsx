@@ -22,8 +22,28 @@ export interface SwapFormInitialValues {
   lockDest?: boolean; // when true, lock the TO chain/token/recipient fields
 }
 
+interface TokenMetadata {
+  symbol: string;
+  decimals: number;
+  assetId: string;
+  blockchain?: string;
+  contractAddress?: string;
+  icon?: string;
+}
+
+interface EnrichedQuote {
+  quote?: Record<string, unknown>;
+  quoteRequest?: Record<string, unknown>;
+  feeInfo?: Record<string, unknown>;
+  fromChain: string;
+  toChain: string;
+  originTokenMetadata: TokenMetadata;
+  destinationTokenMetadata: TokenMetadata;
+  [key: string]: unknown;
+}
+
 interface SwapFormProps {
-  onQuoteReceived: (quote: any) => void;
+  onQuoteReceived: (quote: EnrichedQuote) => void;
   refreshKey?: number;
   onSwapInitiated: (depositAddress: string) => void;
   initialValues?: SwapFormInitialValues;
@@ -31,18 +51,18 @@ interface SwapFormProps {
 
 // Available chains for selection
 const SUPPORTED_CHAINS = [
-  { id: 'aptos', name: 'Aptos', type: 'aptos' as const },
-  { id: 'arbitrum', name: 'Arbitrum', type: 'evm' as const },
-  { id: 'base', name: 'Base', type: 'evm' as const },
-  { id: 'bsc', name: 'BNB Chain', type: 'evm' as const },
-  { id: 'ethereum', name: 'Ethereum', type: 'evm' as const },
-  { id: 'near', name: 'NEAR', type: 'near' as const },
-  { id: 'optimism', name: 'Optimism', type: 'evm' as const },
-  { id: 'polygon', name: 'Polygon', type: 'evm' as const },
-  { id: 'solana', name: 'Solana', type: 'solana' as const },
-  { id: 'starknet', name: 'Starknet', type: 'starknet' as const },
-  { id: 'sui', name: 'Sui', type: 'sui' as const },
-  { id: 'tron', name: 'Tron', type: 'tron' as const },
+  { id: 'aptos', name: 'Aptos', type: 'APTOS' as const },
+  { id: 'arbitrum', name: 'Arbitrum', type: 'EVM' as const },
+  { id: 'base', name: 'Base', type: 'EVM' as const },
+  { id: 'bsc', name: 'BNB Chain', type: 'EVM' as const },
+  { id: 'ethereum', name: 'Ethereum', type: 'EVM' as const },
+  { id: 'near', name: 'NEAR', type: 'NEAR' as const },
+  { id: 'optimism', name: 'Optimism', type: 'EVM' as const },
+  { id: 'polygon', name: 'Polygon', type: 'EVM' as const },
+  { id: 'solana', name: 'Solana', type: 'SOLANA' as const },
+  { id: 'starknet', name: 'Starknet', type: 'STARKNET' as const },
+  { id: 'sui', name: 'Sui', type: 'SUI' as const },
+  { id: 'tron', name: 'Tron', type: 'TRON' as const },
 ] as const;
 
 import { filterTokens } from '@/lib/token-filters';
@@ -334,7 +354,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
     };
     setBalances({});
     fetchBalances();
-  }, [fromAddress(), fromTokens, fromChain, refreshKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fromAddress is a stable useCallback; call it inside the effect, depend on its deps
+  }, [fromChain, getAddress, fromTokens, refreshKey]);
 
   // Fetch destination chain balances
   useEffect(() => {
@@ -364,7 +385,8 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
     };
     setToBalances({});
     fetchToBalances();
-  }, [toAddress(), toTokens, toChain, refreshKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- toAddress is a stable useCallback; call it inside the effect, depend on its deps
+  }, [toChain, getAddress, toTokens, refreshKey]);
 
   const convertToSmallestUnit = (amount: string, decimals: number): string => {
     amount = amount.trim();
@@ -534,7 +556,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
           emptyMessage={fromAddress() ? "No tokens with balance on this chain" : undefined} />
 
         <div>
-          <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+          <input type="text" inputMode="decimal" value={amount} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setAmount(v); }}
             placeholder="0.0" className="input w-full h-12 text-h4 mb-2" />
           
           {originAsset && balances[originAsset] && parseFloat(balances[originAsset]) > 0 && (

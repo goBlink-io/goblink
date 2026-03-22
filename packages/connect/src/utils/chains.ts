@@ -9,73 +9,73 @@ export interface ChainMeta {
   color: string;
 }
 
-const CHAIN_METADATA: Record<ChainType, ChainMeta> = {
-  evm: {
-    id: 'evm',
+const CHAIN_METADATA: Partial<Record<ChainType, ChainMeta>> = {
+  EVM: {
+    id: 'EVM',
     name: 'Ethereum',
     symbol: 'ETH',
     decimals: 18,
     explorer: 'https://etherscan.io',
     color: '#627eea',
   },
-  solana: {
-    id: 'solana',
+  SOLANA: {
+    id: 'SOLANA',
     name: 'Solana',
     symbol: 'SOL',
     decimals: 9,
     explorer: 'https://solscan.io',
     color: '#9945ff',
   },
-  bitcoin: {
-    id: 'bitcoin',
+  BITCOIN: {
+    id: 'BITCOIN',
     name: 'Bitcoin',
     symbol: 'BTC',
     decimals: 8,
     explorer: 'https://mempool.space',
     color: '#f7931a',
   },
-  sui: {
-    id: 'sui',
+  SUI: {
+    id: 'SUI',
     name: 'Sui',
     symbol: 'SUI',
     decimals: 9,
     explorer: 'https://suiscan.xyz',
     color: '#4da2ff',
   },
-  near: {
-    id: 'near',
+  NEAR: {
+    id: 'NEAR',
     name: 'NEAR',
     symbol: 'NEAR',
     decimals: 24,
     explorer: 'https://nearblocks.io',
     color: '#00ec97',
   },
-  aptos: {
-    id: 'aptos',
+  APTOS: {
+    id: 'APTOS',
     name: 'Aptos',
     symbol: 'APT',
     decimals: 8,
     explorer: 'https://aptoscan.com',
     color: '#2dd8a7',
   },
-  starknet: {
-    id: 'starknet',
+  STARKNET: {
+    id: 'STARKNET',
     name: 'Starknet',
     symbol: 'STRK',
     decimals: 18,
     explorer: 'https://starkscan.co',
     color: '#29296e',
   },
-  ton: {
-    id: 'ton',
+  TON: {
+    id: 'TON',
     name: 'TON',
     symbol: 'TON',
     decimals: 9,
     explorer: 'https://tonscan.org',
     color: '#0098ea',
   },
-  tron: {
-    id: 'tron',
+  TRON: {
+    id: 'TRON',
     name: 'Tron',
     symbol: 'TRX',
     decimals: 6,
@@ -95,7 +95,7 @@ export function getChainMeta(chain: ChainType): ChainMeta | null {
  * Get all chain metadata.
  */
 export function getAllChainMeta(): ChainMeta[] {
-  return Object.values(CHAIN_METADATA);
+  return Object.values(CHAIN_METADATA).filter((v): v is ChainMeta => !!v);
 }
 
 /**
@@ -106,23 +106,23 @@ export function getExplorerTxUrl(chain: ChainType, txHash: string): string {
   if (!meta) return '';
 
   switch (chain) {
-    case 'evm':
+    case 'EVM':
       return `${meta.explorer}/tx/${txHash}`;
-    case 'solana':
+    case 'SOLANA':
       return `${meta.explorer}/tx/${txHash}`;
-    case 'bitcoin':
+    case 'BITCOIN':
       return `${meta.explorer}/tx/${txHash}`;
-    case 'sui':
+    case 'SUI':
       return `${meta.explorer}/txblock/${txHash}`;
-    case 'near':
+    case 'NEAR':
       return `${meta.explorer}/txns/${txHash}`;
-    case 'aptos':
+    case 'APTOS':
       return `${meta.explorer}/transaction/${txHash}`;
-    case 'starknet':
+    case 'STARKNET':
       return `${meta.explorer}/tx/${txHash}`;
-    case 'ton':
+    case 'TON':
       return `${meta.explorer}/transaction/${txHash}`;
-    case 'tron':
+    case 'TRON':
       return `${meta.explorer}/#/transaction/${txHash}`;
     default:
       return '';
@@ -137,23 +137,23 @@ export function getExplorerAddressUrl(chain: ChainType, address: string): string
   if (!meta) return '';
 
   switch (chain) {
-    case 'evm':
+    case 'EVM':
       return `${meta.explorer}/address/${address}`;
-    case 'solana':
+    case 'SOLANA':
       return `${meta.explorer}/account/${address}`;
-    case 'bitcoin':
+    case 'BITCOIN':
       return `${meta.explorer}/address/${address}`;
-    case 'sui':
+    case 'SUI':
       return `${meta.explorer}/account/${address}`;
-    case 'near':
+    case 'NEAR':
       return `${meta.explorer}/address/${address}`;
-    case 'aptos':
+    case 'APTOS':
       return `${meta.explorer}/account/${address}`;
-    case 'starknet':
+    case 'STARKNET':
       return `${meta.explorer}/contract/${address}`;
-    case 'ton':
+    case 'TON':
       return `${meta.explorer}/address/${address}`;
-    case 'tron':
+    case 'TRON':
       return `${meta.explorer}/#/address/${address}`;
     default:
       return '';

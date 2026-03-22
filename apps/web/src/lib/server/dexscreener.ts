@@ -5,6 +5,7 @@ const CHAIN_ID_MAPPING: Record<string, string> = {
   'berachain': 'berachain', 'monad': 'monad',
 };
 
+const MAX_CACHE_SIZE = 500;
 const tokenDataCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -29,6 +30,18 @@ export async function getTokenPairs(chainId: string, tokenAddress: string): Prom
     const pairs = (data.pairs || []).filter((pair: DexScreenerPair) =>
       pair.chainId.toLowerCase() === dexChainId.toLowerCase()
     );
+    // Evict stale entries when cache grows too large
+    if (tokenDataCache.size >= MAX_CACHE_SIZE) {
+      const now = Date.now();
+      for (const [key, val] of tokenDataCache) {
+        if (now - val.timestamp >= CACHE_TTL) tokenDataCache.delete(key);
+      }
+      // If still too large, delete oldest entries
+      if (tokenDataCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = tokenDataCache.keys().next().value;
+        if (firstKey) tokenDataCache.delete(firstKey);
+      }
+    }
     tokenDataCache.set(cacheKey, { data: pairs, timestamp: Date.now() });
     return pairs;
   } catch {

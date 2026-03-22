@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
+import { jwtDecrypt } from 'jose';
 
 export interface GitHubUser {
   id: string;
@@ -26,7 +26,7 @@ export async function getGitHubUser(): Promise<GitHubUser | null> {
     const secret = getSessionSecret();
     if (!secret) return null;
 
-    const { payload } = await jwtVerify(authCookie.value, secret);
+    const { payload } = await jwtDecrypt(authCookie.value, secret);
 
     return {
       id: payload.userId as string,

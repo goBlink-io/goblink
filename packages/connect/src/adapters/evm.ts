@@ -27,43 +27,51 @@ export function useEvmAdapter(): EvmAdapterResult {
   // Determine which chain AppKit is connected to via CAIP address
   const appKitChain = (() => {
     if (!caipAddress) return null;
-    if (caipAddress.startsWith('eip155:')) return 'evm' as ChainType;
-    if (caipAddress.startsWith('solana:')) return 'solana' as ChainType;
-    if (caipAddress.startsWith('bip122:')) return 'bitcoin' as ChainType;
+    if (caipAddress.startsWith('eip155:')) return 'EVM' as ChainType;
+    if (caipAddress.startsWith('solana:')) return 'SOLANA' as ChainType;
+    if (caipAddress.startsWith('bip122:')) return 'BITCOIN' as ChainType;
     return null;
   })();
 
   const evmAddress =
-    (appKitChain === 'evm' && appKitAddress) || (wagmiConnected && wagmiAddress) || null;
-  const solanaAddress = (appKitChain === 'solana' && appKitAddress) || null;
-  const bitcoinAddress = (appKitChain === 'bitcoin' && appKitAddress) || null;
+    (appKitChain === 'EVM' && appKitAddress) || (wagmiConnected && wagmiAddress) || null;
+  const solanaAddress = (appKitChain === 'SOLANA' && appKitAddress) || null;
+  const bitcoinAddress = (appKitChain === 'BITCOIN' && appKitAddress) || null;
 
   const connect = useCallback(async () => {
-    openAppKit();
+    try {
+      openAppKit();
+    } catch (error) {
+      console.error('[BlinkConnect] EVM/AppKit connect failed:', error);
+    }
   }, [openAppKit]);
 
   const disconnect = useCallback(async () => {
-    if (appKitConnected) await appKitDisconnect();
-    if (wagmiConnected) wagmiDisconnect();
+    try {
+      if (appKitConnected) await appKitDisconnect();
+      if (wagmiConnected) wagmiDisconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] EVM/AppKit disconnect failed:', error);
+    }
   }, [appKitConnected, appKitDisconnect, wagmiConnected, wagmiDisconnect]);
 
   return {
     evm: {
-      chain: 'evm',
+      chain: 'EVM',
       address: evmAddress,
       connected: !!evmAddress,
       connect,
       disconnect,
     },
     solana: {
-      chain: 'solana',
+      chain: 'SOLANA',
       address: solanaAddress,
       connected: !!solanaAddress,
       connect,
       disconnect,
     },
     bitcoin: {
-      chain: 'bitcoin',
+      chain: 'BITCOIN',
       address: bitcoinAddress,
       connected: !!bitcoinAddress,
       connect,

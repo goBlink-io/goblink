@@ -29,7 +29,7 @@ export interface UseConnectReturn {
  * const { openModal, isModalOpen, connectChain } = useConnect();
  *
  * <button onClick={openModal}>Open Wallet Modal</button>
- * <button onClick={() => connectChain('evm')}>Connect EVM</button>
+ * <button onClick={() => connectChain('EVM')}>Connect EVM</button>
  * ```
  */
 export function useConnect(): UseConnectReturn {

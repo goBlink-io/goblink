@@ -72,16 +72,16 @@ export default async function TipFramePage({ searchParams }: Props) {
   const isCrossChain = p.crossChain === 'true';
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Tip {shortAddress(to)}</h1>
-        <p style={{ color: '#a1a1aa' }}>{destToken} on {getChainDisplayName(destChain)} &mdash; $1, $5, $10, or custom</p>
+        <p style={{ color: 'var(--text-secondary)' }}>{destToken} on {getChainDisplayName(destChain)} &mdash; $1, $5, $10, or custom</p>
         {isCrossChain && (
-          <p style={{ color: '#71717a', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Paid with {sourceToken} on {getChainDisplayName(sourceChain)} · Cross-chain via goBlink
           </p>
         )}
-        <p style={{ color: '#a1a1aa', marginTop: '1rem', fontSize: '0.875rem' }}>Open this link in Farcaster to tip via Frame.</p>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', fontSize: '0.875rem' }}>Open this link in Farcaster to tip via Frame.</p>
       </div>
     </div>
   );

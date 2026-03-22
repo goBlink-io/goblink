@@ -67,23 +67,32 @@ export function useNearAdapter(options?: NearAdapterOptions): AdapterHookResult 
       console.error('[BlinkConnect] NEAR connector not ready');
       return;
     }
-    console.log('[BlinkConnect] Connecting NEAR wallet...');
-    const wallet = await connector.connect();
-    const accounts = await (wallet as any).getAccounts?.();
-    if (accounts?.length > 0) {
-      const accountId = accounts[0].accountId || accounts[0];
-      if (typeof accountId === 'string') setAddress(accountId);
+    try {
+      console.log('[BlinkConnect] Connecting NEAR wallet...');
+      const wallet = await connector.connect();
+      const accounts = await (wallet as any).getAccounts?.();
+      if (accounts?.length > 0) {
+        const accountId = accounts[0].accountId || accounts[0];
+        if (typeof accountId === 'string') setAddress(accountId);
+      }
+    } catch (error) {
+      console.error('[BlinkConnect] NEAR connect failed:', error);
+      setAddress(null);
     }
   }, [connector]);
 
   const disconnect = useCallback(async () => {
     if (!connector) return;
-    await connector.disconnect();
+    try {
+      await connector.disconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] NEAR disconnect failed:', error);
+    }
     setAddress(null);
   }, [connector]);
 
   return {
-    chain: 'near',
+    chain: 'NEAR',
     address,
     connected: !!address,
     connect,

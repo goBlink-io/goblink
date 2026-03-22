@@ -41,9 +41,13 @@ export default function AdminShell({
 
   useEffect(() => {
     async function checkSession() {
-      const sb = getSupabaseBrowserClient();
-      const { data } = await sb.auth.getSession();
-      setAuthed(!!data.session);
+      try {
+        const sb = getSupabaseBrowserClient();
+        const { data } = await sb.auth.getSession();
+        setAuthed(!!data.session);
+      } catch {
+        setAuthed(false);
+      }
     }
     checkSession();
   }, []);
@@ -76,9 +80,13 @@ export default function AdminShell({
   }
 
   async function handleLogout() {
-    await fetch('/api/admin/auth', { method: 'DELETE' });
-    const sb = getSupabaseBrowserClient();
-    await sb.auth.signOut();
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+      const sb = getSupabaseBrowserClient();
+      await sb.auth.signOut();
+    } catch {
+      // Best-effort logout
+    }
     setAuthed(false);
   }
 

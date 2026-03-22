@@ -83,9 +83,9 @@ export default function ProactiveTip({ tip, onDismiss, onAction }: ProactiveTipP
         {/* Actions */}
         {tip.actions && tip.actions.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {tip.actions.map((action, idx) => (
+            {tip.actions.map((action) => (
               <button
-                key={idx}
+                key={`${action.action}-${action.label}`}
                 onClick={() => {
                   onAction?.(action.action, action.data);
                   handleDismiss();

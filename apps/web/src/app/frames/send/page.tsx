@@ -118,13 +118,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function SendFramePage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fafafa', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 20px' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>goBlink</h1>
-        <p style={{ color: '#a1a1aa', lineHeight: '1.6' }}>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
           Send, pay, or tip — any token, any chain. Open this link in Farcaster to get started.
         </p>
-        <p style={{ color: '#52525b', marginTop: '1.5rem', fontSize: '0.8rem' }}>
+        <p style={{ color: 'var(--text-faint)', marginTop: '1.5rem', fontSize: '0.8rem' }}>
           Open this link in Warpcast to use the interactive frame.
         </p>
       </div>

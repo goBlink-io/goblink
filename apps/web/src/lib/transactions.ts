@@ -402,14 +402,26 @@ export async function sendTonTransaction(
       });
       return result.boc; // TON returns BOC (Bag of Cells)
     } else {
-      // Jetton transfer — requires calling the jetton wallet contract
-      // For now, encode a simple jetton transfer
+      // Jetton transfer — build TEP-74 transfer message cell
+      const { beginCell, Address, toNano } = await import('@ton/core');
+
+      const jettonTransferBody = beginCell()
+        .storeUint(0xf8a7ea5, 32)   // op: jetton transfer
+        .storeUint(0, 64)            // query_id
+        .storeCoins(BigInt(amount))  // token amount in base units
+        .storeAddress(Address.parse(recipientAddress)) // destination
+        .storeAddress(Address.parse(recipientAddress)) // response_destination (excess TON back to recipient)
+        .storeBit(false)             // no custom payload
+        .storeCoins(toNano('0.05'))  // forward_ton_amount for notification
+        .storeBit(false)             // no forward payload
+        .endCell();
+
       const result = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
         messages: [{
           address: tokenAddress, // Jetton wallet address
-          amount: '50000000', // 0.05 TON for gas
-          payload: '', // TODO: Encode jetton transfer payload
+          amount: '100000000',   // 0.1 TON for gas (covers forward + fees)
+          payload: jettonTransferBody.toBoc().toString('base64'),
         }],
       });
       return result.boc;

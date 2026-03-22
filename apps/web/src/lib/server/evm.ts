@@ -92,7 +92,9 @@ function getPublicClient(chainName: SupportedChain): PublicClient {
 export async function getNativeBalance(chainName: SupportedChain, address: string) {
   const client = getPublicClient(chainName);
   const balanceWei = await client.getBalance({ address: address as Address });
-  const balance = formatUnits(balanceWei, 18);
+  const config = CHAIN_CONFIGS[chainName];
+  const nativeDecimals = config.chain.nativeCurrency?.decimals ?? 18;
+  const balance = formatUnits(balanceWei, nativeDecimals);
   return {
     balance,
     balanceWei: balanceWei.toString(),

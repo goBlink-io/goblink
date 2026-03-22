@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getBaseUrl } from './frame-helpers';
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 /**
  * Return a proper Farcaster frame for error states instead of raw JSON.
  * The user sees a branded error card with a retry/start-over button.
  */
 export function errorFrame(message: string, retryTarget?: string): NextResponse {
   const base = getBaseUrl();
-  const imageUrl = `${base}/frames/image?type=send&step=error&message=${encodeURIComponent(message)}`;
+  const safeMessage = escapeHtml(message);
+  const imageUrl = `${base}/frames/image?type=send&step=error&message=${encodeURIComponent(safeMessage)}`;
   const target = retryTarget || `${base}/frames/send/post?step=start`;
 
   const html = `<!DOCTYPE html><html><head>

@@ -53,6 +53,7 @@ const EXPLORERS: Record<string, string> = {
 export default function TransactionsPage() {
   const [data, setData] = useState<TxData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
@@ -60,11 +61,17 @@ export default function TransactionsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: '50' });
-    if (status) params.set('status', status);
-    if (search) params.set('search', search);
-    const d = await adminFetch<TxData>(`/api/admin/transactions?${params}`);
-    if (d) setData(d);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      if (status) params.set('status', status);
+      if (search) params.set('search', search);
+      const d = await adminFetch<TxData>(`/api/admin/transactions?${params}`);
+      if (d) setData(d);
+      else setError('Failed to load transactions');
+    } catch {
+      setError('Failed to load transactions');
+    }
     setLoading(false);
   }, [page, status, search]);
 
@@ -114,6 +121,10 @@ export default function TransactionsPage() {
           </button>
         </form>
       </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
+      )}
 
       {/* Table */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">

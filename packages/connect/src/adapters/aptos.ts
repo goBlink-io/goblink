@@ -15,17 +15,25 @@ export function useAptosAdapter(): AdapterHookResult {
   } = useAptosWallet();
 
   const connect = useCallback(async () => {
-    if (wallets?.length) {
-      await aptosConnect((wallets[0] as any).name || wallets[0]);
+    try {
+      if (wallets?.length) {
+        await aptosConnect((wallets[0] as any).name || wallets[0]);
+      }
+    } catch (error) {
+      console.error('[BlinkConnect] Aptos connect failed:', error);
     }
   }, [aptosConnect, wallets]);
 
   const disconnect = useCallback(async () => {
-    await aptosDisconnect();
+    try {
+      await aptosDisconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] Aptos disconnect failed:', error);
+    }
   }, [aptosDisconnect]);
 
   return {
-    chain: 'aptos',
+    chain: 'APTOS',
     address: connected ? account?.address?.toString() ?? null : null,
     connected,
     connect,

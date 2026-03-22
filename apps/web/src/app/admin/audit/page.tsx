@@ -24,6 +24,7 @@ interface AuditData {
 export default function AuditPage() {
   const [data, setData] = useState<AuditData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -31,10 +32,16 @@ export default function AuditPage() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = useCallback(async () => {
-    const params = new URLSearchParams({ page: String(page), limit: '50' });
-    if (action) params.set('action', action);
-    const d = await adminFetch<AuditData>(`/api/admin/audit?${params}`);
-    if (d) setData(d);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      if (action) params.set('action', action);
+      const d = await adminFetch<AuditData>(`/api/admin/audit?${params}`);
+      if (d) setData(d);
+      else setError('Failed to load audit logs');
+    } catch {
+      setError('Failed to load audit logs');
+    }
     setLoading(false);
   }, [page, action]);
 
@@ -93,6 +100,10 @@ export default function AuditPage() {
           </option>
         ))}
       </select>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-red-400 text-sm">{error}</div>
+      )}
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">

@@ -1,13 +1,26 @@
 export type ChainType =
-  | 'evm'
-  | 'solana'
-  | 'sui'
-  | 'near'
-  | 'bitcoin'
-  | 'aptos'
-  | 'starknet'
-  | 'ton'
-  | 'tron';
+  | 'EVM'
+  | 'SOLANA'
+  | 'SUI'
+  | 'NEAR'
+  | 'BITCOIN'
+  | 'APTOS'
+  | 'STARKNET'
+  | 'TON'
+  | 'TRON'
+  | 'STELLAR'
+  | 'XRP'
+  | 'DOGE'
+  | 'LITECOIN'
+  | 'BITCOIN_CASH';
+
+/**
+ * Normalize a chain type string to the canonical UPPERCASE form.
+ * Accepts both lowercase and uppercase inputs for backward compatibility.
+ */
+export function normalizeChainType(chain: string): ChainType {
+  return chain.toUpperCase() as ChainType;
+}
 
 export interface ConnectedWallet {
   chain: ChainType;

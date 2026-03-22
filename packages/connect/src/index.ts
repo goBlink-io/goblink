@@ -10,6 +10,7 @@ export type {
   WalletEvent,
   WalletEventMap,
 } from './core/types';
+export { normalizeChainType } from './core/types';
 
 // Core utilities
 export { WalletEventEmitter, globalEvents } from './core/events';

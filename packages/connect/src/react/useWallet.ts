@@ -45,7 +45,7 @@ export interface UseWalletReturn {
  * <button onClick={() => connect()}>Connect</button>
  *
  * // Connect specific chain
- * <button onClick={() => connect('solana')}>Connect Solana</button>
+ * <button onClick={() => connect('SOLANA')}>Connect Solana</button>
  *
  * // Show address
  * {isConnected && <span>{address}</span>}

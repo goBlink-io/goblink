@@ -47,12 +47,18 @@ export async function GET(
     }) as unknown as { result: number[] };
 
     const balance = JSON.parse(Buffer.from(result.result).toString());
-    const decimalsNum = parseInt(decimals, 10) || 0;
+    const decimalsNum = parseInt(decimals, 10);
+    if (isNaN(decimalsNum) || decimalsNum < 0) {
+      return errorResponse('Invalid decimals parameter', 400, { code: 'INVALID_DECIMALS' });
+    }
     const raw = BigInt(balance);
-    const divisor = BigInt(10 ** decimalsNum);
+    const divisor = 10n ** BigInt(decimalsNum);
     const whole = raw / divisor;
     const fraction = raw % divisor;
-    const balanceInTokens = String(Number(whole) + Number(fraction) / Number(divisor));
+    const fractionStr = decimalsNum > 0
+      ? fraction.toString().padStart(decimalsNum, '0').replace(/0+$/, '')
+      : '';
+    const balanceInTokens = fractionStr ? `${whole}.${fractionStr}` : whole.toString();
 
     return successResponse({
       balance: balanceInTokens,

@@ -59,7 +59,7 @@ export async function getNearTokenBalance(
       contractAddress.includes('::') || // Sui
       /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(contractAddress) // Likely Solana base58
     ) {
-      console.log(`Skipping non-NEAR contract address: ${contractAddress}`);
+      // Non-NEAR contract address format — skip silently
       return '0.00';
     }
     

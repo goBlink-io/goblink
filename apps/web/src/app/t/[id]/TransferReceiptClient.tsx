@@ -95,9 +95,9 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
           </Link>
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-4"
-            style={{ background: 'rgba(34,197,94,0.12)', color: 'var(--success)', border: '1px solid rgba(34,197,94,0.25)' }}
+            style={{ background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success)' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--success)' }} />
             Transfer Completed
           </div>
           <p className="text-tiny" style={{ color: 'var(--text-muted)' }}>{date}</p>
@@ -143,7 +143,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
           {/* Received amount */}
           <div
             className="text-center p-3 rounded-xl mb-5"
-            style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
+            style={{ background: 'var(--success-bg)', border: '1px solid var(--success)' }}
           >
             <div className="text-tiny font-medium mb-0.5" style={{ color: 'var(--success)' }}>Received</div>
             <div className="text-h4 font-bold" style={{ color: 'var(--success)' }}>
@@ -176,7 +176,7 @@ export default function TransferReceiptClient({ data, fromLogo, toLogo }: Props)
             {savings && (
               <div
                 className="p-3 rounded-xl text-center"
-                style={{ background: 'rgba(16,185,129,0.08)' }}
+                style={{ background: 'var(--success-bg)' }}
               >
                 <span className="text-base">🏆</span>
                 <div className="text-body-sm font-bold" style={{ color: 'var(--success)' }}>{savings}</div>

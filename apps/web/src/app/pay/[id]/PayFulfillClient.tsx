@@ -89,8 +89,8 @@ function JourneyStepper({ currentStep }: { currentStep: 0 | 1 | 2 }) {
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{
-                  background: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'rgb(82 82 91)',
-                  color: isCompleted || isCurrent || isDone ? '#fff' : 'rgb(161 161 170)',
+                  background: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'var(--text-muted)',
+                  color: isCompleted || isCurrent || isDone ? '#fff' : 'var(--text-faint)',
                 }}
               >
                 {isCompleted || isDone ? (
@@ -102,7 +102,7 @@ function JourneyStepper({ currentStep }: { currentStep: 0 | 1 | 2 }) {
               <span
                 className="text-xs mt-1 font-medium"
                 style={{
-                  color: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'rgb(113 113 122)',
+                  color: isDone ? 'var(--success)' : isCompleted ? 'var(--success)' : isCurrent ? 'var(--brand)' : 'var(--text-muted)',
                 }}
               >
                 {isDone ? 'Done \u2713' : label}
@@ -112,7 +112,7 @@ function JourneyStepper({ currentStep }: { currentStep: 0 | 1 | 2 }) {
               <div
                 className="h-0.5 flex-1 -mt-4 mx-1"
                 style={{
-                  background: i < currentStep ? 'var(--success)' : 'rgb(63 63 70)',
+                  background: i < currentStep ? 'var(--success)' : 'var(--border)',
                 }}
               />
             )}
@@ -213,7 +213,7 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
           <div className="text-center">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-              style={{ background: 'rgba(34, 197, 94, 0.15)' }}
+              style={{ background: 'var(--success-bg)' }}
             >
               <CheckCircle2 className="h-10 w-10" style={{ color: 'var(--success)' }} />
             </div>

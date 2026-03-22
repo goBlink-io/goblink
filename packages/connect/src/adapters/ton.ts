@@ -10,15 +10,23 @@ export function useTonAdapter(): AdapterHookResult {
   const tonAddr = useTonAddress();
 
   const connect = useCallback(async () => {
-    await tonConnectUI.openModal();
+    try {
+      await tonConnectUI.openModal();
+    } catch (error) {
+      console.error('[BlinkConnect] TON connect failed:', error);
+    }
   }, [tonConnectUI]);
 
   const disconnect = useCallback(async () => {
-    await tonConnectUI.disconnect();
+    try {
+      await tonConnectUI.disconnect();
+    } catch (error) {
+      console.error('[BlinkConnect] TON disconnect failed:', error);
+    }
   }, [tonConnectUI]);
 
   return {
-    chain: 'ton',
+    chain: 'TON',
     address: tonAddr || null,
     connected: !!tonAddr,
     connect,
