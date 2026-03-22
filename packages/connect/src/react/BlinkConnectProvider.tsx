@@ -172,12 +172,13 @@ function ProviderStack({ config, wagmiAdapter, children }: ProviderStackProps) {
   const enabledChains = config.chains;
   const isEnabled = (chain: ChainType) => !enabledChains || enabledChains.includes(chain);
 
+  const persistSession = config.features?.persistSession ?? false;
   // Build the provider tree — only include enabled chains
   let tree = <>{children}</>;
 
   if (isEnabled('TRON')) {
     tree = (
-      <TronWalletProvider adapters={tronAdapters} autoConnect={false}>
+      <TronWalletProvider adapters={tronAdapters} autoConnect={persistSession}>
         {tree}
       </TronWalletProvider>
     );
@@ -200,13 +201,13 @@ function ProviderStack({ config, wagmiAdapter, children }: ProviderStackProps) {
   }
 
   if (isEnabled('APTOS')) {
-    tree = <AptosWalletAdapterProvider autoConnect={false}>{tree}</AptosWalletAdapterProvider>;
+    tree = <AptosWalletAdapterProvider autoConnect={persistSession}>{tree}</AptosWalletAdapterProvider>;
   }
 
   if (isEnabled('SUI')) {
     tree = (
       <SuiClientProvider networks={suiNetworks} defaultNetwork={suiNetwork}>
-        <SuiWalletProvider>{tree}</SuiWalletProvider>
+        <SuiWalletProvider autoConnect={persistSession}>{tree}</SuiWalletProvider>
       </SuiClientProvider>
     );
   }
