@@ -25,12 +25,22 @@ const nextConfig = {
     const blinkconnectRoot = require('fs').realpathSync(
       path.resolve(__dirname, 'node_modules/@goblink/connect')
     );
+    // Force single instance of @mysten/dapp-kit and @mysten/sui across workspace
+    // (prevents React context duplication between @goblink/connect and apps/web)
+    const webDappKit = require('fs').realpathSync(
+      path.resolve(__dirname, 'node_modules/@mysten/dapp-kit')
+    );
+    const webSui = require('fs').realpathSync(
+      path.resolve(__dirname, 'node_modules/@mysten/sui')
+    );
     config.resolve.alias = {
       ...config.resolve.alias,
       '@goblink/connect/react': path.join(blinkconnectRoot, 'dist/react/index.js'),
       '@goblink/connect/vanilla': path.join(blinkconnectRoot, 'dist/vanilla/index.js'),
       '@goblink/connect/adapters': path.join(blinkconnectRoot, 'dist/adapters/index.js'),
       '@goblink/connect': path.join(blinkconnectRoot, 'dist/index.js'),
+      '@mysten/dapp-kit': webDappKit,
+      '@mysten/sui': webSui,
     };
     // Also set extensionAlias to help resolve .js → .ts in linked package
     config.resolve.conditionNames = ['import', 'require', 'default'];
