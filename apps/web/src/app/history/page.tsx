@@ -102,7 +102,7 @@ export default function HistoryPage() {
 
           fetch(`/api/transactions/${tx.id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({
               depositAddress: tx.deposit_address,
               status: newStatus,

@@ -421,7 +421,7 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
             // Mark as processing in DB + refresh local status
             fetch(`/api/pay/${linkId}/complete`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
               body: JSON.stringify({ sendTxHash, depositAddress, payerAddress, payerChain }),
             }).then(() => fetchStatus()).catch(() => {});
           }}
@@ -429,7 +429,7 @@ export default function PayFulfillClient({ data, toLogo, linkId }: Props) {
             // Promote to paid in DB + refresh local status
             fetch(`/api/pay/${linkId}/complete`, {
               method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
               body: JSON.stringify({ fulfillmentTxHash, outcome: 'paid' }),
             }).then(() => fetchStatus()).catch(() => {});
           }}

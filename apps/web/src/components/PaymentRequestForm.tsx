@@ -54,7 +54,7 @@ export default function PaymentRequestForm({ onGenerated }: Props) {
 
       const res = await fetch('/api/pay/shorten', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(data),
       });
 

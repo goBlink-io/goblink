@@ -71,7 +71,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
       // Step 1: Get actual quote with deposit address (dry: false)
       const response = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           ...quoteRequest,
           dry: false, // Get actual deposit address
@@ -229,7 +229,7 @@ export default function QuotePreview({ quote, onReset, onSwapInitiated }: QuoteP
           const base64Tx = btoa(String.fromCharCode(...bytes));
           const sendRes = await fetch('/api/balances/solana-rpc', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({
               jsonrpc: '2.0',
               id: 1,

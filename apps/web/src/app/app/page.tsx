@@ -83,7 +83,7 @@ export default function Home() {
     if (txHash) {
       fetch('/api/deposit/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ txHash, depositAddress }),
       }).catch(err => console.error('Error submitting tx:', err));
     }

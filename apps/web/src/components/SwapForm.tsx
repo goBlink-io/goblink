@@ -417,7 +417,7 @@ export default function SwapForm({ onQuoteReceived, refreshKey, initialValues }:
       
       const response = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           originAsset: (originToken as any).defuseAssetId || originAsset,
           destinationAsset: (destinationToken as any).defuseAssetId || destinationAsset,
