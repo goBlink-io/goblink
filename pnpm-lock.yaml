@@ -9,6 +9,8 @@ overrides:
   minimatch: '>=10.2.3'
   ajv: '>=6.14.0'
   bn.js: '>=5.2.3'
+  '@mysten/dapp-kit': 1.0.3
+  '@mysten/sui': 2.4.0
 
 importers:
 
@@ -48,10 +50,10 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
       '@mysten/dapp-kit':
-        specifier: ^1.0.3
+        specifier: 1.0.3
         version: 1.0.3(@mysten/sui@2.4.0(typescript@5.9.3))(@tanstack/react-query@5.90.21(react@19.2.4))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))
       '@mysten/sui':
-        specifier: ^2.4.0
+        specifier: 2.4.0
         version: 2.4.0(typescript@5.9.3)
       '@reown/appkit':
         specifier: ^1.8.18
@@ -217,7 +219,7 @@ importers:
         specifier: ^0.10.0
         version: 0.10.0
       '@mysten/dapp-kit':
-        specifier: ^1.0.3
+        specifier: 1.0.3
         version: 1.0.3(@mysten/sui@2.4.0(typescript@5.9.3))(@tanstack/react-query@5.90.21(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(immer@11.1.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@18.3.1))
       '@reown/appkit':
         specifier: ^1.8.18
@@ -1174,14 +1176,14 @@ packages:
   '@mysten/dapp-kit@1.0.3':
     resolution: {integrity: sha512-grlRTgrfRTrl7old0wZ9Q2hV1LOAhCErX0OCxnZ9cjl3g16rCMYamm8LOQeGKtr7hWiE6lVNUtFFzahuaoMH+Q==}
     peerDependencies:
-      '@mysten/sui': ^2.3.2
+      '@mysten/sui': 2.4.0
       '@tanstack/react-query': ^5.0.0
       react: '*'
 
   '@mysten/slush-wallet@1.0.2':
     resolution: {integrity: sha512-gcAQaG4rExDqvw+4dTRNlM8U+st8Ngp5cpdFO54DuYqhNqzk5Pc4DAa9lh4zZiUMq/ZtGki2+SpvYrVvT2Vy7Q==}
     peerDependencies:
-      '@mysten/sui': ^2.3.2
+      '@mysten/sui': 2.4.0
 
   '@mysten/sui@2.4.0':
     resolution: {integrity: sha512-2EG5+lTypWMgU3lWyKlcjopQ++Ae9BkoROOBVcJ6mYwM5o1IcKnoc7rFqr94KQClYmBFV2aFz5+aKm5okatoBw==}
@@ -1193,7 +1195,7 @@ packages:
   '@mysten/wallet-standard@0.20.1':
     resolution: {integrity: sha512-Q2GoXO1SPLayqunNIWI3VT8cyOVGTFAPUvaCzx7jYIEoZBfyCR5RCUS4/ehgAlApF88Y/1c/OfjBvEoeRi76jw==}
     peerDependencies:
-      '@mysten/sui': '*'
+      '@mysten/sui': 2.4.0
 
   '@mysten/window-wallet-core@0.1.3':
     resolution: {integrity: sha512-Y3j896R7yfJTihJtLqRZLNwF7iEssYKJjNWPv72CflF5CvYZIngHJcUNGq9Y59o7OrD3oYL+/JM1YVZVMkR/EQ==}
