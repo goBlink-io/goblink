@@ -88,7 +88,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
     if (!user) return;
 
     try {
-      const res = await fetch(`/api/features/${id}/vote`, { method: 'POST' });
+      const res = await fetch(`/api/features/${id}/vote`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const data = await res.json();
       
       if (res.ok) {
@@ -107,7 +107,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ id: st
     try {
       const res = await fetch(`/api/features/${id}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ body: commentBody }),
       });
 

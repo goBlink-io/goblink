@@ -118,7 +118,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
             : null;
           fetch('/api/route-stats/log', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({
               fromChain,
               toChain,
@@ -139,7 +139,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
               if (result.success && result.data?.transactions?.[0]?.id) {
                 const txId = result.data.transactions[0].id;
                 // Trigger sync to update with latest data from explorer
-                fetch(`/api/transactions/${txId}/sync`, { method: 'POST' }).catch(() => {});
+                fetch(`/api/transactions/${txId}/sync`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
               }
             })
             .catch(() => {});
@@ -170,7 +170,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
     try {
       const response = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ ...quoteRequest, dry: false }),
       });
 
@@ -238,7 +238,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
           if (walletAddress) {
             await fetch('/api/transactions', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
               body: JSON.stringify({
                 walletAddress,
                 walletChain,
@@ -340,7 +340,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
         setConfirmationStep('Broadcasting...');
         const base64Tx = btoa(String.fromCharCode(...new Uint8Array(signed.serialize())));
         const sendRes = await fetch('/api/balances/solana-rpc', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({
             jsonrpc: '2.0', id: 1, method: 'sendTransaction',
             params: [base64Tx, { encoding: 'base64', skipPreflight: false, preflightCommitment: 'confirmed' }],

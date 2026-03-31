@@ -176,7 +176,7 @@ export default function PaymentModal({ data, toLogo, onClose, onPaymentSent, onP
 
       const res = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         signal: ctrl.signal,
         body: JSON.stringify({
           dry: true,
