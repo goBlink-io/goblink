@@ -118,7 +118,7 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
             : null;
           fetch('/api/route-stats/log', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               fromChain,
               toChain,
@@ -139,7 +139,8 @@ export default function TransferModal({ quote, onClose, onComplete, onOutcome }:
               if (result.success && result.data?.transactions?.[0]?.id) {
                 const txId = result.data.transactions[0].id;
                 // Trigger sync to update with latest data from explorer
-                fetch(`/api/transactions/${txId}/sync`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+                const senderAddr = getAddress(fromChain) || '';
+                fetch(`/api/transactions/${txId}/sync?walletAddress=${encodeURIComponent(senderAddr)}`, { method: 'POST' }).catch(() => {});
               }
             })
             .catch(() => {});

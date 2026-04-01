@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/server/db';
-import { createHmac } from 'crypto';
 import { ALL_CHAIN_NAMES } from '@goblink/shared';
 
 export const dynamic = 'force-dynamic';
@@ -11,14 +10,20 @@ const VALID_CHAINS = new Set(ALL_CHAIN_NAMES);
 let lastRefreshAt = 0;
 const REFRESH_DEBOUNCE_MS = 60_000; // 1 minute
 
-function verifySignature(body: unknown, signature: string | null): boolean {
-  const secret = process.env.STATS_SECRET;
-  if (!secret) return false;
-  if (!signature) return false;
-  const expected = createHmac('sha256', secret)
-    .update(JSON.stringify(body))
-    .digest('hex');
-  return signature === expected;
+/** Simple per-IP rate limiter: max 30 logs per minute per IP */
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 30;
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
 }
 
 /**
@@ -36,10 +41,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate HMAC signature
-    const signature = request.headers.get('x-stats-signature');
-    if (!verifySignature(body, signature)) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }
 
     // Validate chain IDs
